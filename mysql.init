@@ -441,8 +441,9 @@ mysqlinit() {
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chown mysql:mysql "$MYSQL_CLUSTER_DIR"
-        chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
+	# Using mysql:mysql for MYSQL_CLUSTER_DIR is creating SECURITY hole, root:root is proper
+	chown root:root "$MYSQL_CLUSTER_DIR"
+    chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
 	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
