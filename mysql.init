@@ -39,18 +39,11 @@ case "$1" in
 	fi
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
-		busy
-		su mysql -c "/usr/sbin/mysqld --datadir=$MYSQL_DATA_DIR &>/dev/null &"
-		sleep 1
-		if ps ax | grep -v grep | grep -q mysqld; then
-			deltext; ok
-		else
-			deltext; fail
-		fi
+		nohup daemon /usr/sbin/mysqld -u mysql --datadir=$MYSQL_DATA_DIR
+		touch /var/lock/subsys/mysql
 	else
 		echo "Mysql already is running"
 	fi
-	touch /var/lock/subsys/mysql
 	;;
   stop)
 	show Stopping mysql service
@@ -69,13 +62,16 @@ case "$1" in
   init)
 	# Check if not exist init database
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		show Creating mysql init database
-		busy
+		show Creating privilege mysql tables
+		started
 		TMP=/tmp TMPDIR=/tmp mysql_install_db &>/tmp/initdb.mysql
-		deltext
+		show Creating privilege mysql tables
 		ok
 		echo "Now You can setup database administrator password by:"
 		echo "# mysqladmimn -u mysql -h <host> password <new-password>"
+	else
+		echo "Semms that database is initialized now. Remove by hand $MYSQL_DATA_DIR/mysql"
+		echo "before initialize database.".
 	fi
 	;;
   *)
