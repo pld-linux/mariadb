@@ -1,16 +1,3 @@
-diff -ur mysql-4.1.7.org/isam/Makefile.am mysql-4.1.7/isam/Makefile.am
---- mysql-4.1.7.org/isam/Makefile.am	2004-10-27 01:35:55.374104568 +0200
-+++ mysql-4.1.7/isam/Makefile.am	2004-10-27 01:41:21.199571568 +0200
-@@ -16,7 +16,7 @@
- 
- INCLUDES =		@MT_INCLUDES@ -I$(top_srcdir)/include 
- LDADD =			@CLIENT_EXTRA_LDFLAGS@ libnisam.a ../mysys/libmysys.a \
--			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a $(libdir)/libsupc++.la
- pkglib_LIBRARIES =	libnisam.a
- bin_PROGRAMS =		isamchk isamlog pack_isam
- isamchk_DEPENDENCIES=	$(LIBRARIES)
-Tylko w mysql-4.1.7/isam: Makefile.am.orig
 diff -ur mysql-4.1.7.org/myisam/Makefile.am mysql-4.1.7/myisam/Makefile.am
 --- mysql-4.1.7.org/myisam/Makefile.am	2004-10-27 01:35:55.000000000 +0200
 +++ mysql-4.1.7/myisam/Makefile.am	2004-10-27 01:41:47.764533080 +0200
