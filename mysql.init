@@ -98,25 +98,27 @@ mysqlgetconfig() {
 
 	# emulate old behaviour if only one cluster specified
 	if [ "$clusterdir" = "$MYSQL_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mysql" -a -f /etc/mysqld.conf ]; then
-		MYSQL_NO_CLUSTER_COMPAT=yes; export MYSQL_NO_CLUSTER_COMPAT
+		MYSQL_RA_COMPAT=yes; export MYSQL_RA_COMPAT
 		config_file=/etc/mysqld.conf
-	fi
-	
-	# TODO: convert this piece of crap to awk
-	config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
-	if [ -f "$config" ]; then
-		config_file="$config"
 	else
-		config_file="$clusterdir/mysqld.conf"
+		# TODO: convert this piece of crap to awk
+		config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
+		if [ -f "$config" ]; then
+			config_file="$config"
+		else
+			config_file="$clusterdir/mysqld.conf"
+		fi
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
+	
 	if [ -z "$config_file" ]; then
 		nls "Error: Can't find config file for %s cluster" "$clusterdir"
 		exit 6
 	else
 		MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
 	fi
+	
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
 		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
@@ -145,7 +147,7 @@ END {
 ' $config_file`
 
 
-	if is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then
+	if is_yes "$MYSQL_RA_COMPAT"; then
 		MYSQL_DATA_DIR_SUB=""
 	else
 		MYSQL_DATA_DIR_SUB="/mysqldb"
