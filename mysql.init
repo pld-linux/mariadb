@@ -273,10 +273,10 @@ case "$1" in
 	then
 	  c_c="$c_c CREATE TABLE columns_priv ("
 	  c_c="$c_c   Host char(60) DEFAULT '' NOT NULL,"
-	  c_c="$c_c   Db char(64) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Db char(60) DEFAULT '' NOT NULL,"
 	  c_c="$c_c   User char(16) DEFAULT '' NOT NULL,"
-	  c_c="$c_c   Table_name char(64) DEFAULT '' NOT NULL,"
-	  c_c="$c_c   Column_name char(64) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Table_name char(60) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Column_name char(60) DEFAULT '' NOT NULL,"
 	  c_c="$c_c   Timestamp timestamp(14),"
 	  c_c="$c_c   Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL,"
 	  c_c="$c_c   PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
