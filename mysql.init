@@ -41,7 +41,6 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
 		busy
-#		cd $MYSQL_DATA_DIR
 		/usr/sbin/mysqld -u $MYSQL_USER --datadir=$MYSQL_DATA_DIR >>/var/log/mysql.log 2>&1 &
 		deltext
 		ok
@@ -87,7 +86,7 @@ case "$1" in
 
 		# Create database directories mysql & test
   		if test ! -d $MYSQL_DATA_DIR/mysql; then 
-  			install -d -m700 -o #MYSQL_USER $MYSQL_DATA_DIR/mysql;  
+  			install -d -m700 -o $MYSQL_USER $MYSQL_DATA_DIR/mysql;  
   		fi
 
 		#mysqld --bootstrap need whole (and only one) sql command in one line
