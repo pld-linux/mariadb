@@ -102,7 +102,7 @@ mysqlgetconfig() {
 		config_file=/etc/mysqld.conf
 	fi
 	
-	config=`/etc/mysql/clusters.conf | grep '$clusterdir$' | cut -s -f 1 -d '='`
+	config=`cat /etc/mysql/clusters.conf | grep '$clusterdir$' | cut -s -f 1 -d '='`
 	if [ -f "$config" ]; then
 		config_file=$config
 	elif [ -f /etc/mysql/$config ]; then
