@@ -312,11 +312,11 @@ mysqlinit() {
 	fi
 
 	# Initialize variables
-	c_d="" i_d=""
-	c_h="" i_h=""
-	c_u="" i_u=""
-	c_f="" i_f=""
-	c_t="" c_c=""
+	c_d="" i_d="" c_ht=""  c_tz=""
+	c_h="" i_h="" c_hc=""  c_tzt=""
+	c_u="" i_u="" c_hk=""  c_tztt=""
+	c_f="" i_f="" c_hr=""  c_tzls=""
+	c_t="" c_c="" c_tzn=""
 
 	# Check for old tables
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/db.frm
@@ -430,7 +430,7 @@ mysqlinit() {
 	  c_f="$c_f   PRIMARY KEY (name)"
 	  c_f="$c_f )"
 	  c_f="$c_f CHARACTER SET utf8 COLLATE utf8_bin"
-	  c_f="$c_f   comment='User defined functions';"
+	  c_f="$c_f comment='User defined functions';"
 	fi
 
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/tables_priv.frm
@@ -448,7 +448,7 @@ mysqlinit() {
 	  c_t="$c_t   KEY Grantor (Grantor)"
 	  c_t="$c_t )"
 	  c_t="$c_t CHARACTER SET utf8 COLLATE utf8_bin"
-	  c_t="$c_t   comment='Table privileges';"
+	  c_t="$c_t comment='Table privileges';"
 	fi
 
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/columns_priv.frm
@@ -464,7 +464,119 @@ mysqlinit() {
 	  c_c="$c_c   PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
 	  c_c="$c_c )"
 	  c_c="$c_c CHARACTER SET utf8 COLLATE utf8_bin"
-	  c_c="$c_c   comment='Column privileges';"
+	  c_c="$c_c comment='Column privileges';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/help_topic.frm
+	then
+	  c_ht="$c_ht CREATE TABLE help_topic ("
+	  c_ht="$c_ht   help_topic_id    int unsigned not null,"
+	  c_ht="$c_ht   name             varchar(64) not null,"
+      c_ht="$c_ht   help_category_id smallint unsigned not null,"
+	  c_ht="$c_ht   description      text not null,"
+	  c_ht="$c_ht   example          text not null,"
+	  c_ht="$c_ht   url              varchar(128) not null,"
+	  c_ht="$c_ht   primary key      (help_topic_id),"
+	  c_ht="$c_ht   unique index     (name)"
+	  c_ht="$c_ht )"
+	  c_ht="$c_ht CHARACTER SET utf8"
+	  c_ht="$c_ht comment='help topics';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/help_category.frm
+	then
+	  c_hc="$c_hc CREATE TABLE help_category ("
+	  c_hc="$c_hc   help_category_id   smallint unsigned not null,"
+	  c_hc="$c_hc   name               varchar(64) not null,"
+	  c_hc="$c_hc   parent_category_id smallint unsigned null,"
+	  c_hc="$c_hc   url                varchar(128) not null,"
+	  c_hc="$c_hc   primary key        (help_category_id),"
+	  c_hc="$c_hc   unique index       (name)"
+	  c_hc="$c_hc )"
+	  c_hc="$c_hc   CHARACTER SET utf8"
+	  c_hc="$c_hc comment='help categories';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/help_keyword.frm
+	then
+	  c_hk="$c_hk CREATE TABLE help_keyword ("
+	  c_hk="$c_hk   help_keyword_id  int unsigned not null,"
+	  c_hk="$c_hk   name             varchar(64) not null,"
+	  c_hk="$c_hk   primary key      (help_keyword_id),"
+	  c_hk="$c_hk   unique index     (name)"
+	  c_hk="$c_hk )"
+	  c_hk="$c_hk   CHARACTER SET utf8"
+	  c_hk="$c_hk comment='help keywords';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/help_relation.frm
+	then
+	  c_hr="$c_hr CREATE TABLE help_relation ("
+	  c_hr="$c_hr   help_topic_id    int unsigned not null references help_topic,"
+	  c_hr="$c_hr   help_keyword_id  int unsigned not null references help_keyword,"
+	  c_hr="$c_hr   primary key      (help_keyword_id, help_topic_id)"
+	  c_hr="$c_hr )"
+	  c_hr="$c_hr   CHARACTER SET utf8"
+	  c_hr="$c_hr comment='keyword-topic relation';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone_name.frm
+	then
+	  c_tzn="$c_tzn CREATE TABLE time_zone_name ("
+	  c_tzn="$c_tzn   Name char(64) NOT NULL,"
+	  c_tzn="$c_tzn   Time_zone_id int unsigned NOT NULL,"
+	  c_tzn="$c_tzn   PRIMARY KEY Name (Name)"
+	  c_tzn="$c_tzn )"
+	  c_tzn="$c_tzn   CHARACTER SET utf8"
+	  c_tzn="$c_tzn comment='Time zone names';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone.frm
+	then
+	  c_tz="$c_tz CREATE TABLE time_zone ("
+	  c_tz="$c_tz   Time_zone_id int unsigned NOT NULL auto_increment,"
+	  c_tz="$c_tz   Use_leap_seconds enum('Y','N') DEFAULT 'N' NOT NULL,"
+	  c_tz="$c_tz   PRIMARY KEY TzId (Time_zone_id)"
+	  c_tz="$c_tz )"
+	  c_tz="$c_tz   CHARACTER SET utf8"
+	  c_tz="$c_tz comment='Time zones';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone_transition.frm
+	then
+	  c_tzt="$c_tzt CREATE TABLE time_zone_transition ("
+	  c_tzt="$c_tzt   Time_zone_id int unsigned NOT NULL,"
+	  c_tzt="$c_tzt   Transition_time bigint signed NOT NULL,"
+	  c_tzt="$c_tzt   Transition_type_id int unsigned NOT NULL,"
+	  c_tzt="$c_tzt   PRIMARY KEY TzIdTranTime (Time_zone_id, Transition_time)"
+	  c_tzt="$c_tzt )"
+	  c_tzt="$c_tzt   CHARACTER SET utf8"
+	  c_tzt="$c_tzt comment='Time zone transitions';"
+	fi
+	
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone_transition_type.frm
+	then
+	  c_tztt="$c_tztt CREATE TABLE time_zone_transition_type ("
+	  c_tztt="$c_tztt   Time_zone_id int unsigned NOT NULL,"
+	  c_tztt="$c_tztt   Transition_type_id int unsigned NOT NULL,"
+	  c_tztt="$c_tztt   Offset int signed DEFAULT 0 NOT NULL,"
+	  c_tztt="$c_tztt   Is_DST tinyint unsigned DEFAULT 0 NOT NULL,"
+	  c_tztt="$c_tztt   Abbreviation char(8) DEFAULT '' NOT NULL,"
+	  c_tztt="$c_tztt   PRIMARY KEY TzIdTrTId (Time_zone_id, Transition_type_id)"
+	  c_tztt="$c_tztt )"
+	  c_tztt="$c_tztt   CHARACTER SET utf8"
+	  c_tztt="$c_tztt comment='Time zone transition types';"
+	fi
+
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone_leap_second.frm
+	then
+	  c_tzls="$c_tzls CREATE TABLE time_zone_leap_second ("
+	  c_tzls="$c_tzls   Transition_time bigint signed NOT NULL,"
+	  c_tzls="$c_tzls   Correction int signed NOT NULL,"
+	  c_tzls="$c_tzls   PRIMARY KEY TranTime (Transition_time)"
+	  c_tzls="$c_tzls )"
+	  c_tzls="$c_tzls CHARACTER SET utf8"
+	  c_tzls="$c_tzls   comment='Leap seconds information for time zones';"
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
@@ -504,6 +616,17 @@ $i_f
 
 $c_t
 $c_c
+
+$c_ht
+$c_hc
+$c_hk
+$c_hr
+
+$c_tzn
+$c_tz
+$c_tzt
+$c_tztt
+$c_tzls
 END_OF_DATA
 	then 
 	    ok
