@@ -2,3 +2,6 @@
 
 # Define nice level for mysql
 SERVICE_RUN_NICE_LEVEL="+0"
+
+# Other options for MySQL:
+ADDITIONAL_OPTIONS=""
