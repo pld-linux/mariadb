@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# mysql		A very fast and reliable SQL database engine
+#
+# chkconfig:	2345 90 90
+#
+# description:	A very fast and reliable SQL database engine.
+#
+# pidfile:	/var/state/mysql/mysqld.pid
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# Get service config
+[ -f /etc/sysconfig/mysql ] && . /etc/sysconfig/mysql
+
+# Check that networking is up.
+if [ "${NETWORKING}" = "no" ]; then
+	echo "WARNING: Networking is down. Mysql service can't be runed."
+	exit 1
+fi
+
+case "$mode" in
+	# Check if the service is already running?
+	if [ ! -f /var/lock/subsys/mysql ]; then
+		show Starting mysql
+		busy
+		su mysql -c '/usr/bin/msqld
+		touch /var/lock/subsys/mysql
+		deltext
+		ok
+	else
+		echo "Mysql already is running"
+	fi
+	touch /var/lock/subsys/mysql
+	;;
+  stop)
+	show Stopping mysql service
+	killproc postmaster
+	sleep 2
+	rm -f /var/state/mysql/mysqld.pid
+	rm -f /var/lock/subsys/mysql
+	;;
+  status)
+	status postmaster
+	;;
+  restart|reload)
+	$0 stop
+	$0 start
+	;;
+  *)
+	echo "Usage: mysql {start|stop|status|restart|reload}"
+	exit 1
+  'start')
+
+    if test -x $bindir/safe_mysqld
+    then
+      # Give extra arguments to mysqld with the my.cnf file. This script may
+      # be overwritten at next upgrade.
+      $bindir/safe_mysqld --user=$mysql_daemon_user --pid-file=$pid_file --datadir=$datadir &
+    else
+      echo "Can't execute $bindir/safe_mysqld"
+    fi
+    ;;
+
+  'stop')
+    # Stop daemon. We use a signal here to avoid having to know the
+    # root password.
+    if test -f "$pid_file"
+    then
+      mysqld_pid=`cat $pid_file`
+      echo "Killing mysqld with pid $mysqld_pid"
+      kill $mysqld_pid
+      # mysqld should remove the pid_file when it exits.
+    else
+      echo "No mysqld pid file found. Looked for $pid_file."
+    fi
+    ;;
+
+  *)
+    # usage
+    echo "usage: $0 start|stop"
+    exit 1
+    ;;
+esac
