@@ -2,3 +2,6 @@
 
 # Define nice level for cron 
 SERVICE_RUN_NICE_LEVEL="+0"
+
+# extra mysqld options
+#MYSQLD_OPTS=""

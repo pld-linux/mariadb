@@ -91,7 +91,7 @@ case "$1" in
 		chown mysql.mysql $MYSQLD_ERRLOG
 		chmod 640 $MYSQLD_ERRLOG
 		    
-		/usr/sbin/mysqld --defaults-file=$MYSQLD_CONFIG >>$MYSQLD_ERRLOG 2>&1 &
+		/usr/sbin/mysqld --defaults-file=$MYSQLD_CONFIG $MYSQLD_OPTS >>$MYSQLD_ERRLOG 2>&1 &
 		sleep 1
 		deltext
 		if ps -C mysqld >/dev/null 2>&1; then
