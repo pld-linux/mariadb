@@ -47,7 +47,7 @@ fi
 action="$1"
 
 # any db cluster as command line argument?
-if [ $# -gt 1 ]; then\
+if [ $# -gt 1 ]; then
 	shift
 	# perform action for specified clusters only
 	DB_CLUSTERS="$@"
@@ -102,17 +102,16 @@ mysqlgetconfig() {
 		config_file=/etc/mysqld.conf
 	fi
 	
+	# TODO: convert this piece of crap to awk
 	config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
 	if [ -f "$config" ]; then
-		config_file=$config
-	elif [ -f /etc/mysql/$config ]; then
-		config_file=/etc/mysql/$config
-	elif [ -f "$clusterdir/mysqld.conf" ]; then
-		config_file=$clusterdir/mysqld.conf
+		config_file="$config"
+	else
+		config_file="$clusterdir/mysqld.conf"
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
-	if [ ! "$config_file" ]; then
+	if [ -z "$config_file" ]; then
 		nls "Error: Can't find config file for %s cluster" "$clusterdir"
 		exit 6
 	else
@@ -245,16 +244,15 @@ mysqlinit() {
 		exit 1
 	fi
 
-	#if [ -f "$clusterdir/mysqld.conf" ]; then
-	# Let's say that config for each cluster is mandatory...
-	mysqlgetconfig "$clusterdir"
-	#else
-	#	MYSQL_USER="mysql"
-	#	MYSQL_CLUSTER_DIR="$clusterdir"
-	#	MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
-	#	MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
-	#	MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
-	#fi
+	if [ -f "$clusterdir/mysqld.conf" ]; then
+		mysqlgetconfig "$clusterdir"
+	else
+		MYSQL_USER="mysql"
+		MYSQL_CLUSTER_DIR="$clusterdir"
+		MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
+		MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
+		MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
+	fi
 
 	nls "Initializing cluster %s" "$clusterdir"
 
