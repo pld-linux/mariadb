@@ -281,7 +281,7 @@ mysqlinit() {
 
 	# Check if not exist init database
 	if [ -d "$MYSQL_DATA_DIR/mysql" ]; then
-		nls "Seems that database is initialized now. Remove by hand %s" "$MYSQL_DATA_DIR/mysqldb/mysql"
+		nls "Seems that database is initialized now. Remove by hand %s" "$MYSQL_DATA_DIR/mysql"
 		nls "before initializing database."
 		nls "For now skipping cluster %s." "$clusterdir"
 		return
