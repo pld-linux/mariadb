@@ -2,7 +2,7 @@
 #
 # mysql		A very fast and reliable SQL database engine
 #
-# chkconfig:	2345 90 90
+# chkconfig:	2345 90 25
 #
 # description:	A very fast and reliable SQL database engine.
 #
@@ -26,8 +26,8 @@ if [ -f /etc/sysconfig/mysql ] ; then
 fi
 
 # Check that networking is up.
-if [ "${NETWORKING}" = "no" ]; then
-	echo "WARNING: Networking is down. Mysql service can't be runed."
+if is_no "${NETWORKING}"; then
+	msg_Network_Down Mysql
 	exit 1
 fi
 
@@ -38,8 +38,9 @@ case "$1" in
 		echo "Mysq database not initialized. Try \"$0 init\" before start."
 		exit 1
 	fi
+		
 	if [ ! -f /var/lock/subsys/mysql ]; then
-		show Starting mysql
+		msg_starting Mysql
 		busy
 		/usr/sbin/mysqld -u $MYSQL_USER --datadir=$MYSQL_DATA_DIR >>/var/log/mysql.log 2>&1 &
 		sleep 1
@@ -49,20 +50,26 @@ case "$1" in
 		else
 			fail
 		fi
-		touch /var/lock/subsys/mysql
+                RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/mysql
 	else
-		echo "Mysql already is running"
+		msg_Already_Running Mysql
 	fi
 	;;
   stop)
-	show Stopping mysql service
-	killproc mysqld
-	sleep 2
-	rm -f /var/state/mysql/mysqld.pid
-	rm -f /var/lock/subsys/mysql
+        if [ -f /var/lock/subsys/mysql ]; then
+                msg_stopping Mysql
+                killproc mysqld
+		sleep 2
+                rm -f /var/lock/subsys/mysql /var/state/mysql/mysql.pid >/dev/null 2>&1
+        else
+                msg_Not_Running Mysql
+                exit 1
+        fi
 	;;
   status)
 	status mysqld
+	exit $?
 	;;
   restart|reload)
 	$0 stop
@@ -71,7 +78,7 @@ case "$1" in
   init)
 	# Check if not exist init database
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		show Creating privilege mysql tables
+		show "Creating privilege mysql tables"
 		busy
 		TMP=/tmp TMPDIR=/tmp 
 		hostname=`hostname`		# Install this too in the user table
@@ -251,8 +258,9 @@ END_OF_DATA
 	fi
 	;;
   *)
-	echo "Usage: mysql {start|stop|status|restart|reload|init}"
+	msg_Usage "$0 {start|stop|status|restart|reload|init}"
 	exit 1
 	;;
 esac
 
+exit $RETVAL
