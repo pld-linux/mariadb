@@ -102,7 +102,7 @@ mysqlgetconfig() {
 		config_file=/etc/mysqld.conf
 	fi
 	
-	config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep \"$clusterdir$\" | cut -s -f 1 -d '='`
+	config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
 	if [ -f "$config" ]; then
 		config_file=$config
 	elif [ -f /etc/mysql/$config ]; then
@@ -112,7 +112,12 @@ mysqlgetconfig() {
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
-	MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
+	if [ ! "$config_file" ]; then
+		nls "Error: Can't find config file for %s cluster" "$clusterdir"
+		exit 6
+	else
+		MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
+	fi
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
 		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
