@@ -14,15 +14,14 @@
 # Get network config
 . /etc/sysconfig/network
 
-MYSQL_DATA_DIR=/var/state/mysql
-MYSQL_USER=mysql
-
 # Get service config
 if [ -f /etc/sysconfig/mysql ] ; then
 	. /etc/sysconfig/mysql
 	if [ -z "${MYSQL_DATA_DIR}" ]; then
 		MYSQL_DATA_DIR=/var/state/mysql
 	fi
+else
+	MYSQL_DATA_DIR=/var/state/mysql
 fi
 
 # Check that networking is up.
@@ -41,13 +40,17 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
 		busy
-		/usr/sbin/mysqld -u $MYSQL_USER --datadir=$MYSQL_DATA_DIR >>/var/log/mysql.log 2>&1 &
-		deltext
-		ok
-		touch /var/lock/subsys/mysql
+		/usr/sbin/mysqld --user=mysql --datadir=$MYSQL_DATA_DIR >/dev/null &
+		sleep 1
+		if ps ax | grep -v grep | grep -q mysqld; then
+			deltext; ok
+		else
+			deltext; fail
+		fi
 	else
 		echo "Mysql already is running"
 	fi
+	touch /var/lock/subsys/mysql
 	;;
   stop)
 	show Stopping mysql service
@@ -66,183 +69,14 @@ case "$1" in
   init)
 	# Check if not exist init database
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		show Creating privilege mysql tables
+		show Creating mysql init database
 		busy
-		TMP=/tmp TMPDIR=/tmp 
-		hostname=`hostname`		# Install this too in the user table
-
-		# Check if hostname is valid
-  		resolved=`/usr/bin/resolveip $hostname 2>&1`
-  		if [ $? -ne 0 ]; then
-    		resolved=`/usr/bin/resolveip localhost 2>&1`
-    		if [ $? -eq 0 ]; then
-      			deltext
-      			fail
-      			echo "Sorry, the host '$hostname' could not be looked up."
-      			echo "Please configure the 'hostname' command to return a correct hostname."
-      			exit 1
-    		fi
-  		fi
-
-		# Create database directories mysql & test
-  		if test ! -d $MYSQL_DATA_DIR/mysql; then 
-  			install -d -m700 -o $MYSQL_USER $MYSQL_DATA_DIR/mysql;  
-  		fi
-
-		#mysqld --bootstrap need whole (and only one) sql command in one line
-		create_db=""
-		create_db="$create_db CREATE TABLE db ( "
-		create_db="$create_db Host char(60) DEFAULT '' NOT NULL, "
-		create_db="$create_db Db char(32) DEFAULT '' NOT NULL," 
-		create_db="$create_db User char(16) DEFAULT '' NOT NULL, "
-		create_db="$create_db Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_db="$create_db PRIMARY KEY Host (Host,Db,User), "
-		create_db="$create_db KEY User (User)"
-		create_db="$create_db );"
-
-		create_host=""
- 		create_host="$create_host CREATE TABLE host ( "
-		create_host="$create_host Host char(60) DEFAULT '' NOT NULL, "
-		create_host="$create_host Db char(32) DEFAULT '' NOT NULL, "
-		create_host="$create_host Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_host="$create_host PRIMARY KEY Host (Host,Db)"
-		create_host="$create_host 	);"
-
-		create_user=""
- 		create_user="$create_user CREATE TABLE user (" 
-		create_user="$create_user Host char(60) DEFAULT '' NOT NULL, "
-		create_user="$create_user User char(16) DEFAULT '' NOT NULL, "
-		create_user="$create_user Password char(16) DEFAULT '' NOT NULL, "
-		create_user="$create_user Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Reload_priv enum('N','Y') DEFAULT 'N' NOT NULL," 
-		create_user="$create_user Shutdown_priv enum('N','Y') DEFAULT 'N' NOT NULL," 
-		create_user="$create_user Process_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user File_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-		create_user="$create_user PRIMARY KEY Host (Host,User)"
-		create_user="$create_user );"
-
-		create_func=""
- 		create_func="$create_func CREATE TABLE func ( "
- 		create_func="$create_func name char(64) DEFAULT '' NOT NULL, "
- 		create_func="$create_func ret tinyint(1) DEFAULT '0' NOT NULL," 
- 		create_func="$create_func dl char(128) DEFAULT '' NOT NULL, "
- 		create_func="$create_func type enum ('function','aggregate') NOT NULL, "
- 		create_func="$create_func PRIMARY KEY (name)"
- 		create_func="$create_func ); "
-		
-		create_tblpriv=""
-		create_tblpriv="$create_tblpriv CREATE TABLE tables_priv ( "
-		create_tblpriv="$create_tblpriv Host char(60) DEFAULT '' NOT NULL, "
-		create_tblpriv="$create_tblpriv Db char(60) DEFAULT '' NOT NULL, "
-		create_tblpriv="$create_tblpriv User char(16) DEFAULT '' NOT NULL," 
-		create_tblpriv="$create_tblpriv Table_name char(60) DEFAULT '' NOT NULL, "
-		create_tblpriv="$create_tblpriv Grantor char(77) DEFAULT '' NOT NULL, "
-		create_tblpriv="$create_tblpriv Timestamp timestamp(14), "
-		create_tblpriv="$create_tblpriv Table_priv set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter') DEFAULT '' NOT NULL, "
-		create_tblpriv="$create_tblpriv Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL,"
-		create_tblpriv="$create_tblpriv PRIMARY KEY (Host,Db,User,Table_name), "
-		create_tblpriv="$create_tblpriv KEY Grantor (Grantor)"
-		create_tblpriv="$create_tblpriv );"
-
-		create_colpriv=""
-		create_colpriv="$create_colpriv CREATE TABLE columns_priv ( "
-		create_colpriv="$create_colpriv Host char(60) DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv Db char(60) DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv User char(16) DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv Table_name char(60) DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv Column_name char(60) DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv Timestamp timestamp(14), "
-		create_colpriv="$create_colpriv Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL, "
-		create_colpriv="$create_colpriv PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
-		create_colpriv="$create_colpriv );"
-
- 		if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
-    		--basedir=/usr --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
-			use mysql;
- 			$create_db
-			$inser_db
-			$create_host
-			$create_user
-			$insert_user
-			$create_func
-			$create_tblpriv
-			$create_colpriv
-
- 			INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
-			INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
-			INSERT INTO user VALUES ('localhost','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-			INSERT INTO user VALUES ('$hostname','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-			REPLACE INTO user VALUES ('localhost','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-			REPLACE INTO user VALUES ('$hostname','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-			INSERT INTO user VALUES ('localhost','','','N','N','N','N','N','N','N','N','N','N','N','N','N','N');
-			INSERT INTO user VALUES ('$hostname','','','N','N','N','N','N','N','N','N','N','N','N','N','N','N');
-
-END_OF_DATA
-		then
-	  		deltext
-	  		ok
-	  		echo "	PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL root USER !"
-	  		echo "	This is done with:"
-	  		echo "	/usr/bin/mysqladmin -u root password 'new-password'"
-	 		echo "	See the manual for more instructions."
-	  		echo
-		else
-      		deltext
-	  		fail
-	  		echo "	Installation of grant tables failed!"
-	  		echo
-	  		echo "	Examine the logs in $MYSQL_DATA_DIR for more information."
-	  		echo "	You can also try to start the mysqld demon with:"
-	  		echo "	/usr/sbin/mysqld --skip-grant &"
-	  		echo "	You can use the command line tool"
-	  		echo "	/usr/bin/mysql to connect to the mysql"
-	  		echo "	database and look at the grant tables:"
-	  		echo
-	  		echo "shell> /usr/bin/mysql -u root mysql"
-	  		echo "mysql> show tables"
-	  		echo
-	  		echo "Try 'mysqld --help' if you have problems with paths. Using --log"
-	  		echo "gives you a log in $MYSQL_DATA_DIR that may be helpful."
-	  		echo
-	  		echo "The latest information about MySQL is available on the web at"
-	  		echo "http://www.mysql.com"
-	  		echo "Please consult the MySQL manual section: 'Problems running mysql_install_db',"
-	  		echo "and the manual section that describes problems on your OS."
-	  		echo "Another information source is the MySQL email archive."
-	  		echo "Please check all of the above before mailing us!"
-	  		echo "And if you do mail us, you MUST use the /usr/bin/mysqlbug script!"
-	  		exit 1
-		fi
-	else
-		echo "Semms that database is initialized now. Remove by hand $MYSQL_DATA_DIR/mysql"
-		echo "before initialize database.".
+		TMP=/tmp TMPDIR=/tmp mysql_install_db &>/tmp/initdb.mysql
+		chown mysql.mysql -R /var/state/mysql
+		deltext
+		ok
+		echo "Now You can setup database administrator password by:"
+		echo "# mysqladmimn -u mysql -h <host> password <new-password>"
 	fi
 	;;
   *)
@@ -250,4 +84,3 @@ END_OF_DATA
 	exit 1
 	;;
 esac
-
