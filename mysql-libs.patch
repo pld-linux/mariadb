@@ -1,7 +1,7 @@
-diff -urN mysql-4.0.9-gamma.org/acinclude.m4 mysql-4.0.9-gamma/acinclude.m4
---- mysql-4.0.9-gamma.org/acinclude.m4	Mon Feb  3 23:34:15 2003
-+++ mysql-4.0.9-gamma/acinclude.m4	Tue Feb  4 00:11:55 2003
-@@ -715,6 +715,9 @@
+diff -burN mysql-4.0.14.orig/acinclude.m4 mysql-4.0.14/acinclude.m4
+--- mysql-4.0.14.orig/acinclude.m4	Fri Jul 18 16:57:40 2003
++++ mysql-4.0.14/acinclude.m4	Thu Jul 24 23:22:42 2003
+@@ -722,6 +722,9 @@
    if test -f $d/libssl.a ; then
      OPENSSL_LIB=$d
    fi
@@ -10,31 +10,11 @@ diff -urN mysql-4.0.9-gamma.org/acinclude.m4 mysql-4.0.9-gamma/acinclude.m4
 +  fi
   done
  
-  if test -z "$OPENSSL_LIB" -o -z "$OPENSSL_INCLUDE" ; then
-
-diff -urN mysql-4.0.10-gamma.org/vio/Makefile.am mysql-4.0.10-gamma/vio/Makefile.am
---- mysql-4.0.10-gamma.org/vio/Makefile.am	Wed Jan 29 12:29:24 2003
-+++ mysql-4.0.10-gamma/vio/Makefile.am	Wed Feb 12 01:50:02 2003
-@@ -21,13 +21,13 @@
- noinst_HEADERS =	
- test_ssl_SOURCES =   test-ssl.c
- test_ssl_LDADD =   	@CLIENT_EXTRA_LDFLAGS@ ../dbug/libdbug.a libvio.a ../mysys/libmysys.a \
--			../strings/libmystrings.a libvio.a $(openssl_libs)
-+			../strings/libmystrings.a libvio.a $(openssl_libs) ../libmysql_r/libmysqlclient_r.la
- test_sslserver_SOURCES =   test-sslserver.c
- test_sslserver_LDADD =   @CLIENT_EXTRA_LDFLAGS@	../dbug/libdbug.a libvio.a ../mysys/libmysys.a \
--			../strings/libmystrings.a libvio.a $(openssl_libs)
-+			../strings/libmystrings.a libvio.a $(openssl_libs) ../libmysql_r/libmysqlclient_r.la
- test_sslclient_SOURCES =   test-sslclient.c
- test_sslclient_LDADD =   @CLIENT_EXTRA_LDFLAGS@	../dbug/libdbug.a libvio.a ../mysys/libmysys.a \
--			../strings/libmystrings.a libvio.a $(openssl_libs)
-+			../strings/libmystrings.a libvio.a $(openssl_libs) ../libmysql_r/libmysqlclient_r.la
- libvio_a_SOURCES =	vio.c viosocket.c viossl.c viosslfactories.c
- 
- # Don't update the files from bitkeeper
---- mysql-4.0.11a-gamma/configure.in.orig	Tue Feb 25 21:29:51 2003
-+++ mysql-4.0.11a-gamma/configure.in	Mon Mar 10 22:17:08 2003
-@@ -743,19 +743,21 @@
+   # On RedHat 9 we need kerberos to compile openssl
+diff -burN mysql-4.0.14.orig/configure.in mysql-4.0.14/configure.in
+--- mysql-4.0.14.orig/configure.in	Fri Jul 18 16:57:46 2003
++++ mysql-4.0.14/configure.in	Thu Jul 24 23:29:00 2003
+@@ -742,19 +742,21 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
@@ -60,20 +40,10 @@ diff -urN mysql-4.0.10-gamma.org/vio/Makefile.am mysql-4.0.10-gamma/vio/Makefile
 +LIBS="$save_LIBS"
  
  # For sem_xxx functions on Solaris 2.6
- AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4))
---- mysql-4.0.11a-gamma/sql/Makefile.am.orig	Thu Feb 20 20:57:48 2003
-+++ mysql-4.0.11a-gamma/sql/Makefile.am	Mon Mar 10 22:16:32 2003
-@@ -43,7 +43,7 @@
- mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
- 			@bdb_libs@ @innodb_libs@ @pstack_libs@ \
-                         @innodb_system_libs@ \
--			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@
-+			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@ @LIBCRYPT@
- noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
- 			item_strfunc.h item_timefunc.h item_uniq.h \
- 			item_create.h mysql_priv.h \
---- mysql-4.0.11a-gamma/libmysql_r/Makefile.am.orig	Mon Mar 10 22:39:27 2003
-+++ mysql-4.0.11a-gamma/libmysql_r/Makefile.am	Mon Mar 10 22:45:14 2003
+ AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4, sem_init))
+diff -burN mysql-4.0.14.orig/libmysql_r/Makefile.am mysql-4.0.14/libmysql_r/Makefile.am
+--- mysql-4.0.14.orig/libmysql_r/Makefile.am	Fri Jul 18 16:57:47 2003
++++ mysql-4.0.14/libmysql_r/Makefile.am	Thu Jul 24 23:30:25 2003
 @@ -30,7 +30,7 @@
  libmysql_dir = $(top_srcdir)/libmysql
  
@@ -83,3 +53,37 @@ diff -urN mysql-4.0.10-gamma.org/vio/Makefile.am mysql-4.0.10-gamma/vio/Makefile
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
  # This is called from the toplevel makefile
+diff -burN mysql-4.0.14.orig/sql/Makefile.am mysql-4.0.14/sql/Makefile.am
+--- mysql-4.0.14.orig/sql/Makefile.am	Fri Jul 18 16:57:41 2003
++++ mysql-4.0.14/sql/Makefile.am	Thu Jul 24 23:29:27 2003
+@@ -43,7 +43,7 @@
+ mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
+ 			@bdb_libs@ @innodb_libs@ @pstack_libs@ \
+                         @innodb_system_libs@ \
+-			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@
++			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@ @LIBCRYPT@
+ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
+ 			item_strfunc.h item_timefunc.h item_uniq.h \
+ 			item_create.h mysql_priv.h \
+diff -burN mysql-4.0.14.orig/vio/Makefile.am mysql-4.0.14/vio/Makefile.am
+--- mysql-4.0.14.orig/vio/Makefile.am	Fri Jul 18 16:57:50 2003
++++ mysql-4.0.14/vio/Makefile.am	Thu Jul 24 23:24:27 2003
+@@ -22,15 +22,15 @@
+ test_ssl_SOURCES=	test-ssl.c
+ test_ssl_LDADD=   	@CLIENT_EXTRA_LDFLAGS@ ../dbug/libdbug.a libvio.a \
+ 			../mysys/libmysys.a ../strings/libmystrings.a \
+-			$(openssl_libs)
++			$(openssl_libs) ../libmysql_r/libmysqlclient_r.la
+ test_sslserver_SOURCES=	test-sslserver.c
+ test_sslserver_LDADD=   @CLIENT_EXTRA_LDFLAGS@	../dbug/libdbug.a libvio.a \
+ 			../mysys/libmysys.a ../strings/libmystrings.a \
+-			$(openssl_libs)
++			$(openssl_libs) ../libmysql_r/libmysqlclient_r.la
+ test_sslclient_SOURCES=   test-sslclient.c
+ test_sslclient_LDADD=   @CLIENT_EXTRA_LDFLAGS@	../dbug/libdbug.a libvio.a \
+ 			../mysys/libmysys.a ../strings/libmystrings.a \
+-			$(openssl_libs)
++			$(openssl_libs) ../libmysql_r/libmysqlclient_r.la
+ libvio_a_SOURCES=	vio.c viosocket.c viossl.c viosslfactories.c
+ 
+ # Don't update the files from bitkeeper
