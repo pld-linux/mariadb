@@ -6,7 +6,7 @@ diff -urN mysql-4.0.10-gamma.org/isam/Makefile.am mysql-4.0.10-gamma/isam/Makefi
  INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include 
  LDADD =			@CLIENT_EXTRA_LDFLAGS@ libnisam.a ../mysys/libmysys.a \
 -			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a /usr/lib/libsupc++.la
++			../dbug/libdbug.a ../strings/libmystrings.a $(libdir)/libsupc++.la
  pkglib_LIBRARIES =	libnisam.a
  bin_PROGRAMS =		isamchk isamlog pack_isam
  isamchk_DEPENDENCIES=	$(LIBRARIES)
@@ -18,7 +18,7 @@ diff -urN mysql-4.0.10-gamma.org/myisam/Makefile.am mysql-4.0.10-gamma/myisam/Ma
  INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include
  LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a ../mysys/libmysys.a \
 -			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a /usr/lib/libsupc++.la
++			../dbug/libdbug.a ../strings/libmystrings.a $(libdir)/libsupc++.la
  pkglib_LIBRARIES =	libmyisam.a
  bin_PROGRAMS =		myisamchk myisamlog myisampack
  myisamchk_DEPENDENCIES=	$(LIBRARIES)
