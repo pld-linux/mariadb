@@ -105,6 +105,8 @@ mysqlgetconfig() {
 		config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
 		if [ -f "$config" ]; then
 			config_file="$config"
+		elif [ -f /etc/mysql/$config ]; then
+			config_file=/etc/mysql/$config
 		else
 			config_file="$clusterdir/mysqld.conf"
 		fi
