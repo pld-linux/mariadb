@@ -34,7 +34,7 @@ fi
 
 # Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-	nls "MySQL config %s does not exist" "$MYSQLD_CONFIG"
+	nls "%s config %s does not exist." MySQL "$MYSQLD_CONFIG"
 	exit 1
 fi
 
