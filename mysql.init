@@ -441,7 +441,7 @@ mysqlinit() {
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chown root:root "$MYSQL_CLUSTER_DIR"
+	chown mysql:mysql "$MYSQL_CLUSTER_DIR"
         chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
