@@ -32,3 +32,54 @@ diff -urN mysql-4.0.10-gamma.org/vio/Makefile.am mysql-4.0.10-gamma/vio/Makefile
  libvio_a_SOURCES =	vio.c viosocket.c viossl.c viosslfactories.c
  
  # Don't update the files from bitkeeper
+--- mysql-4.0.11a-gamma/configure.in.orig	Tue Feb 25 21:29:51 2003
++++ mysql-4.0.11a-gamma/configure.in	Mon Mar 10 22:17:08 2003
+@@ -743,19 +743,21 @@
+ 
+ AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
+ 
++AC_CHECK_FUNC(gethostbyname_r, , [
+ AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
+-  AC_CHECK_LIB(nsl, gethostbyname_r))
+-AC_CHECK_FUNC(gethostbyname_r)
++  AC_CHECK_LIB(nsl, gethostbyname_r))])
+ 
+ AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
+-AC_CHECK_FUNC(yp_get_default_domain, ,
+-  AC_CHECK_LIB(nsl, yp_get_default_domain))
+ AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+ # This may get things to compile even if bind-8 is installed
+ AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+ # For crypt() on Linux
+-AC_CHECK_LIB(crypt, crypt)
++save_LIBS="$LIBS"
++LIBCRYPT=
++AC_CHECK_LIB(crypt, crypt, [LIBS="-lcrypt $LIBS"; LIBCRYPT="-lcrypt"])
++AC_SUBST(LIBCRYPT)
+ AC_CHECK_FUNC(crypt, AC_DEFINE(HAVE_CRYPT)) 
++LIBS="$save_LIBS"
+ 
+ # For sem_xxx functions on Solaris 2.6
+ AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4))
+--- mysql-4.0.11a-gamma/sql/Makefile.am.orig	Thu Feb 20 20:57:48 2003
++++ mysql-4.0.11a-gamma/sql/Makefile.am	Mon Mar 10 22:16:32 2003
+@@ -43,7 +43,7 @@
+ mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
+ 			@bdb_libs@ @innodb_libs@ @pstack_libs@ \
+                         @innodb_system_libs@ \
+-			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@
++			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@ @LIBCRYPT@
+ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
+ 			item_strfunc.h item_timefunc.h item_uniq.h \
+ 			item_create.h mysql_priv.h \
+--- mysql-4.0.11a-gamma/libmysql_r/Makefile.am.orig	Mon Mar 10 22:39:27 2003
++++ mysql-4.0.11a-gamma/libmysql_r/Makefile.am	Mon Mar 10 22:45:14 2003
+@@ -30,7 +30,7 @@
+ libmysql_dir = $(top_srcdir)/libmysql
+ 
+ libmysqlclient_r_la_SOURCES = $(target_sources)
+-libmysqlclient_r_la_LIBADD = $(target_libadd)
++libmysqlclient_r_la_LIBADD = $(target_libadd) -lpthread
+ libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
+ 
+ # This is called from the toplevel makefile
