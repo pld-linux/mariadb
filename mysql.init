@@ -26,7 +26,7 @@ if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
 fi
 
-[ -f /etc/mysql/clusters.conf ]&& MYSQL_DB_CLUSTERS=$(grep -v '^#' | cut -s -f 2 -d '=' /etc/mysql/clusters.conf)
+[ -f /etc/mysql/clusters.conf ]&& MYSQL_DB_CLUSTERS=$(grep -v '^#' /etc/mysql/clusters.conf | cut -s -f 2 -d '=')
 
 if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
 	nls "Warning: Missing clusters config file %s" /etc/mysql/clusters.conf
