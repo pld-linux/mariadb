@@ -22,14 +22,15 @@ else
 	exit 1
 fi
 
-if [ "$MYSQL_DB_CLUSTERS" ]; then
+if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
 fi
 
-if [ -f /etc/mysql/clusters.conf ]; then
-	MYSQL_DB_CLUSTERS=`cat /etc/mysql/clusters.conf | grep -v '^#' | cut -s -f 2 -d '='`
-else
-	nls "Waning: Missing clusters config file %s" /etc/mysql/clusters.conf
+[ -f /etc/mysql/clusters.conf ]&& MYSQL_DB_CLUSTERS=$(grep -v '^#' | cut -s -f 2 -d '=' /etc/mysql/clusters.conf)
+
+if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+	nls "Warning: Missing clusters config file %s" /etc/mysql/clusters.conf
+	nls "Warning: or there is no configured clusters in it."
 	nls "Using default cluster /var/lib/mysql (compatibility mode)"
 	MYSQL_DB_CLUSTERS=/var/lib/mysql
 fi
