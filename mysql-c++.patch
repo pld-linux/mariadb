@@ -1,24 +1,25 @@
-diff -urN mysql-4.0.10-gamma.org/isam/Makefile.am mysql-4.0.10-gamma/isam/Makefile.am
---- mysql-4.0.10-gamma.org/isam/Makefile.am	Thu Feb 13 19:29:15 2003
-+++ mysql-4.0.10-gamma/isam/Makefile.am	Thu Feb 13 19:29:26 2003
+diff -ur mysql-4.1.7.org/isam/Makefile.am mysql-4.1.7/isam/Makefile.am
+--- mysql-4.1.7.org/isam/Makefile.am	2004-10-27 01:35:55.374104568 +0200
++++ mysql-4.1.7/isam/Makefile.am	2004-10-27 01:41:21.199571568 +0200
 @@ -16,7 +16,7 @@
  
- INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include 
+ INCLUDES =		@MT_INCLUDES@ -I$(top_srcdir)/include 
  LDADD =			@CLIENT_EXTRA_LDFLAGS@ libnisam.a ../mysys/libmysys.a \
 -			../dbug/libdbug.a ../strings/libmystrings.a
 +			../dbug/libdbug.a ../strings/libmystrings.a $(libdir)/libsupc++.la
  pkglib_LIBRARIES =	libnisam.a
  bin_PROGRAMS =		isamchk isamlog pack_isam
  isamchk_DEPENDENCIES=	$(LIBRARIES)
-diff -urN mysql-4.0.10-gamma.org/myisam/Makefile.am mysql-4.0.10-gamma/myisam/Makefile.am
---- mysql-4.0.10-gamma.org/myisam/Makefile.am	Wed Jan 29 12:29:22 2003
-+++ mysql-4.0.10-gamma/myisam/Makefile.am	Thu Feb 13 19:32:55 2003
-@@ -19,7 +19,7 @@
- 
- INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include
- LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a ../mysys/libmysys.a \
--			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a $(libdir)/libsupc++.la
+Tylko w mysql-4.1.7/isam: Makefile.am.orig
+diff -ur mysql-4.1.7.org/myisam/Makefile.am mysql-4.1.7/myisam/Makefile.am
+--- mysql-4.1.7.org/myisam/Makefile.am	2004-10-27 01:35:55.000000000 +0200
++++ mysql-4.1.7/myisam/Makefile.am	2004-10-27 01:41:47.764533080 +0200
+@@ -21,7 +21,7 @@
+ LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+ 			$(top_builddir)/mysys/libmysys.a \
+ 			$(top_builddir)/dbug/libdbug.a \
+-			$(top_builddir)/strings/libmystrings.a @ZLIB_LIBS@
++			$(top_builddir)/strings/libmystrings.a @ZLIB_LIBS@ $(libdir)/libsupc++.la
  pkglib_LIBRARIES =	libmyisam.a
- bin_PROGRAMS =		myisamchk myisamlog myisampack
+ bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
  myisamchk_DEPENDENCIES=	$(LIBRARIES)
