@@ -455,6 +455,8 @@ This is done (after starting database) with:
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
+IMPORTANT: The configuration file is now located in /var/lib/mysq/mysqld.conf 
+
 END_OF_MSG
       else  
 	    fail
