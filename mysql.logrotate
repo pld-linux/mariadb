@@ -1,6 +1,40 @@
-/var/log/mysqld.log {
+/var/log/mysql/err {
+        notifempty
 	create 640 mysql mysql
+        prerotate
+        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+	endscript
+
 	postrotate
-		/usr/bin/mysqladmin flush-logs
+		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
 	endscript
 }
+
+/var/log/mysql/log {
+        notifempty
+	missingok
+	create 640 mysql mysql
+
+        prerotate
+        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+	endscript
+
+	postrotate
+		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+	endscript
+}
+
+/var/log/mysql/isamlog {
+        notifempty
+	missingok
+	create 640 mysql mysql
+
+        prerotate
+        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+	endscript
+
+	postrotate
+		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+	endscript
+}
+
