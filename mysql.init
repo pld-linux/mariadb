@@ -39,9 +39,24 @@ if [ ! -f $MYSQLD_CONFIG ]; then
     exit 1
 fi
 
-MYSQL_DATA_DIR=`grep -m 1 "^[[:space:]]*datadir" $MYSQLD_CONFIG 2>/dev/null| cut -f 2 -d= | tr -d '[:space:]'`
-MYSQL_USER=`grep -m 1 "^[[:space:]]*user" $MYSQLD_CONFIG 2>/dev/null| cut -f 2 -d= | tr -d '[:space:]'` 
-MYSQLD_PIDFILE=`grep -m 1 "^[[:space:]]*pid\-file" $MYSQLD_CONFIG 2>/dev/null| cut -f 2 -d= | tr -d '[:space:]'`
+eval `awk '
+/^[ \t]*\[.*\][ \t]*$/ {
+	match($0,/\[.*\]/)
+	section=substr($0,RSTART+1,RSTART+RLENGTH-3)
+}
+section=="mysqld" && $2~"=" {
+	if ($1=="datadir") {
+		printf("MYSQL_DATA_DIR=%s;", $3)
+	} else if ($1=="user") {
+		printf("MYSQL_USER=%s;", $3)
+	} else if ($1=="pid-file") {
+		printf("MYSQL_PIDFILE=%s;", $3)
+	}
+}
+END {
+	print "export MYSQL_DATA_DIR MYSQL_USER MYSQL_PIDFILE"
+}
+' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
     echo "MySQL datadir $MYSQL_DATA_DIR not configured propely!"
@@ -121,7 +136,7 @@ case "$1" in
 	TMP=/tmp TMPDIR=/tmp 
 	
 	# Install this too in the user table
-	hostname=`hostname --fqdn | tr -d '[:space:]'`
+	hostname="`hostname --fqdn | tr -d '[:space:]'`"
 		
 	# Check if hostname is valid
 	if [ -z "$hostname" ]; then
@@ -138,120 +153,156 @@ case "$1" in
      		exit 1
 	fi
 
-	#mysqld --bootstrap need whole (and only one) sql command in one line
-	create_db=""
-	create_db="$create_db CREATE TABLE db ( "
-	create_db="$create_db Host char(60) DEFAULT '' NOT NULL, "
-	create_db="$create_db Db char(32) DEFAULT '' NOT NULL," 
-	create_db="$create_db User char(16) DEFAULT '' NOT NULL, "
-	create_db="$create_db Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_db="$create_db PRIMARY KEY Host (Host,Db,User), "
-	create_db="$create_db KEY User (User)"
-	create_db="$create_db );"
+	# Initialize variables
+	c_d="" i_d=""
+	c_h="" i_h=""
+	c_u="" i_u=""
+	c_f="" i_f=""
+	c_t="" c_c=""
+	
+	# Check for old tables
+	if test ! -f $mdata/db.frm
+	then
+	  # mysqld --bootstrap wants one command/line
+	  c_d="$c_d CREATE TABLE db ("
+	  c_d="$c_d   Host char(60) DEFAULT '' NOT NULL,"
+	  c_d="$c_d   Db char(64) DEFAULT '' NOT NULL,"
+	  c_d="$c_d   User char(16) DEFAULT '' NOT NULL,"
+	  c_d="$c_d   Select_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Update_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Create_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d PRIMARY KEY Host (Host,Db,User),"
+	  c_d="$c_d KEY User (User)"
+	  c_d="$c_d )"
+	  c_d="$c_d comment='Database privileges';"
+	  
+	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
+	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');"
+	fi
+	
+	if test ! -f $mdata/host.frm
+	then
+	  c_h="$c_h CREATE TABLE host ("
+	  c_h="$c_h  Host char(60) DEFAULT '' NOT NULL,"
+	  c_h="$c_h  Db char(64) DEFAULT '' NOT NULL,"
+	  c_h="$c_h  Select_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Update_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Create_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  PRIMARY KEY Host (Host,Db)"
+	  c_h="$c_h )"
+	  c_h="$c_h comment='Host privileges;  Merged with database privileges';"
+	fi
+	
+	if test ! -f $mdata/user.frm
+	then
+	  c_u="$c_u CREATE TABLE user ("
+	  c_u="$c_u   Host char(60) DEFAULT '' NOT NULL,"
+	  c_u="$c_u   User char(16) DEFAULT '' NOT NULL,"
+	  c_u="$c_u   Password char(16) DEFAULT '' NOT NULL,"
+	  c_u="$c_u   Select_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Update_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Create_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Reload_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Shutdown_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Process_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   File_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   PRIMARY KEY Host (Host,User)"
+	  c_u="$c_u )"
+	  c_u="$c_u comment='Users and global privileges';"
+	
+	  i_u="INSERT INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+	  INSERT INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+	  
+	  REPLACE INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+	  REPLACE INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+	  
+	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','N','N','N','N','N','N','N','N');"
+	fi
+	
+	if test ! -f $mdata/func.frm
+	then
+	  c_f="$c_f CREATE TABLE func ("
+	  c_f="$c_f   name char(64) DEFAULT '' NOT NULL,"
+	  c_f="$c_f   ret tinyint(1) DEFAULT '0' NOT NULL,"
+	  c_f="$c_f   dl char(128) DEFAULT '' NOT NULL,"
+	  c_f="$c_f   type enum ('function','aggregate') NOT NULL,"
+	  c_f="$c_f   PRIMARY KEY (name)"
+	  c_f="$c_f )"
+	  c_f="$c_f   comment='User defined functions';"
+	fi
+	
+	if test ! -f $mdata/tables_priv.frm
+	then
+	  c_t="$c_t CREATE TABLE tables_priv ("
+	  c_t="$c_t   Host char(60) DEFAULT '' NOT NULL,"
+	  c_t="$c_t   Db char(64) DEFAULT '' NOT NULL,"
+	  c_t="$c_t   User char(16) DEFAULT '' NOT NULL,"
+	  c_t="$c_t   Table_name char(60) DEFAULT '' NOT NULL,"
+	  c_t="$c_t   Grantor char(77) DEFAULT '' NOT NULL,"
+	  c_t="$c_t   Timestamp timestamp(14),"
+	  c_t="$c_t   Table_priv set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter') DEFAULT '' NOT NULL,"
+	  c_t="$c_t   Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL,"
+	  c_t="$c_t   PRIMARY KEY (Host,Db,User,Table_name),"
+	  c_t="$c_t   KEY Grantor (Grantor)"
+	  c_t="$c_t )"
+	  c_t="$c_t   comment='Table privileges';"
+	fi
+	
+	if test ! -f $mdata/columns_priv.frm
+	then
+	  c_c="$c_c CREATE TABLE columns_priv ("
+	  c_c="$c_c   Host char(60) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Db char(64) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   User char(16) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Table_name char(64) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Column_name char(64) DEFAULT '' NOT NULL,"
+	  c_c="$c_c   Timestamp timestamp(14),"
+	  c_c="$c_c   Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL,"
+	  c_c="$c_c   PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
+	  c_c="$c_c )"
+	  c_c="$c_c   comment='Column privileges';"
+	fi
 
-	create_host=""
-	create_host="$create_host CREATE TABLE host ( "
-	create_host="$create_host Host char(60) DEFAULT '' NOT NULL, "
-	create_host="$create_host Db char(32) DEFAULT '' NOT NULL, "
-	create_host="$create_host Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_host="$create_host PRIMARY KEY Host (Host,Db)"
-	create_host="$create_host 	);"
-
-	create_user=""
-	create_user="$create_user CREATE TABLE user (" 
-	create_user="$create_user Host char(60) DEFAULT '' NOT NULL, "
-	create_user="$create_user User char(16) DEFAULT '' NOT NULL, "
-	create_user="$create_user Password char(16) DEFAULT '' NOT NULL, "
-	create_user="$create_user Select_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Insert_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Update_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Delete_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Create_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Drop_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Reload_priv enum('N','Y') DEFAULT 'N' NOT NULL," 
-	create_user="$create_user Shutdown_priv enum('N','Y') DEFAULT 'N' NOT NULL," 
-	create_user="$create_user Process_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user File_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Grant_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user References_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Index_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL, "
-	create_user="$create_user PRIMARY KEY Host (Host,User)"
-	create_user="$create_user );"
-
-	create_func=""
-	create_func="$create_func CREATE TABLE func ( "
-	create_func="$create_func name char(64) DEFAULT '' NOT NULL, "
-	create_func="$create_func ret tinyint(1) DEFAULT '0' NOT NULL," 
-	create_func="$create_func dl char(128) DEFAULT '' NOT NULL, "
-	create_func="$create_func type enum ('function','aggregate') NOT NULL, "
-	create_func="$create_func PRIMARY KEY (name)"
-	create_func="$create_func ); "
-
-	create_tblpriv=""
-	create_tblpriv="$create_tblpriv CREATE TABLE tables_priv ( "
-	create_tblpriv="$create_tblpriv Host char(60) DEFAULT '' NOT NULL, "
-	create_tblpriv="$create_tblpriv Db char(60) DEFAULT '' NOT NULL, "
-	create_tblpriv="$create_tblpriv User char(16) DEFAULT '' NOT NULL," 
-	create_tblpriv="$create_tblpriv Table_name char(60) DEFAULT '' NOT NULL, "
-	create_tblpriv="$create_tblpriv Grantor char(77) DEFAULT '' NOT NULL, "
-	create_tblpriv="$create_tblpriv Timestamp timestamp(14), "
-	create_tblpriv="$create_tblpriv Table_priv set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter') DEFAULT '' NOT NULL, "
-	create_tblpriv="$create_tblpriv Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL,"
-	create_tblpriv="$create_tblpriv PRIMARY KEY (Host,Db,User,Table_name), "
-	create_tblpriv="$create_tblpriv KEY Grantor (Grantor)"
-	create_tblpriv="$create_tblpriv );"
-
-	create_colpriv=""
-	create_colpriv="$create_colpriv CREATE TABLE columns_priv ( "
-	create_colpriv="$create_colpriv Host char(60) DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv Db char(60) DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv User char(16) DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv Table_name char(60) DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv Column_name char(60) DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv Timestamp timestamp(14), "
-	create_colpriv="$create_colpriv Column_priv set('Select','Insert','Update','References') DEFAULT '' NOT NULL, "
-	create_colpriv="$create_colpriv PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
-	create_colpriv="$create_colpriv );"
 	if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
-    	    --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
-CREATE DATABASE mysql;    
+	    --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
+CREATE DATABASE mysql;
 use mysql;
-$create_db
-$inser_db
-$create_host
-$create_user
-$insert_user
-$create_func
-$create_tblpriv
-$create_colpriv
-#INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
-#INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
-INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N');
-INSERT INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-INSERT INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-REPLACE INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-REPLACE INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-END_OF_DATA
+$c_d
+$i_d
 
+$c_h
+$i_h
+
+$c_u
+$i_u
+
+$c_f
+$i_f
+
+$c_t
+$c_c
+END_OF_DATA
 	then 
 	    deltext
 	    ok
@@ -301,8 +352,7 @@ us, you MUST use the /usr/bin/mysqlbug script!
 END_OF_MSG
 
 	exit 1 
-    fi
-
+	fi
 	;;
   *)
 	msg_Usage "$0 {start|stop|status|restart|reload|init}"
