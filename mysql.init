@@ -185,7 +185,7 @@ mysqlstop() {
 	mysqlstatus "$clusterdir"
 	msg_stopping "MySQL $clusterdir"
 	busy
-	[ "$MYSQL_PID" != "unknown" ] && kill -TERM "$MYSQL_PID"
+	[ "$MYSQL_PID" != "unknown" ] && kill -TERM "$MYSQL_PID" 2> /dev/null
 	# 3 seconds
 	for nr in 1 2 3; do
 		[ -d "/proc/$MYSQL_PID" ] && sleep 1
