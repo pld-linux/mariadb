@@ -170,6 +170,9 @@ mysqlstart() {
 	mysqlstatus "$clusterdir"
 	if [ "$MYSQL_STATUS" = "running" -a "$MYSQL_PID" != "unknown" ]; then
 		ok
+	elif [ "$MYSQL_STATUS" = "died" ]; then
+	    	RETVAL=1
+		died
 	else
 		RETVAL=1
 		fail
@@ -188,7 +191,9 @@ mysqlstop() {
 		[ -d "/proc/$MYSQL_PID" ] && sleep 1
 	done
 	mysqlstatus "$clusterdir"
-	if [ "$MYSQL_STATUS" != "not running" ]; then
+	if [ "$MYSQL_STATUS" = "died" ]; then
+	    	died
+	elif [ "$MYSQL_STATUS" = "running" ]; then
 		fail
 	else
 		ok
