@@ -6,7 +6,6 @@
 #
 # description:  A very fast and reliable SQL database engine.
 #
-
 # Source function library
 . /etc/rc.d/init.d/functions
 
@@ -18,7 +17,7 @@ if [ -f /etc/sysconfig/mysql ]; then
 	. /etc/sysconfig/mysql
 else
 	nls "Error: %s not found" /etc/sysconfig/mysql
-	nls " MySQL can't be run."
+	nls "%s can't be run." MySQL
 	exit 1
 fi
 
@@ -26,14 +25,21 @@ if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
 fi
 
-[ -f /etc/mysql/clusters.conf ] && MYSQL_DB_CLUSTERS=$(grep -v '^#' /etc/mysql/clusters.conf | cut -s -f 2 -d '=')
+if [ -f /etc/mysql/clusters.conf ]; then
+	MYSQL_DB_CLUSTERS=$(grep -v '^#' /etc/mysql/clusters.conf | cut -s -f 2 -d '=')
+	if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+		nls "Warning: there are no configured clusters."
+	fi
 
-if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+else
 	nls "Warning: Missing clusters config file %s" /etc/mysql/clusters.conf
-	nls "Warning: or there is no configured clusters in it."
-	nls "Using default cluster /var/lib/mysql (compatibility mode)"
-	MYSQL_DB_CLUSTERS=/var/lib/mysql
+	if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+		nls "Warning: there are no configured clusters."
+		nls "Using default cluster /var/lib/mysql (compatibility mode)"
+		MYSQL_DB_CLUSTERS=/var/lib/mysql
+	fi
 fi
+
 
 # Check that networking is up
 if is_yes "${NETWORKING}"; then
@@ -69,7 +75,7 @@ MYSQL_ERRLOG=/var/log/mysql/err
 # $1 - db cluster
 #
 # sets variables:
-# MYSQL_STATUS = running | not running
+# MYSQL_STATUS = running | not running | died
 # MYSQL_PID    = pid of mysqld process
 #
 mysqlstatus() {
@@ -208,6 +214,16 @@ mysqlstop() {
 	mysqlstatus "$clusterdir"
 	msg_stopping "MySQL $clusterdir"
 	busy
+
+# TODO
+#  graceful mysql shutdown with mysqladmin shutdown requires 'shutdown'
+#  privilege. create new user mysqlctl or rename mysql_logrotate to mysqlctl
+#  and give it both privs (flush-logs and shutdown)?
+
+	# try graceful shutdown -- send shutdown command
+	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown
+	mysqlstatus "$clusterdir"
+
 	[ "$MYSQL_PID" != "unknown" ] && kill -TERM "$MYSQL_PID" 2> /dev/null
 	# 3 seconds
 	for nr in 1 2 3; do
@@ -221,6 +237,8 @@ mysqlstop() {
 	else
 		ok
 	fi
+
+	# FIXME: should let mysqld remove pid by itself?
 	rm -f "$MYSQL_PIDFILE"
 }
 
@@ -501,7 +519,7 @@ This is done (after starting database) with:
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
-IMPORTANT: The configuration file is mysqld.conf in MYSQ_DB_CLUSTERS directories.
+IMPORTANT: The configuration file is mysqld.conf in MYSQL_DB_CLUSTERS directories.
 
 END_OF_MSG
       else  
@@ -582,8 +600,8 @@ case "$action" in
 	exit $?
 	;;
   restart|force-reload)
-	$0 stop
-	$0 start
+	$0 stop $DB_CLUSTERS
+	$0 start $DB_CLUSTERS
 	exit $?
 	;;
   init)
