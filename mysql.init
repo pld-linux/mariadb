@@ -34,8 +34,8 @@ fi
 
 # Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-	nls "%s config %s does not exist." MySQL "$MYSQLD_CONFIG"
-	exit 1
+	nls "%s config %s does not exist." MySQL "$MYSQLD_CONFIG" >&2
+	exit 6
 fi
 
 eval `awk '
@@ -59,31 +59,29 @@ END {
 
 if [ -z $MYSQL_DATA_DIR ]; then 
 	echo $(nls "MySQL datadir %s not configured properly" "$MYSQL_DATA_DIR")'!'
-	nls "Edit %s and configure it." "$MYSQLD_CONFIG"
-	exit 1
+	nls "Edit %s and configure it." "$MYSQLD_CONFIG" >&2
+	exit 6
 fi
 
 if [ -z $MYSQL_USER ]; then 
 	echo $(nls "MySQL user not configured properly")'!'
-	nls "Edit %s and configure it." "$MYSQLD_CONFIG"
-	exit 1
+	nls "Edit %s and configure it." "$MYSQLD_CONFIG" >&2
+	exit 6
 fi
 
-
+RETVAL=0
 case "$1" in
   start)
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		nls "MySQL database not initialized. Try \"%s init\" before start." "$0"
-		exit 1
+		nls "MySQL database not initialized. Try \"%s init\" before start." "$0" >&2
+		exit 6
 	fi
 
 	# Check if the service is already running?		
-	if [ -f /var/lock/subsys/mysql ]; then
-		msg_already_running MySQL
-	else 	
+	if [ ! -f /var/lock/subsys/mysql ]; then
 		msg_starting MySQL
 		busy
-		
+
 		if [ ! -f $MYSQLD_ERRLOG ]; then 
 			touch $MYSQLD_ERRLOG
 		fi
@@ -93,15 +91,15 @@ case "$1" in
 		[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 		TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQLD_CONFIG >>$MYSQLD_ERRLOG 2>&1 &
 		sleep 1
-		deltext
 		if ps -C mysqld >/dev/null 2>&1; then
-			RETVAL=0
 			ok
 		else
 			RETVAL=1
 			fail
 		fi
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/mysql
+	else 	
+		msg_already_running MySQL
 	fi
 	;;
   stop)
@@ -112,16 +110,16 @@ case "$1" in
 		rm -f /var/lock/subsys/mysql $MYSQLD_PIDFILE >/dev/null 2>&1
 	else
 		msg_not_running MySQL
-		exit 1
 	fi
 	;;
   status)
 	status mysqld
 	exit $?
 	;;
-  restart|reload)
+  restart|force-reload)
 	$0 stop
 	$0 start
+	exit $?
 	;;
   init)
 	# Check if not exist init database
@@ -159,7 +157,7 @@ case "$1" in
 	c_u="" i_u=""
 	c_f="" i_f=""
 	c_t="" c_c=""
-	
+
 	# Check for old tables
 	if test ! -f $mdata/db.frm
 	then
@@ -182,11 +180,11 @@ case "$1" in
 	  c_d="$c_d KEY User (User)"
 	  c_d="$c_d )"
 	  c_d="$c_d comment='Database privileges';"
-	  
+
 	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
 	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');"
 	fi
-	
+
 	if test ! -f $mdata/host.frm
 	then
 	  c_h="$c_h CREATE TABLE host ("
@@ -206,7 +204,7 @@ case "$1" in
 	  c_h="$c_h )"
 	  c_h="$c_h comment='Host privileges;  Merged with database privileges';"
 	fi
-	
+
 	if test ! -f $mdata/user.frm
 	then
 	  c_u="$c_u CREATE TABLE user ("
@@ -230,7 +228,7 @@ case "$1" in
 	  c_u="$c_u   PRIMARY KEY Host (Host,User)"
 	  c_u="$c_u )"
 	  c_u="$c_u comment='Users and global privileges';"
-	
+
 	  i_u="INSERT INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 	  INSERT INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 	  
@@ -239,7 +237,7 @@ case "$1" in
 	  
 	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N');"
 	fi
-	
+
 	if test ! -f $mdata/func.frm
 	then
 	  c_f="$c_f CREATE TABLE func ("
@@ -251,7 +249,7 @@ case "$1" in
 	  c_f="$c_f )"
 	  c_f="$c_f   comment='User defined functions';"
 	fi
-	
+
 	if test ! -f $mdata/tables_priv.frm
 	then
 	  c_t="$c_t CREATE TABLE tables_priv ("
@@ -268,7 +266,7 @@ case "$1" in
 	  c_t="$c_t )"
 	  c_t="$c_t   comment='Table privileges';"
 	fi
-	
+
 	if test ! -f $mdata/columns_priv.frm
 	then
 	  c_c="$c_c CREATE TABLE columns_priv ("
@@ -304,7 +302,6 @@ $c_t
 $c_c
 END_OF_DATA
 	then 
-	    deltext
 	    ok
 	    cat << END_OF_MSG
 
@@ -320,7 +317,6 @@ mysqladmin section. See the manual for more instructions.
 
 END_OF_MSG
       else  
-	    deltext
 	    fail
 	    cat << END_OF_MSG
 Installation of grant tables FAILED!
@@ -355,9 +351,8 @@ END_OF_MSG
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|init|restart|reload|status}"
-	exit 1
-	;;
+	msg_usage "$0 {start|stop|init|restart|force-reload|status}"
+	exit 3
 esac
 
 exit $RETVAL
