@@ -92,7 +92,7 @@ case "$1" in
 		chmod 640 $MYSQLD_ERRLOG
 
 		[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
-		TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQLD_CONFIG $ADDITIONAL_OPTIONS >>$MYSQLD_ERRLOG 2>&1 &
+		TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQLD_CONFIG >>$MYSQLD_ERRLOG 2>&1 &
 		sleep 1
 		deltext
 		if ps -C mysqld >/dev/null 2>&1; then
