@@ -1,0 +1,26 @@
+diff -Nru mysql-3.22.27/Docs/manual.texi mysql-3.22.27.new/Docs/manual.texi
+--- mysql-3.22.27/Docs/manual.texi	Thu Oct 28 20:41:06 1999
++++ mysql-3.22.27.new/Docs/manual.texi	Thu Oct 28 20:42:04 1999
+@@ -31,9 +31,10 @@
+ 
+ @ifinfo
+ @format
+-START-INFO-DIR-ENTRY
+-* mysql: (mysql).               @strong{MySQL} documentation.
+-END-INFO-DIR-ENTRY
++@dircategory Data bases:
++@direntry
++* mysql: (mysql).		@strong{MySQL} documentation
++@end direntry
+ @end format
+ @end ifinfo
+ 
+@@ -20302,7 +20303,7 @@
+ The index is stored in a file with the @code{.MYI} extension and the data is
+ stored in file with the @code{.MYD} extension.  You can check/repair
+ @code{ISAM} tables with the @code{myisamchk} utility.
+-@xref{Crash recovery} 
++@xref{Crash recovery}.
+ 
+ The following is new in @code{MyISAM}:
+ 
