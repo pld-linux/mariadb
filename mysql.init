@@ -101,7 +101,7 @@ mysqlgetconfig() {
 
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
-	        nls " MySQL can't be run."
+	        nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
         	exit 6
 	fi
 
@@ -126,19 +126,24 @@ END {
 }
 ' $config_file`
 
-	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "$clusterdir/mysqldb/db" ]; then
-		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/db"
-                nls " MySQL can't be run."
-                exit 6
-	fi
 
-	if ! is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then			
-		if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir/mysqldb/mysql.pid" ]; then
-	                nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/mysql.pid"
-	                nls " MySQL can't be run."
-	                exit 6
-		fi
-        fi
+	if is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then
+	    	MYSQL_DATA_DIR_SUB=""
+	else
+	    	MYSQL_DATA_DIR_SUB="/mysqldb"
+	fi
+		
+	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "${clusterdir}${MYSQL_DATA_DIR_SUB}/db" ]; then
+    		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
+    		nls " MySQL can't be run."
+    		exit 6
+	fi
+	
+	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid" ]; then
+		nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid"
+		nls " MySQL can't be run."
+		exit 6
+	fi
 
 	if [ -z $MYSQL_USER ]; then
         	echo "$(nls 'MySQL user not configured properly')"'!' >&2
@@ -214,7 +219,13 @@ mysqlsubsys() {
 
 mysqlinit() {
 	clusterdir="$1"
-		
+
+	if [ -f /etc/mysqld.conf ]; then
+	    nls "Running in \`no cluster compat' mode: can't initialize database."
+	    nls "Move /etc/mysqld.conf away and rerun \`$0 init' (new config will be in $clusterdir)."
+	    exit 1
+	fi
+
 	if [ -f "$clusterdir/mysqld.conf" ]; then
 	    mysqlgetconfig "$clusterdir"
 	else
