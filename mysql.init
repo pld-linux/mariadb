@@ -433,7 +433,10 @@ mysqlinit() {
 	    chown root:root "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
-		
+
+	if [ ! -e /var/lib/mysql/mysql.sock ]; then
+	    ln -s "$MYSQL_SOCKET" /var/lib/mysql/mysql.sock
+	fi
 
 	if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
 	    --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
