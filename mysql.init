@@ -40,7 +40,11 @@ case "$1" in
 	fi
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
-		nohup daemon /usr/sbin/mysqld -u mysql --datadir=$MYSQL_DATA_DIR
+		busy
+#		cd $MYSQL_DATA_DIR
+		/usr/sbin/mysqld -u $MYSQL_USER --datadir=$MYSQL_DATA_DIR >>/var/log/mysql.log 2>&1 &
+		deltext
+		ok
 		touch /var/lock/subsys/mysql
 	else
 		echo "Mysql already is running"
@@ -83,10 +87,7 @@ case "$1" in
 
 		# Create database directories mysql & test
   		if test ! -d $MYSQL_DATA_DIR/mysql; then 
-  			install -d -m700 -o mysql $MYSQL_DATA_DIR/mysql;  
-  		fi
-  		if test ! -d $MYSQL_DATA_DIR/test; then 
-  			install -d -m700 -o mysql $MYSQL_DATA_DIR/test;  
+  			install -d -m700 -o #MYSQL_USER $MYSQL_DATA_DIR/mysql;  
   		fi
 
 		#mysqld --bootstrap need whole (and only one) sql command in one line
@@ -184,7 +185,7 @@ case "$1" in
 		create_colpriv="$create_colpriv );"
 
  		if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
-    		--basedir=/usr --datadir=$MYSQL_DATA_DIR --user=mysql << END_OF_DATA
+    		--basedir=/usr --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
 			use mysql;
  			$create_db
 			$inser_db
