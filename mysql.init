@@ -134,7 +134,7 @@ END {
 
 	if ! is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then			
 		if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir/mysqldb/mysql.pid" ]; then
-	                nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir/mysql.pid"
+	                nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/mysql.pid"
 	                nls " MySQL can't be run."
 	                exit 6
 		fi
