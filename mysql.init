@@ -109,8 +109,6 @@ mysqlgetconfig() {
 		config_file=/etc/mysql/$config
 	elif [ -f "$clusterdir/mysqld.conf" ]; then
 		config_file=$clusterdir/mysqld.conf
-	elif [ -f /etc/mysql/mysqld.conf ]; then
-		config_file=/etc/mysql/mysqld.conf
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
