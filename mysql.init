@@ -176,13 +176,16 @@ case "$1" in
 	  c_d="$c_d   References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_d="$c_d   Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_d="$c_d   Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Create_tmp_table_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_d="$c_d   Lock_tables_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_d="$c_d PRIMARY KEY Host (Host,Db,User),"
 	  c_d="$c_d KEY User (User)"
 	  c_d="$c_d )"
 	  c_d="$c_d comment='Database privileges';"
 
-	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');
-	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y');"
+	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y');
+	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y');"
+	    
 	fi
 
 	if test ! -f $mdata/host.frm
@@ -200,6 +203,8 @@ case "$1" in
 	  c_h="$c_h  References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_h="$c_h  Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_h="$c_h  Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Create_tmp_table_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_h="$c_h  Lock_tables_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_h="$c_h  PRIMARY KEY Host (Host,Db)"
 	  c_h="$c_h )"
 	  c_h="$c_h comment='Host privileges;  Merged with database privileges';"
@@ -225,17 +230,31 @@ case "$1" in
 	  c_u="$c_u   References_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_u="$c_u   Index_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
 	  c_u="$c_u   Alter_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Show_db_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Super_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Create_tmp_table_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Lock_tables_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Execute_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Repl_slave_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   Repl_client_priv enum('N','Y') DEFAULT 'N' NOT NULL,"
+	  c_u="$c_u   ssl_type enum('','ANY','X509', 'SPECIFIED') DEFAULT '' NOT NULL,"
+	  c_u="$c_u   ssl_cipher BLOB NOT NULL,"
+	  c_u="$c_u   x509_issuer BLOB NOT NULL,"
+	  c_u="$c_u   x509_subject BLOB NOT NULL,"
+	  c_u="$c_u   max_questions int(11) unsigned DEFAULT 0  NOT NULL,"
+	  c_u="$c_u   max_updates int(11) unsigned DEFAULT 0  NOT NULL,"
+	  c_u="$c_u   max_connections int(11) unsigned DEFAULT 0  NOT NULL,"
 	  c_u="$c_u   PRIMARY KEY Host (Host,User)"
 	  c_u="$c_u )"
 	  c_u="$c_u comment='Users and global privileges';"
 
-	  i_u="INSERT INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-	  INSERT INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-	  
-	  REPLACE INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-	  REPLACE INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
-	  
-	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N');"
+	  i_u="INSERT INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0);
+	  INSERT INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0);
+
+	  REPLACE INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0);
+	  REPLACE INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0);
+
+	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0);"
 	fi
 
 	if test ! -f $mdata/func.frm
@@ -306,7 +325,7 @@ END_OF_DATA
 	    cat << END_OF_MSG
 
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
-This is done with:
+This is done (after starting database) with:
 
 /usr/bin/mysqladmin -u mysql password 'password'
 /usr/bin/mysqladmin -h $hostname -u mysql password 'password'
