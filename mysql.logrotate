@@ -1,4 +1,4 @@
-/var/log/mysql/err /var/log/mysql/log /var/log/mysql/isamlog.log /var/log/mysql/update* {
+/var/log/mysql/log /var/log/mysql/isamlog.log /var/log/mysql/update* {
 	olddir /var/log/archiv/mysql
         notifempty
 	create 640 mysql mysql
