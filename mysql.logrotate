@@ -15,6 +15,7 @@
 	olddir /var/log/archiv/mysql
         notifempty
 	missingok
+	daily
 	create 640 mysql mysql
 
         prerotate
