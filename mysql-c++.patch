@@ -1,0 +1,24 @@
+diff -Nru mysql-3.23.54a.orig/isam/Makefile.am mysql-3.23.54a/isam/Makefile.am
+--- mysql-3.23.54a.orig/isam/Makefile.am	Thu Dec  5 10:37:06 2002
++++ mysql-3.23.54a/isam/Makefile.am	Fri Jan 17 14:42:23 2003
+@@ -16,7 +16,7 @@
+ 
+ INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include 
+ LDADD =			@CLIENT_EXTRA_LDFLAGS@ libnisam.a ../mysys/libmysys.a \
+-			../dbug/libdbug.a ../strings/libmystrings.a
++			../dbug/libdbug.a ../strings/libmystrings.a -lstdc++
+ pkglib_LIBRARIES =	libnisam.a
+ bin_PROGRAMS =		isamchk isamlog pack_isam
+ isamchk_DEPENDENCIES=	$(LIBRARIES)
+diff -Nru mysql-3.23.54a.orig/myisam/Makefile.am mysql-3.23.54a/myisam/Makefile.am
+--- mysql-3.23.54a.orig/myisam/Makefile.am	Thu Dec  5 10:37:04 2002
++++ mysql-3.23.54a/myisam/Makefile.am	Fri Jan 17 14:42:41 2003
+@@ -19,7 +19,7 @@
+ 
+ INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include 
+ LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a ../mysys/libmysys.a \
+-			../dbug/libdbug.a ../strings/libmystrings.a
++			../dbug/libdbug.a ../strings/libmystrings.a -lstdc++
+ pkglib_LIBRARIES =	libmyisam.a
+ bin_PROGRAMS =		myisamchk myisamlog myisampack
+ myisamchk_DEPENDENCIES=	$(LIBRARIES)
