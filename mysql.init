@@ -30,8 +30,8 @@ fi
 
 # Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-    echo "MySQL config $MYSQLD_CONFIG does not exist"
-    exit 1
+	echo "MySQL config $MYSQLD_CONFIG does not exist"
+	exit 1
 fi
 
 eval `awk '
@@ -54,15 +54,15 @@ END {
 ' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
-    echo "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
-    echo "Edit $MYSQLD_CONFIG and configure it."
-    exit 1
+	echo "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
+	echo "Edit $MYSQLD_CONFIG and configure it."
+	exit 1
 fi
 
 if [ -z $MYSQL_USER ]; then 
-    echo "MySQL user not configured properly!"
-    echo "Edit $MYSQLD_CONFIG and configure it."
-    exit 1
+	echo "MySQL user not configured properly!"
+	echo "Edit $MYSQLD_CONFIG and configure it."
+	exit 1
 fi
 
 
@@ -335,7 +335,7 @@ mysql> show tables
 Try 'mysqld --help' if you have problems with paths. Setting on
 logging in /etc/mysqld.conf gives you a log in /var/log/mysql/log that
 may be helpful. The latest information about MySQL is available on the
-web at <http://www.mysql.com>.
+web at http://www.mysql.com/.
 
 Please check PLD ftp site for newer versions of this package.
 
