@@ -1,0 +1,8 @@
+/var/log/mysqld.log {
+	prerotate
+		mysqladmin flush-logs
+	endscript
+	postrotate
+		mysqladmin flush-logs
+	endscript
+}
