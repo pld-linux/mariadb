@@ -15,9 +15,13 @@
 . /etc/sysconfig/network
 
 # Check that networking is up
-if is_no "${NETWORKING}"; then
-	msg_network_down MySQL
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		msg_network_down MySQL
+		exit 1
+	fi
+else
+	exit 0
 fi
 
 MYSQLD_ERRLOG=/var/log/mysql/err
@@ -30,7 +34,7 @@ fi
 
 # Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-	nls "MySQL config $MYSQLD_CONFIG does not exist"
+	nls "MySQL config %s does not exist" "$MYSQLD_CONFIG"
 	exit 1
 fi
 
@@ -54,14 +58,14 @@ END {
 ' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
-	nls "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
-	nls "Edit $MYSQLD_CONFIG and configure it."
+	echo $(nls "MySQL datadir %s not configured properly" "$MYSQL_DATA_DIR")'!'
+	nls "Edit %s and configure it." "$MYSQLD_CONFIG"
 	exit 1
 fi
 
 if [ -z $MYSQL_USER ]; then 
-	nls "MySQL user not configured properly!"
-	nls "Edit $MYSQLD_CONFIG and configure it."
+	echo $(nls "MySQL user not configured properly")'!'
+	nls "Edit %s and configure it." "$MYSQLD_CONFIG"
 	exit 1
 fi
 
@@ -69,7 +73,7 @@ fi
 case "$1" in
   start)
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		nls "MySQL database not initialized. Try \"$0 init\" before start."
+		nls "MySQL database not initialized. Try \"%s init\" before start." "$0"
 		exit 1
 	fi
 
@@ -351,7 +355,7 @@ END_OF_MSG
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|reload||status|init}"
+	msg_usage "$0 {start|stop|init|restart|reload|status}"
 	exit 1
 	;;
 esac
