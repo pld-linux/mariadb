@@ -68,7 +68,7 @@ MYSQL_ERRLOG=/var/log/mysql/err
 mysqlstatus() {
 	clusterdir="$1"
 	mysqlgetconfig "$clusterdir"
-        MYSQL_STATUS="unknown"
+        MYSQL_STATUS="not running"
         MYSQL_PID="unknown"
 
 	[ -f "$MYSQL_PIDFILE" ] && MYSQL_PID=$(cat "$MYSQL_PIDFILE")
@@ -126,14 +126,14 @@ END {
 }
 ' $config_file`
 
-	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "$clusterdir/db" ]; then
-		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir/db"
+	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "$clusterdir/mysqldb/db" ]; then
+		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/db"
                 nls " MySQL can't be run."
                 exit 6
 	fi
 
 	if ! is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then			
-		if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir/mysql.pid" ]; then
+		if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir/mysqldb/mysql.pid" ]; then
 	                nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir/mysql.pid"
 	                nls " MySQL can't be run."
 	                exit 6
@@ -161,7 +161,7 @@ mysqlstart() {
 	busy
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE >> $MYSQL_ERRLOG 2>&1 &
-	sleep 1
+	sleep 2
 	mysqlstatus "$clusterdir"
 	if [ "$MYSQL_STATUS" = "running" -a "$MYSQL_PID" != "unknown" ]; then
 		ok
@@ -220,16 +220,16 @@ mysqlinit() {
 	else
 	    MYSQL_USER="mysql"
     	    MYSQL_CLUSTER_DIR="$clusterdir"
-    	    MYSQL_DATA_DIR="$clusterdir/db"
-    	    MYSQL_PIDFILE="$clusterdir/mysql.pid"
-    	    MYSQL_SOCKET="$clusterdir/mysql.sock"
+    	    MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
+    	    MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
+    	    MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
 	fi
 
 	nls "Initializing cluster %s" "$clusterdir"
 
 	# Check if not exist init database
 	if [ -d "$MYSQL_DATA_DIR/mysql" ]; then
-		nls "Seems that database is initialized now. Remove by hand %s" "$MYSQL_DATA_DIR/mysql"
+		nls "Seems that database is initialized now. Remove by hand %s" "$MYSQL_DATA_DIR/mysqldb/mysql"
 		nls "before initializing database."
 		nls "For now skipping cluster %s." "$clusterdir"
 		return
@@ -241,7 +241,8 @@ mysqlinit() {
 
 		
 	# Install this in the user table, too
-	hostname="`hostname --fqdn | tr -d '[:space:]'`"
+	hostname="`hostname --fqdn 2> /dev/null | tr -d '[:space:]'`"
+	[ -z "$hostname" ] && hostname="localhost-unknown"
 		
 	# Check if hostname is valid
 	if [ -z "$hostname" ]; then
@@ -266,7 +267,7 @@ mysqlinit() {
 	c_t="" c_c=""
 
 	# Check for old tables
-	if test ! -f $MYSQL_DATA_DIR/mysql/db.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/db.frm
 	then
 	  # mysqld --bootstrap wants one command/line
 	  c_d="$c_d CREATE TABLE db ("
@@ -295,7 +296,7 @@ mysqlinit() {
 	    
 	fi
 
-	if test ! -f $MYSQL_DATA_DIR/mysql/host.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/host.frm
 	then
 	  c_h="$c_h CREATE TABLE host ("
 	  c_h="$c_h  Host char(60) DEFAULT '' NOT NULL,"
@@ -317,7 +318,7 @@ mysqlinit() {
 	  c_h="$c_h comment='Host privileges;  Merged with database privileges';"
 	fi
 
-	if test ! -f $MYSQL_DATA_DIR/mysql/user.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/user.frm
 	then
 	  c_u="$c_u CREATE TABLE user ("
 	  c_u="$c_u   Host char(60) DEFAULT '' NOT NULL,"
@@ -364,7 +365,7 @@ mysqlinit() {
 	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0);"
 	fi
 
-	if test ! -f $MYSQL_DATA_DIR/mysql/func.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/func.frm
 	then
 	  c_f="$c_f CREATE TABLE func ("
 	  c_f="$c_f   name char(64) DEFAULT '' NOT NULL,"
@@ -376,7 +377,7 @@ mysqlinit() {
 	  c_f="$c_f   comment='User defined functions';"
 	fi
 
-	if test ! -f $MYSQL_DATA_DIR/mysql/tables_priv.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/tables_priv.frm
 	then
 	  c_t="$c_t CREATE TABLE tables_priv ("
 	  c_t="$c_t   Host char(60) DEFAULT '' NOT NULL,"
@@ -393,7 +394,7 @@ mysqlinit() {
 	  c_t="$c_t   comment='Table privileges';"
 	fi
 
-	if test ! -f $MYSQL_DATA_DIR/mysql/columns_priv.frm
+	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/columns_priv.frm
 	then
 	  c_c="$c_c CREATE TABLE columns_priv ("
 	  c_c="$c_c   Host char(60) DEFAULT '' NOT NULL,"
@@ -409,8 +410,9 @@ mysqlinit() {
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chown mysql.mysql "$MYSQL_CLUSTER_DIR" "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chmod 750 "$MYSQL_CLUSTER_DIR"
+	chown root.root "$MYSQL_CLUSTER_DIR"
+        chown mysql.mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
+	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
 	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
 	    sed -e "s#datadir.*=.*#datadir	= $MYSQL_DATA_DIR#g" \
@@ -455,7 +457,7 @@ This is done (after starting database) with:
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
-IMPORTANT: The configuration file is now located in /var/lib/mysq/mysqld.conf 
+IMPORTANT: The configuration file is mysqld.conf in MYSQ_DB_CLUSTERS directories.
 
 END_OF_MSG
       else  
