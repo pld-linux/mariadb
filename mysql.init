@@ -58,13 +58,13 @@ END {
 ' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
-	echo $(nls "MySQL datadir %s not configured properly" "$MYSQL_DATA_DIR")'!'
+	echo "$(nls 'MySQL datadir %s not configured properly' "$MYSQL_DATA_DIR")"'!' >&2
 	nls "Edit %s and configure it." "$MYSQLD_CONFIG" >&2
 	exit 6
 fi
 
 if [ -z $MYSQL_USER ]; then 
-	echo $(nls "MySQL user not configured properly")'!'
+	echo "$(nls 'MySQL user not configured properly')"'!' >&2
 	nls "Edit %s and configure it." "$MYSQLD_CONFIG" >&2
 	exit 6
 fi
