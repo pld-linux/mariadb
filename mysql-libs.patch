@@ -1,12 +1,72 @@
---- mysql-4.0.15/acinclude.m4.orig	2003-09-06 08:35:50.000000000 +0200
-+++ mysql-4.0.15/acinclude.m4	2003-09-12 19:16:04.000000000 +0200
-@@ -769,6 +769,9 @@
-    if test -f $d/krb5.h  ; then
-      OPENSSL_KERBEROS_INCLUDE="$d"
-    fi
-+   if test -f $d/libssl.so ; then
-+     OPENSSL_LIB=$d
-+   fi
-   done
+--- mysql-4.0.15/acinclude.m4.orig	2003-10-04 13:43:46.567663608 +0200
++++ mysql-4.0.15/acinclude.m4	2003-10-04 13:44:02.120299248 +0200
+@@ -745,7 +745,7 @@
  
+       for d in /usr/ssl/lib /usr/local/ssl/lib /usr/lib/openssl \
+ /usr/lib /usr/lib64 /opt/ssl/lib /opt/openssl/lib /usr/local/lib/ ; do
+-      if test -f $d/libssl.a ; then
++      if test -f $d/libssl.so -o -f $d/libssl.a ; then
+         OPENSSL_LIB=$d
+       fi
+       done
+@@ -757,7 +757,7 @@
+       if test -f $incs/openssl/ssl.h  ; then
+         OPENSSL_INCLUDE=-I$incs
+       fi
+-      if test -f $libs/libssl.a ; then
++      if test -f $libs/libssl.so -o -f $libs/libssl.a ; then
+         OPENSSL_LIB=$libs
+       fi
+       ;;
+--- mysql-4.0.15/configure.in.orig	2003-10-04 13:29:18.000000000 +0200
++++ mysql-4.0.15/configure.in	2003-10-04 13:46:50.506700624 +0200
+@@ -746,19 +746,21 @@
  
+ AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
+ 
+-AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
+-  AC_CHECK_LIB(nsl, gethostbyname_r))
+-AC_CHECK_FUNC(gethostbyname_r)
++AC_CHECK_FUNC(gethostbyname_r, [],
++[AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
++  [AC_CHECK_LIB(nsl, gethostbyname_r)])])
+ 
+ AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
+-AC_CHECK_FUNC(yp_get_default_domain, ,
+-  AC_CHECK_LIB(nsl, yp_get_default_domain))
+ AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+ # This may get things to compile even if bind-8 is installed
+ AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+ # For crypt() on Linux
+-AC_CHECK_LIB(crypt, crypt)
++save_LIBS="$LIBS"
++LIBCRYPT=
++AC_CHECK_LIB(crypt, crypt, [LIBS="-lcrypt $LIBS"; LIBCRYPT="-lcrypt"])
++AC_SUBST(LIBCRYPT)
+ AC_CHECK_FUNC(crypt, AC_DEFINE(HAVE_CRYPT)) 
++LIBS="$save_LIBS"
+ 
+ # For sem_xxx functions on Solaris 2.6
+ AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4, sem_init))
+--- mysql-4.0.15/libmysql_r/Makefile.am.orig	2003-10-04 13:29:16.000000000 +0200
++++ mysql-4.0.15/libmysql_r/Makefile.am	2003-10-04 13:47:15.957831464 +0200
+@@ -30,7 +30,7 @@
+ libmysql_dir = $(top_srcdir)/libmysql
+ 
+ libmysqlclient_r_la_SOURCES = $(target_sources)
+-libmysqlclient_r_la_LIBADD = $(target_libadd)
++libmysqlclient_r_la_LIBADD = $(target_libadd) -lpthread
+ libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
+ 
+ # This is called from the toplevel makefile
+--- mysql-4.0.15/sql/Makefile.am.orig	2003-09-06 08:35:50.000000000 +0200
++++ mysql-4.0.15/sql/Makefile.am	2003-10-04 13:47:34.660988152 +0200
+@@ -43,7 +43,7 @@
+ mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
+ 			@bdb_libs@ @innodb_libs@ @pstack_libs@ \
+                         @innodb_system_libs@ \
+-			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@
++			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@ @LIBCRYPT@
+ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
+ 			item_strfunc.h item_timefunc.h item_uniq.h \
+ 			item_create.h mysql_priv.h \
