@@ -2,7 +2,7 @@
 #
 # mysql		A very fast and reliable SQL database engine
 #
-# chkconfig:	2345 90 25
+# chkconfig:	2345 84 25
 #
 # description:	A very fast and reliable SQL database engine.
 #
