@@ -84,7 +84,7 @@ mysqlstatus() {
 	if [ ! -d "/proc/$MYSQL_PID" -a "$MYSQL_PID" != "unknown" ]; then
 		MYSQL_STATUS="died"
 	elif [ -d "/proc/$MYSQL_PID" ]; then
-		grep -q "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
+		grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
 	fi
 }
 
@@ -568,6 +568,7 @@ case "$action" in
 	mysqlsubsys
 	;;
   status)
+    status mysqld
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir"
 		echo "MySQL cluster $mysqldir: $MYSQL_STATUS"
