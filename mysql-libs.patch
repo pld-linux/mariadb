@@ -1,0 +1,14 @@
+diff -urN mysql-4.0.9-gamma.org/acinclude.m4 mysql-4.0.9-gamma/acinclude.m4
+--- mysql-4.0.9-gamma.org/acinclude.m4	Mon Feb  3 23:34:15 2003
++++ mysql-4.0.9-gamma/acinclude.m4	Tue Feb  4 00:11:55 2003
+@@ -715,6 +715,9 @@
+   if test -f $d/libssl.a ; then
+     OPENSSL_LIB=$d
+   fi
++  if test -f $d/libssl.so ; then
++    OPENSSL_LIB=$d
++  fi
+  done
+ 
+  if test -z "$OPENSSL_LIB" -o -z "$OPENSSL_INCLUDE" ; then
+
