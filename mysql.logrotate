@@ -1,6 +1,6 @@
 /var/log/mysqld.log {
 	create 640 mysql mysql
 	postrotate
-		/etc/rc.d/init.d/mysql restart
+		/usr/bin/mysqladmin flush-logs
 	endscript
 }
