@@ -8,7 +8,7 @@ diff -urN mysql-4.1.7.org/configure.in mysql-4.1.7/configure.in
 -AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
 -  AC_CHECK_LIB(nsl, gethostbyname_r))
 -AC_CHECK_FUNC(gethostbyname_r)
-+AC_CHECK_FUNC(gethostbyname_r, []
++AC_CHECK_FUNC(gethostbyname_r, [],
 +  [AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
 +     [AC_CHECK_LIB(nsl, gethostbyname_r)])])
  
