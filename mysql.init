@@ -18,7 +18,7 @@
 if [ -f /etc/sysconfig/mysql ] ; then
 	. /etc/sysconfig/mysql
 	if [ -z "${MYSQL_DATA_DIR}" ]; then
-	    MYSQL_DATA_DIR=/var/state/mysql
+		MYSQL_DATA_DIR=/var/state/mysql
 	fi
 else
 	MYSQL_DATA_DIR=/var/state/mysql
@@ -32,16 +32,11 @@ fi
 
 case "$1" in
     start)
-	# Check if not exist init database
-	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-	    show Creating mysql init database
-	    busy
-	    TMP=/tmp TMPDIR=/tmp mysql_install_db &>/tmp/initdb.mysql
-	    deltext
-	    ok
-	fi
-	
 	# Check if the service is already running?
+	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
+		echo "Mysq database not initialized. Try \"$0 init\" before start."
+		exit 1
+	fi
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
 		busy
@@ -71,8 +66,20 @@ case "$1" in
 	$0 stop
 	$0 start
 	;;
+  init)
+	# Check if not exist init database
+	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
+		show Creating mysql init database
+		busy
+		TMP=/tmp TMPDIR=/tmp mysql_install_db &>/tmp/initdb.mysql
+		deltext
+		ok
+		echo "Now You can setup database administrator password by:"
+		echo "# mysqladmimn -u mysql -h <host> password <new-password>"
+	fi
+	;;
   *)
-	echo "Usage: mysql {start|stop|status|restart|reload}"
+	echo "Usage: mysql {start|stop|status|restart|reload|init}"
 	exit 1
 	;;
 esac
