@@ -3,11 +3,11 @@
         notifempty
 	create 640 mysql mysql
         prerotate
-        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 
 	postrotate
-		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 }
 
@@ -18,11 +18,11 @@
 	create 640 mysql mysql
 
         prerotate
-        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 
 	postrotate
-		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 }
 
@@ -33,11 +33,11 @@
 	create 640 mysql mysql
 
         prerotate
-        	/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 
 	postrotate
-		/usr/bin/mysqladmin --defaults-file=$MYSQLD_CONFIG flush-logs
+		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
 	endscript
 }
 
