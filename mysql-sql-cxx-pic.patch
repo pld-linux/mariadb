@@ -1,0 +1,10 @@
+--- mysql-4.0.13/sql/Makefile.am.orig	2003-07-11 09:12:35.000000000 +0000
++++ mysql-4.0.13/sql/Makefile.am	2003-07-11 11:02:10.000000000 +0000
+@@ -94,6 +94,7 @@
+ BUILT_SOURCES =		sql_yacc.cc sql_yacc.h
+ EXTRA_DIST =		udf_example.cc $(BUILT_SOURCES)
+ AM_YFLAGS =		-d
++AM_CXXFLAGS = -fPIC
+ 
+ link_sources:
+ 	rm -f mini_client_errors.c
