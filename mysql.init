@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# mysql		A very fast and reliable SQL database engine
+# mysql         A very fast and reliable SQL database engine
 #
-# chkconfig:	2345 84 25
+# chkconfig:    2345 84 25
 #
-# description:	A very fast and reliable SQL database engine.
+# description:  A very fast and reliable SQL database engine.
 #
 
 # Source function library
@@ -15,17 +15,23 @@
 
 # Get service config
 if [ -f /etc/sysconfig/mysql ]; then
-        . /etc/sysconfig/mysql
+	. /etc/sysconfig/mysql
 else
-        nls "Error: %s not found" /etc/sysconfig/mysql
-        nls " MySQL can't be run."
-        exit 1
+	nls "Error: %s not found" /etc/sysconfig/mysql
+	nls " MySQL can't be run."
+	exit 1
 fi
 
-if [ -z "$MYSQL_DB_CLUSTERS" ]; then
-        nls "Warning: MYSQL_DB_CLUSTERS not found or is empty"
-	nls "defaulting to /var/lib/mysql (compatiblity mode)"
-	MYSQL_DB_CLUSTERS="/var/lib/mysql"
+if [ "$MYSQL_DB_CLUSTERS" ]; then
+	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
+fi
+
+if [ -f /etc/mysql/clusters.conf ]; then
+	MYSQL_DB_CLUSTERS=`cat /etc/mysql/clusters.conf | grep -v '^#' | cut -s -f 2 -d '='`
+else
+	nls "Waning: Missing clusters config file %s" /etc/mysql/clusters.conf
+	nls "Using default cluster /var/lib/mysql (compatibility mode)"
+	MYSQL_DB_CLUSTERS=/var/lib/mysql
 fi
 
 # Check that networking is up
@@ -41,12 +47,12 @@ fi
 action="$1"
 
 # any db cluster as command line argument?
-if [ $# -gt 1 ]; then
-        shift
-        # perform action for specified clusters only
-        DB_CLUSTERS="$@"
+if [ $# -gt 1 ]; then\
+	shift
+	# perform action for specified clusters only
+	DB_CLUSTERS="$@"
 else
-        DB_CLUSTERS="$MYSQL_DB_CLUSTERS"
+	DB_CLUSTERS="$MYSQL_DB_CLUSTERS"
 fi
 
 MYSQL_ERRLOG=/var/log/mysql/err
@@ -68,15 +74,16 @@ MYSQL_ERRLOG=/var/log/mysql/err
 mysqlstatus() {
 	clusterdir="$1"
 	mysqlgetconfig "$clusterdir"
-        MYSQL_STATUS="not running"
-        MYSQL_PID="unknown"
+	
+	MYSQL_STATUS="not running"
+	MYSQL_PID="unknown"
 
 	[ -f "$MYSQL_PIDFILE" ] && MYSQL_PID=$(cat "$MYSQL_PIDFILE")
 
 	if [ ! -d "/proc/$MYSQL_PID" -a "$MYSQL_PID" != "unknown" ]; then
-	    MYSQL_STATUS="died"
+		MYSQL_STATUS="died"
 	elif [ -d "/proc/$MYSQL_PID" ]; then
-	    grep -q "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
+		grep -q "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
 	fi
 }
 
@@ -88,21 +95,29 @@ mysqlstatus() {
 
 mysqlgetconfig() {
 	clusterdir="$1"
-	config_file="$clusterdir/mysqld.conf"
 
 	# emulate old behaviour if only one cluster specified
 	if [ "$clusterdir" = "$MYSQL_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mysql" -a -f /etc/mysqld.conf ]; then
 		MYSQL_NO_CLUSTER_COMPAT=yes; export MYSQL_NO_CLUSTER_COMPAT
 		config_file=/etc/mysqld.conf
 	fi
+	
+	config=`/etc/mysql/clusters.conf | grep '$clusterdir$' | cut -s -f 1 -d '='`
+	if [ -f "$config" ]; then
+		config_file=$config
+	elif [ -f /etc/mysql/$config ] then
+		config_file=/etc/mysql/$config
+	elif [ -f "$clusterdir/mysqld.conf" ]; then
+		config_file=$clusterdir/mysqld.conf
+	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
-        MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
+	MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
 
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
-	        nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
-        	exit 6
+		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
+		exit 6
 	fi
 
 	eval `awk '
@@ -128,15 +143,15 @@ END {
 
 
 	if is_yes "$MYSQL_NO_CLUSTER_COMPAT"; then
-	    	MYSQL_DATA_DIR_SUB=""
+		MYSQL_DATA_DIR_SUB=""
 	else
-	    	MYSQL_DATA_DIR_SUB="/mysqldb"
+		MYSQL_DATA_DIR_SUB="/mysqldb"
 	fi
 		
 	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "${clusterdir}${MYSQL_DATA_DIR_SUB}/db" ]; then
-    		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
-    		nls " MySQL can't be run."
-    		exit 6
+		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
+		nls " MySQL can't be run."
+		exit 6
 	fi
 	
 	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid" ]; then
@@ -146,9 +161,9 @@ END {
 	fi
 
 	if [ -z $MYSQL_USER ]; then
-        	echo "$(nls 'MySQL user not configured properly')"'!' >&2
-	        nls "Edit %s and configure it." "$config_file" >&2
-	        exit 6
+		echo "$(nls 'MySQL user not configured properly')"'!' >&2
+		nls "Edit %s and configure it." "$config_file" >&2
+		exit 6
 	fi
 }
 
@@ -159,8 +174,8 @@ mysqlstart() {
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
 		nls "MySQL cluster %s not initialized." "$clusterdir"
 		nls "Try \`%s init %s' before start." "$0" "$clusterdir"
-                exit 6
-        fi
+		exit 6
+	fi
 
 	msg_starting "MySQL $clusterdir"
 	busy
@@ -171,7 +186,7 @@ mysqlstart() {
 	if [ "$MYSQL_STATUS" = "running" -a "$MYSQL_PID" != "unknown" ]; then
 		ok
 	elif [ "$MYSQL_STATUS" = "died" ]; then
-	    	RETVAL=1
+		RETVAL=1
 		died
 	else
 		RETVAL=1
@@ -192,7 +207,7 @@ mysqlstop() {
 	done
 	mysqlstatus "$clusterdir"
 	if [ "$MYSQL_STATUS" = "died" ]; then
-	    	died
+		died
 	elif [ "$MYSQL_STATUS" = "running" ]; then
 		fail
 	else
@@ -206,35 +221,36 @@ mysqlstop() {
 # create subsys lock file
 #
 mysqlsubsys() {
-        # check for every defined db cluster in sysconfig file
-        for mysqldir in $DB_CLUSTERS; do
-                mysqlstatus "$mysqldir"
-                if [ "$MYSQL_STATUS" = "running" ]; then
-                        touch /var/lock/subsys/mysql
-                        return
-                fi
-        done
-        rm -f /var/lock/subsys/mysql
+	# check for every defined db cluster in sysconfig file
+	for mysqldir in $DB_CLUSTERS; do
+		mysqlstatus "$mysqldir"
+		if [ "$MYSQL_STATUS" = "running" ]; then
+			touch /var/lock/subsys/mysql
+			return
+		fi
+	done
+	rm -f /var/lock/subsys/mysql
 }
 
 mysqlinit() {
 	clusterdir="$1"
 
 	if [ -f /etc/mysqld.conf ]; then
-	    nls "Running in \`no cluster compat' mode: can't initialize database."
-	    nls "Move /etc/mysqld.conf away and rerun \`$0 init' (new config will be in $clusterdir)."
-	    exit 1
+		nls "Running in \`no cluster compat' mode: can't initialize database."
+		nls "Move /etc/mysqld.conf away and rerun \`$0 init' (new config will be in $clusterdir)."
+		exit 1
 	fi
 
-	if [ -f "$clusterdir/mysqld.conf" ]; then
-	    mysqlgetconfig "$clusterdir"
-	else
-	    MYSQL_USER="mysql"
-    	    MYSQL_CLUSTER_DIR="$clusterdir"
-    	    MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
-    	    MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
-    	    MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
-	fi
+	#if [ -f "$clusterdir/mysqld.conf" ]; then
+	# Let's say that config for each cluster is mandatory...
+	mysqlgetconfig "$clusterdir"
+	#else
+	#	MYSQL_USER="mysql"
+	#	MYSQL_CLUSTER_DIR="$clusterdir"
+	#	MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
+	#	MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
+	#	MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
+	#fi
 
 	nls "Initializing cluster %s" "$clusterdir"
 
@@ -573,3 +589,5 @@ case "$action" in
 esac
 
 exit $RETVAL
+
+# vi: shiftwidth=4 tabstop=4

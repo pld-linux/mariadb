@@ -3,16 +3,6 @@
 # Define nice level for mysql
 SERVICE_RUN_NICE_LEVEL="+0"
 
-# standard setting
-# MYSQL_DB_CLUSTERS="/var/lib/mysql"
-
-# If you want to use than one cluster then read carefuly
-# http://www.mysql.com/doc/en/Multiple_servers.html
-# and set properly all options described there.
-
-# predictable usage
-# MYSQL_DB_CLUSTERS="/var/lib/mysql/01 /var/lib/mysql/02"
-
-# new database disk arrived
-# MYSQL_DB_CLUSTERS="/var/lib/mysql/01 /var/lib/mysql/02 /mnt/db/01"
+# For clusters configuration look into /etc/mysql/clusters.conf
+# Don't use **obsolete** MYSQL_DB_CLUSTERS option
 
