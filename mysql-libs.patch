@@ -12,30 +12,6 @@ diff -urN mysql-4.0.9-gamma.org/acinclude.m4 mysql-4.0.9-gamma/acinclude.m4
  
   if test -z "$OPENSSL_LIB" -o -z "$OPENSSL_INCLUDE" ; then
 
-diff -urN mysql-4.0.10-gamma.org/isam/Makefile.am mysql-4.0.10-gamma/isam/Makefile.am
---- mysql-4.0.10-gamma.org/isam/Makefile.am	Wed Jan 29 12:29:20 2003
-+++ mysql-4.0.10-gamma/isam/Makefile.am	Wed Feb 12 01:40:37 2003
-@@ -16,7 +16,7 @@
- 
- INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include 
- LDADD =			@CLIENT_EXTRA_LDFLAGS@ libnisam.a ../mysys/libmysys.a \
--			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a /usr/lib/libstdc++.la
- pkglib_LIBRARIES =	libnisam.a
- bin_PROGRAMS =		isamchk isamlog pack_isam
- isamchk_DEPENDENCIES=	$(LIBRARIES)
-diff -urN mysql-4.0.10-gamma.org/myisam/Makefile.am mysql-4.0.10-gamma/myisam/Makefile.am
---- mysql-4.0.10-gamma.org/myisam/Makefile.am	Wed Jan 29 12:29:22 2003
-+++ mysql-4.0.10-gamma/myisam/Makefile.am	Wed Feb 12 01:40:48 2003
-@@ -19,7 +19,7 @@
- 
- INCLUDES =		@MT_INCLUDES@ -I$(srcdir)/../include -I../include
- LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a ../mysys/libmysys.a \
--			../dbug/libdbug.a ../strings/libmystrings.a
-+			../dbug/libdbug.a ../strings/libmystrings.a /usr/lib/libstdc++.la
- pkglib_LIBRARIES =	libmyisam.a
- bin_PROGRAMS =		myisamchk myisamlog myisampack
- myisamchk_DEPENDENCIES=	$(LIBRARIES)
 diff -urN mysql-4.0.10-gamma.org/vio/Makefile.am mysql-4.0.10-gamma/vio/Makefile.am
 --- mysql-4.0.10-gamma.org/vio/Makefile.am	Wed Jan 29 12:29:24 2003
 +++ mysql-4.0.10-gamma/vio/Makefile.am	Wed Feb 12 01:50:02 2003
