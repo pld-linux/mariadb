@@ -28,7 +28,7 @@ MYSQLD_ERRLOG=/var/log/mysql/err
 MYSQLD_CONFIG=/etc/mysqld.conf 
 
 # Get service config
-if [ -f /etc/sysconfig/mysql ] ; then
+if [ -f /etc/sysconfig/mysql ]; then
 	. /etc/sysconfig/mysql
 fi
 
