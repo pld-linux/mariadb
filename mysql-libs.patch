@@ -1,15 +1,16 @@
---- mysql-4.0.15/configure.in.orig	2003-10-04 13:29:18.000000000 +0200
-+++ mysql-4.0.15/configure.in	2003-10-04 13:46:50.506700624 +0200
-@@ -746,19 +746,21 @@
+diff -urN mysql-4.1.7.org/configure.in mysql-4.1.7/configure.in
+--- mysql-4.1.7.org/configure.in	2004-10-27 01:35:54.930172056 +0200
++++ mysql-4.1.7/configure.in	2004-10-27 01:39:04.368373072 +0200
+@@ -779,19 +779,20 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
 -AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
 -  AC_CHECK_LIB(nsl, gethostbyname_r))
 -AC_CHECK_FUNC(gethostbyname_r)
-+AC_CHECK_FUNC(gethostbyname_r, [],
-+[AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
-+  [AC_CHECK_LIB(nsl, gethostbyname_r)])])
++AC_CHECK_FUNC(gethostbyname_r, []
++  [AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
++     [AC_CHECK_LIB(nsl, gethostbyname_r)])])
  
  AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
 -AC_CHECK_FUNC(yp_get_default_domain, ,
@@ -20,17 +21,17 @@
  # For crypt() on Linux
 -AC_CHECK_LIB(crypt, crypt)
 +save_LIBS="$LIBS"
-+LIBCRYPT=
 +AC_CHECK_LIB(crypt, crypt, [LIBS="-lcrypt $LIBS"; LIBCRYPT="-lcrypt"])
 +AC_SUBST(LIBCRYPT)
- AC_CHECK_FUNC(crypt, AC_DEFINE(HAVE_CRYPT)) 
+ AC_CHECK_FUNC(crypt, AC_DEFINE([HAVE_CRYPT], [1], [crypt])) 
 +LIBS="$save_LIBS"
  
  # For sem_xxx functions on Solaris 2.6
  AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4, sem_init))
---- mysql-4.0.15/libmysql_r/Makefile.am.orig	2003-10-04 13:29:16.000000000 +0200
-+++ mysql-4.0.15/libmysql_r/Makefile.am	2003-10-04 13:47:15.957831464 +0200
-@@ -30,7 +30,7 @@
+diff -urN mysql-4.1.7.org/libmysql_r/Makefile.am mysql-4.1.7/libmysql_r/Makefile.am
+--- mysql-4.1.7.org/libmysql_r/Makefile.am	2004-10-27 01:35:55.265121136 +0200
++++ mysql-4.1.7/libmysql_r/Makefile.am	2004-10-27 01:36:23.574817408 +0200
+@@ -33,7 +33,7 @@
  libmysql_dir = $(top_srcdir)/libmysql
  
  libmysqlclient_r_la_SOURCES = $(target_sources)
@@ -39,14 +40,15 @@
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
  # This is called from the toplevel makefile
---- mysql-4.0.15/sql/Makefile.am.orig	2003-09-06 08:35:50.000000000 +0200
-+++ mysql-4.0.15/sql/Makefile.am	2003-10-04 13:47:34.660988152 +0200
+diff -urN mysql-4.1.7.org/sql/Makefile.am mysql-4.1.7/sql/Makefile.am
+--- mysql-4.1.7.org/sql/Makefile.am	2004-10-27 01:35:55.971013824 +0200
++++ mysql-4.1.7/sql/Makefile.am	2004-10-27 01:37:07.260176224 +0200
 @@ -43,7 +43,7 @@
- mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
  			@bdb_libs@ @innodb_libs@ @pstack_libs@ \
                          @innodb_system_libs@ \
+ 			@ndbcluster_libs@ @ndbcluster_system_libs@ \
 -			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@
 +			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ @openssl_libs@ @LIBCRYPT@
  noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
  			item_strfunc.h item_timefunc.h item_uniq.h \
- 			item_create.h mysql_priv.h \
+ 			item_create.h item_subselect.h item_row.h \
