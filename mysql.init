@@ -14,7 +14,7 @@
 # Get network config
 . /etc/sysconfig/network
 
-# Check that networking is up.
+# Check that networking is up
 if is_no "${NETWORKING}"; then
 	msg_network_down MySQL
 	exit 1
@@ -28,14 +28,9 @@ if [ -f /etc/sysconfig/mysql ] ; then
 	. /etc/sysconfig/mysql
 fi
 
-# Daemon don't dies if config doesn't exists
+# Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-    echo "MySQL config $MYSQLD_CONFIG not exists"
-    exit 1
-fi
-
-if [ ! -f $MYSQLD_CONFIG ]; then 
-    echo "MySQL config $MYSQLD_CONFIG not exists"
+    echo "MySQL config $MYSQLD_CONFIG does not exist"
     exit 1
 fi
 
@@ -59,13 +54,13 @@ END {
 ' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
-    echo "MySQL datadir $MYSQL_DATA_DIR not configured propely!"
+    echo "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
     echo "Edit $MYSQLD_CONFIG and configure it."
     exit 1
 fi
 
 if [ -z $MYSQL_USER ]; then 
-    echo "MySQL user not configured propely!"
+    echo "MySQL user not configured properly!"
     echo "Edit $MYSQLD_CONFIG and configure it."
     exit 1
 fi
@@ -128,7 +123,7 @@ case "$1" in
 	# Check if not exist init database
 	if [ -d "$MYSQL_DATA_DIR/mysql" ]; then
 	    echo "Seems that database is initialized now. Remove by hand $MYSQL_DATA_DIR/mysql"
-	    echo "before initialize database."
+	    echo "before initializing database."
 	    exit 1;
 	fi
 
@@ -136,7 +131,7 @@ case "$1" in
 	busy
 	TMP=/tmp TMPDIR=/tmp 
 	
-	# Install this too in the user table
+	# Install this in the user table, too
 	hostname="`hostname --fqdn | tr -d '[:space:]'`"
 		
 	# Check if hostname is valid
