@@ -119,7 +119,9 @@ case "$1" in
 	show "Creating privilege mysql tables"
 	busy
 	TMP=/tmp TMPDIR=/tmp 
-	hostname=`hostname | tr -d '[:space:]'`	# Install this too in the user table
+	
+	# Install this too in the user table
+	hostname=`hostname --fqdn | tr -d '[:space:]'`
 		
 	# Check if hostname is valid
 	if [ -z "$hostname" ]; then
@@ -257,6 +259,7 @@ END_OF_DATA
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!"
 This is done with:
 /usr/bin/mysqladmin -u mysql password 'password'
+/usr/bin/mysqladmin -h $hostname -u mysql password 'password'
 /usr/bin/mysqladmin -u mysql_logrotate password 'password'
 NOTE: mysql_logrotate password should be placed to /etc/mysqld.conf in mysqladmin section
 See the manual for more instructions.
