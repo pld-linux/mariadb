@@ -568,7 +568,7 @@ case "$action" in
 	mysqlsubsys
 	;;
   status)
-    status mysqld
+	status mysqld
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir"
 		echo "MySQL cluster $mysqldir: $MYSQL_STATUS"
