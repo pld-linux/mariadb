@@ -22,10 +22,10 @@ else
         exit 1
 fi
 
-if [ ! "$MYSQL_DB_CLUSTERS" ]; then
-        nls "Error: MYSQL_DB_CLUSTERS not found or is empty"
-        nls " MySQL can't be run."
-        exit 1
+if [ -z "$MYSQL_DB_CLUSTERS" ]; then
+        nls "Warning: MYSQL_DB_CLUSTERS not found or is empty"
+	nls "defaulting to /var/lib/mysql (compatiblity mode)"
+	MYSQL_DB_CLUSTERS="/var/lib/mysql"
 fi
 
 # Check that networking is up
@@ -36,11 +36,6 @@ if is_yes "${NETWORKING}"; then
 	fi
 else
 	exit 0
-fi
-
-# Get service config
-if [ -f /etc/sysconfig/mysql ]; then
-        . /etc/sysconfig/mysql
 fi
 
 action="$1"
@@ -93,7 +88,7 @@ mysqlstatus() {
 
 mysqlgetconfig() {
 	clusterdir="$1"
-	config_file="/etc/mysqld/mysqld$(echo "$clusterdir" | tr '/' '-').conf"
+	config_file="$clusterdir/mysqld.conf"
 
 	# emulate old behaviour if only one cluster specified
 	if [ "$clusterdir" = "$MYSQL_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mysql" -a -f /etc/mysqld.conf ]; then
@@ -219,7 +214,16 @@ mysqlsubsys() {
 
 mysqlinit() {
 	clusterdir="$1"
-	mysqlgetconfig "$clusterdir"
+		
+	if [ -f "$clusterdir/mysqld.conf" ]; then
+	    mysqlgetconfig "$clusterdir"
+	else
+	    MYSQL_USER="mysql"
+    	    MYSQL_CLUSTER_DIR="$clusterdir"
+    	    MYSQL_DATA_DIR="$clusterdir/db"
+    	    MYSQL_PIDFILE="$clusterdir/mysql.pid"
+    	    MYSQL_SOCKET="$clusterdir/mysql.sock"
+	fi
 
 	nls "Initializing cluster %s" "$clusterdir"
 
@@ -405,7 +409,18 @@ mysqlinit() {
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chown -R mysql.mysql "$MYSQL_CLUSTER_DIR" > /dev/null 2>&1
+	chown mysql.mysql "$MYSQL_CLUSTER_DIR" "$MYSQL_DATA_DIR" > /dev/null 2>&1
+	chmod 750 "$MYSQL_CLUSTER_DIR"
+
+	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
+	    sed -e "s#datadir.*=.*#datadir	= $MYSQL_DATA_DIR#g" \
+		-e "s#pid-file.*=.*#pid-file = $MYSQL_PIDFILE#g" \
+		-e "s#socket.*=.*#socket = $MYSQL_SOCKET#g" \
+		/usr/share/mysql/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
+	    chown root.root "$MYSQL_CLUSTER_DIR/mysqld.conf"
+	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
+	fi
+		
 
 	if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
 	    --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
@@ -433,15 +448,12 @@ END_OF_DATA
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
 This is done (after starting database) with:
 
-/usr/bin/mysqladmin -u mysql password 'password'
-/usr/bin/mysqladmin -h $hostname -u mysql password 'password'
-/usr/bin/mysqladmin -u mysql_logrotate password 'password'
+/usr/bin/mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
+/usr/bin/mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
+/usr/bin/mysqladmin -u mysql_logrotate -S $MYSQL_SOCKET password 'password'
 
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
-
-NOTE: if you are using cluster ability of this package you need
-to specify different socket for each cluster (see --socket option)
 
 END_OF_MSG
       else  
