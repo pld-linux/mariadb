@@ -30,7 +30,7 @@ fi
 
 # Daemon doesn't die if config doesn't exist
 if [ ! -f $MYSQLD_CONFIG ]; then 
-	echo "MySQL config $MYSQLD_CONFIG does not exist"
+	nls "MySQL config $MYSQLD_CONFIG does not exist"
 	exit 1
 fi
 
@@ -54,22 +54,22 @@ END {
 ' /etc/mysqld.conf`
 
 if [ -z $MYSQL_DATA_DIR ]; then 
-	echo "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
-	echo "Edit $MYSQLD_CONFIG and configure it."
+	nls "MySQL datadir $MYSQL_DATA_DIR not configured properly!"
+	nls "Edit $MYSQLD_CONFIG and configure it."
 	exit 1
 fi
 
 if [ -z $MYSQL_USER ]; then 
-	echo "MySQL user not configured properly!"
-	echo "Edit $MYSQLD_CONFIG and configure it."
+	nls "MySQL user not configured properly!"
+	nls "Edit $MYSQLD_CONFIG and configure it."
 	exit 1
 fi
 
 
 case "$1" in
-    start)
+  start)
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		echo "MySQL database not initialized. Try \"$0 init\" before start."
+		nls "MySQL database not initialized. Try \"$0 init\" before start."
 		exit 1
 	fi
 
@@ -81,7 +81,7 @@ case "$1" in
 		busy
 		
 		if [ ! -f $MYSQLD_ERRLOG ]; then 
-		    touch $MYSQLD_ERRLOG
+			touch $MYSQLD_ERRLOG
 		fi
 		chown mysql.mysql $MYSQLD_ERRLOG
 		chmod 640 $MYSQLD_ERRLOG
@@ -91,7 +91,7 @@ case "$1" in
 		sleep 1
 		deltext
 		if ps -C mysqld >/dev/null 2>&1; then
-	                RETVAL=0
+			RETVAL=0
 			ok
 		else
 			RETVAL=1
@@ -101,15 +101,15 @@ case "$1" in
 	fi
 	;;
   stop)
-        if [ -f /var/lock/subsys/mysql ]; then
-                msg_stopping MySQL
-                killproc mysqld
+	if [ -f /var/lock/subsys/mysql ]; then
+		msg_stopping MySQL
+		killproc mysqld
 		sleep 1
-                rm -f /var/lock/subsys/mysql $MYSQLD_PIDFILE >/dev/null 2>&1
-        else
-                msg_not_running MySQL
-                exit 1
-        fi
+		rm -f /var/lock/subsys/mysql $MYSQLD_PIDFILE >/dev/null 2>&1
+	else
+		msg_not_running MySQL
+		exit 1
+	fi
 	;;
   status)
 	status mysqld
@@ -122,9 +122,9 @@ case "$1" in
   init)
 	# Check if not exist init database
 	if [ -d "$MYSQL_DATA_DIR/mysql" ]; then
-	    echo "Seems that database is initialized now. Remove by hand $MYSQL_DATA_DIR/mysql"
-	    echo "before initializing database."
-	    exit 1;
+		nls "Seems that database is initialized now. Remove by hand %s" "$MYSQL_DATA_DIR/mysql"
+		nls "before initializing database."
+		exit 1;
 	fi
 
 	show "Creating privilege mysql tables"
@@ -137,16 +137,16 @@ case "$1" in
 	# Check if hostname is valid
 	if [ -z "$hostname" ]; then
 		deltext
-      		fail
-		echo "Sorry, the host name is not configured."
-		echo "Please configure the 'hostname' command to return a hostname."
+		fail
+		nls "Sorry, the host name is not configured."
+		nls "Please configure the 'hostname' command to return a hostname."
 		exit 1
-        elif ! hostname -i >/dev/null 2>&1; then 
-    		deltext
-      		fail
-      		echo "Sorry, the host '$hostname' could not be looked up."
-      		echo "Please configure the 'hostname' command to return a correct hostname."
-     		exit 1
+	elif ! hostname -i >/dev/null 2>&1; then 
+		deltext
+		fail
+		nls "Sorry, the host '%s' could not be looked up." "$hostname"
+		nls "Please configure the 'hostname' command to return a correct hostname."
+		exit 1
 	fi
 
 	# Initialize variables
@@ -351,7 +351,7 @@ END_OF_MSG
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|status|restart|reload|init}"
+	msg_usage "$0 {start|stop|restart|reload||status|init}"
 	exit 1
 	;;
 esac
