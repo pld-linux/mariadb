@@ -1,62 +1,9 @@
-/var/log/mysql/err {
+/var/log/mysql/err /var/log/mysql/log /var/log/mysql/isamlog.log /var/log/mysql/update* {
 	olddir /var/log/archiv/mysql
         notifempty
 	create 640 mysql mysql
-        prerotate
-        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-	endscript
-
+	sharedscripts
 	postrotate
-		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
+		/etc/rc.d/init.d/mysql flush-logs
 	endscript
 }
-
-/var/log/mysql/log {
-	olddir /var/log/archiv/mysql
-        notifempty
-	missingok
-	daily
-	create 640 mysql mysql
-
-        prerotate
-        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-	endscript
-
-	postrotate
-		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-	endscript
-}
-
-/var/log/mysql/isamlog.log {
-	olddir /var/log/archiv/mysql
-        notifempty
-	missingok
-	daily
-	create 640 mysql mysql
-
-        prerotate
-        	/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-	endscript
-
-	postrotate
-		/usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-	endscript
-}
-
-/var/log/mysql/update* {
-        olddir /var/log/archiv/mysql
-        notifempty
-        missingok
-        create 640 mysql mysql
-
-        prerotate
-                /usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-        endscript
-
-        postrotate
-                /usr/bin/mysqladmin --defaults-file=/etc/mysqld.conf flush-logs
-        endscript
-}
-
-
-
