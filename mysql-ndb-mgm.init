@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# mysql-ndb-mgm		This shell script takes care of starting and stopping mysql-ndb-mgm.
+#
+# chkconfig:	2345 80 30
+# description:	mysql-ndb-mgm is a mysql NDB engine
+#		
+# processname:	ndbd
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Source oident configureation.
+if [ -f /etc/sysconfig/mysql-ndb-mgm ]; then
+	. /etc/sysconfig/mysql-ndb-mgm
+fi
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down mysql-ndb-mgm
+		exit 1
+	fi
+else
+	exit 0
+fi
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+	# Start daemons.
+	if [ ! -f /var/lock/subsys/mysql-ndb-mgm ]; then
+		msg_starting "mysql ndb_mgmd"
+		daemon ndb_mgmd $MYSQL_NDB_MGM_OPT
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/mysql-ndb-mgm
+	else
+		msg_already_running "mysql ndb_mgmd"
+	fi
+	;;
+  stop)
+	# Stop daemons.
+	if [ -f /var/lock/subsys/mysql-ndb-mgm ]; then
+		msg_stopping "mysql ndb_mgmd"
+		killproc ndbd
+		rm -f /var/lock/subsys/mysql-ndb-mgm >/dev/null 2>&1
+	else
+		msg_not_running "mysql ndb_mgmd"
+	fi	
+	;;
+  restart|force-reload)
+	$0 stop
+	$0 start
+	exit $?
+	;;
+  status)
+	status ndb_mgmd
+	exit $?
+	;;
+#  reload)
+#	msg_reloading "mysql ndb_mgmd"
+#	killproc ndb_mgmd -HUP
+#	;;
+  *)
+	msg_usage "$0 {start|stop|restart|force-reload|status}"
+	exit 3
+esac
+
+exit $RETVAL
