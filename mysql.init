@@ -16,7 +16,7 @@
 
 # Check that networking is up.
 if is_no "${NETWORKING}"; then
-	msg_Network_Down MySQL
+	msg_network_down MySQL
 	exit 1
 fi
 
@@ -80,7 +80,7 @@ case "$1" in
 
 	# Check if the service is already running?		
 	if [ -f /var/lock/subsys/mysql ]; then
-		msg_Already_Running MySQL
+		msg_already_running MySQL
 	else 	
 		msg_starting MySQL
 		busy
@@ -111,7 +111,7 @@ case "$1" in
 		sleep 1
                 rm -f /var/lock/subsys/mysql $MYSQLD_PIDFILE >/dev/null 2>&1
         else
-                msg_Not_Running MySQL
+                msg_not_running MySQL
                 exit 1
         fi
 	;;
@@ -355,7 +355,7 @@ END_OF_MSG
 	fi
 	;;
   *)
-	msg_Usage "$0 {start|stop|status|restart|reload|init}"
+	msg_usage "$0 {start|stop|status|restart|reload|init}"
 	exit 1
 	;;
 esac
