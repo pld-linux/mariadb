@@ -109,11 +109,13 @@ mysqlgetconfig() {
 		config_file=/etc/mysql/$config
 	elif [ -f "$clusterdir/mysqld.conf" ]; then
 		config_file=$clusterdir/mysqld.conf
+	elif [ -f /etc/mysql/mysqld.conf ]; then
+		config_file=/etc/mysql/mysqld.conf
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
 	MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
-
+nls "mc: " "$config"
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
 		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
@@ -575,13 +577,13 @@ case "$action" in
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlinit "$mysqldir"
 	done
+	exit $?
 	;;
   flush-logs)
   	for mysqldir in $DB_CLUSTERS; do
 	    mysqlgetconfig "$mysqldir"
 	    /usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
 	done
-	exit $?
 	;;
   *)
 	msg_usage "$0 {start|stop|init|restart|force-reload|status}"
