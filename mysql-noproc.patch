@@ -1,0 +1,21 @@
+--- mysql-3.23.49/configure.in.orig	Sun May 19 11:05:42 2002
++++ mysql-3.23.49/configure.in	Sun May 19 11:05:56 2002
+@@ -362,7 +362,7 @@
+ AC_SUBST(PERL)
+ AC_SUBST(PERL5)
+ 
+-# Lock for PS
++# Look for PS
+ AC_PATH_PROG(PS, ps, ps)
+ AC_MSG_CHECKING("how to check if pid exists")
+ PS=$ac_cv_path_PS
+@@ -394,6 +394,9 @@
+     *cygwin*)
+       FIND_PROC="$PS -e | grep mysqld | grep \" \$\$PID \" > /dev/null"
+       ;;
++    *linux*)
++      FIND_PROC="$PS -p \$\$PID \" > /dev/null"
++      ;;
+     *)
+       AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
+   esac
