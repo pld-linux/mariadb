@@ -26,7 +26,7 @@
 	endscript
 }
 
-/var/log/mysql/isamlog {
+/var/log/mysql/isamlog.log {
 	olddir /var/log/archiv/mysql
         notifempty
 	missingok
@@ -41,7 +41,7 @@
 	endscript
 }
 
-/var/log/mysql/update {
+/var/log/mysql/update* {
         olddir /var/log/archiv/mysql
         notifempty
         missingok
