@@ -77,7 +77,12 @@ mysqlstatus() {
         MYSQL_PID="unknown"
 
 	[ -f "$MYSQL_PIDFILE" ] && MYSQL_PID=$(cat "$MYSQL_PIDFILE")
-	[ -d "/proc/$MYSQL_PID" ] && grep -q "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
+
+	if [ ! -d "/proc/$MYSQL_PID" -a "$MYSQL_PID" != "unknown" ]; then
+	    MYSQL_STATUS="died"
+	elif [ -d "/proc/$MYSQL_PID" ]; then
+	    grep -q "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline && MYSQL_STATUS="running" || MYSQL_STATUS="not running"
+	fi
 }
 
 # get mysql configuration in variables
@@ -163,7 +168,7 @@ mysqlstart() {
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE >> $MYSQL_ERRLOG 2>&1 &
 	sleep 1
 	mysqlstatus "$clusterdir"
-	if [ "$MYSQL_STATUS" != "unknown" -a "$MYSQL_PID" != "unknown" ]; then
+	if [ "$MYSQL_STATUS" = "running" -a "$MYSQL_PID" != "unknown" ]; then
 		ok
 	else
 		RETVAL=1
@@ -177,7 +182,7 @@ mysqlstop() {
 	mysqlstatus "$clusterdir"
 	msg_stopping "MySQL $clusterdir"
 	busy
-	kill -TERM "$MYSQL_PID"
+	[ "$MYSQL_PID" != "unknown" ] && kill -TERM "$MYSQL_PID"
 	# 3 seconds
 	for nr in 1 2 3; do
 		[ -d "/proc/$MYSQL_PID" ] && sleep 1
