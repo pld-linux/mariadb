@@ -160,7 +160,7 @@ mysqlstart() {
 	msg_starting "MySQL $clusterdir"
 	busy
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
-	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE >> $MYSQL_ERRLOG 2>&1 &
+	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/bin/setsid /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE >> $MYSQL_ERRLOG 2>&1 &
 	sleep 2
 	mysqlstatus "$clusterdir"
 	if [ "$MYSQL_STATUS" = "running" -a "$MYSQL_PID" != "unknown" ]; then
@@ -410,8 +410,8 @@ mysqlinit() {
 	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
-	chown root.root "$MYSQL_CLUSTER_DIR"
-        chown mysql.mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
+	chown root:root "$MYSQL_CLUSTER_DIR"
+        chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
 	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
@@ -419,7 +419,7 @@ mysqlinit() {
 		-e "s#pid-file.*=.*#pid-file = $MYSQL_PIDFILE#g" \
 		-e "s#socket.*=.*#socket = $MYSQL_SOCKET#g" \
 		/usr/share/mysql/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
-	    chown root.root "$MYSQL_CLUSTER_DIR/mysqld.conf"
+	    chown root:root "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
 		
@@ -505,7 +505,7 @@ case "$action" in
 	if [ ! -f $MYSQL_ERRLOG ]; then
 		touch $MYSQL_ERRLOG
 	fi
-	chown mysql.mysql $MYSQL_ERRLOG
+	chown mysql:mysql $MYSQL_ERRLOG
 	chmod 640 $MYSQL_ERRLOG
 
 	for mysqldir in $DB_CLUSTERS; do
