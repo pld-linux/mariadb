@@ -6,7 +6,7 @@
 #
 # description:	A very fast and reliable SQL database engine.
 #
-# pidfile:	/var/state/mysql/mysqld.pid
+# pidfile:	/var/lib/mysql/mysqld.pid
 
 # Source function library
 . /etc/rc.d/init.d/functions
@@ -14,14 +14,14 @@
 # Get network config
 . /etc/sysconfig/network
 
-MYSQL_DATA_DIR=/var/state/mysql
+MYSQL_DATA_DIR=/var/lib/mysql
 MYSQL_USER=mysql
 
 # Get service config
 if [ -f /etc/sysconfig/mysql ] ; then
 	. /etc/sysconfig/mysql
 	if [ -z "${MYSQL_DATA_DIR}" ]; then
-		MYSQL_DATA_DIR=/var/state/mysql
+		MYSQL_DATA_DIR=/var/lib/mysql
 	fi
 fi
 
@@ -61,7 +61,7 @@ case "$1" in
                 msg_stopping Mysql
                 killproc mysqld
 		sleep 2
-                rm -f /var/lock/subsys/mysql /var/state/mysql/mysql.pid >/dev/null 2>&1
+                rm -f /var/lock/subsys/mysql /var/lib/mysql/mysql.pid >/dev/null 2>&1
         else
                 msg_Not_Running Mysql
                 exit 1
