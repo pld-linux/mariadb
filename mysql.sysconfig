@@ -3,8 +3,8 @@
 # Define nice level for mysql
 SERVICE_RUN_NICE_LEVEL="+0"
 
-# Disable clusters configuration by default, you can enable it if you need
-MYSQL_NO_CLUSTER_COMPAT="yes"
+# Be compatible with RA layout (not supported)
+MYSQL_RA_COMPAT="no"
 
 # For clusters configuration look into /etc/mysql/clusters.conf
 # Don't use **obsolete** MYSQL_DB_CLUSTERS option
