@@ -237,7 +237,7 @@ case "$1" in
 	  REPLACE INTO user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 	  REPLACE INTO user VALUES ('$hostname','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 	  
-	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','N','N','N','N','N','N','N','N');"
+	  INSERT INTO user VALUES ('localhost','mysql_logrotate','','N','N','N','N','N','N','Y','N','N','N','N','N','N','N');"
 	fi
 	
 	if test ! -f $mdata/func.frm
