@@ -104,7 +104,7 @@ mysqlgetconfig() {
 	else
 		# TODO: convert this piece of crap to awk
 		config=`grep -v \"^#\" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
-		if [ -f "$config" ]; then
+		if echo "$config" | grep -q '^/'; then
 			config_file="$config"
 		elif [ -f "/etc/mysql/$config" ]; then
 			config_file=/etc/mysql/$config
