@@ -546,6 +546,13 @@ case "$action" in
 		mysqlinit "$mysqldir"
 	done
 	;;
+  flush-logs)
+  	for mysqldir in $DB_CLUSTERS; do
+	    mysqlgetconfig "$mysqldir"
+	    /usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
+	done
+	exit $?
+	;;
   *)
 	msg_usage "$0 {start|stop|init|restart|force-reload|status}"
 	exit 3
