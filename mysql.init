@@ -15,7 +15,14 @@
 . /etc/sysconfig/network
 
 # Get service config
-[ -f /etc/sysconfig/mysql ] && . /etc/sysconfig/mysql
+if [ -f /etc/sysconfig/mysql ] ; then
+	. /etc/sysconfig/mysql
+	if [ -z "${MYSQL_DATA_DIR}" ]; then
+	    MYSQL_DATA_DIR=/var/state/mysql
+	fi
+else
+	MYSQL_DATA_DIR=/var/state/mysql
+fi
 
 # Check that networking is up.
 if [ "${NETWORKING}" = "no" ]; then
@@ -25,14 +32,26 @@ fi
 
 case "$1" in
     start)
+	# Check if not exist init database
+	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
+	    show Creating mysql init database
+	    busy
+	    TMP=/tmp TMPDIR=/tmp mysql_install_db &>/tmp/initdb.mysql
+	    deltext
+	    ok
+	fi
+	
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/mysql ]; then
 		show Starting mysql
 		busy
-		su mysql -c '/usr/sbin/mysqld > /dev/null &'
-		touch /var/lock/subsys/mysql
-		deltext
-		ok
+		su mysql -c "/usr/sbin/mysqld --datadir=$MYSQL_DATA_DIR &>/dev/null &"
+		sleep 1
+		if ps ax | grep -v grep | grep -q mysqld; then
+			deltext; ok
+		else
+			deltext; fail
+		fi
 	else
 		echo "Mysql already is running"
 	fi
