@@ -256,13 +256,16 @@ END_OF_DATA
 	    deltext
 	    ok
 	    cat << END_OF_MSG
-PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!"
+
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
 This is done with:
+
 /usr/bin/mysqladmin -u mysql password 'password'
 /usr/bin/mysqladmin -h $hostname -u mysql password 'password'
 /usr/bin/mysqladmin -u mysql_logrotate password 'password'
-NOTE: mysql_logrotate password should be placed to /etc/mysqld.conf in mysqladmin section
-See the manual for more instructions.
+
+NOTE: mysql_logrotate password should be placed to /etc/mysqld.conf in
+mysqladmin section. See the manual for more instructions.
 
 END_OF_MSG
       else  
