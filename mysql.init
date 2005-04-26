@@ -81,7 +81,7 @@ MYSQL_ERRLOG=/var/log/mysql/err
 mysqlstatus() {
 	clusterdir="$1"
 	mysqlgetconfig "$clusterdir"
-	
+
 	MYSQL_STATUS="not running"
 	MYSQL_PID="unknown"
 
@@ -120,14 +120,14 @@ mysqlgetconfig() {
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
-	
+
 	if [ -z "$config_file" ]; then
 		nls "Error: Can't find config file for %s cluster" "$clusterdir"
 		exit 6
 	else
 		MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
 	fi
-	
+
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
 		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
@@ -161,13 +161,13 @@ END {
 	else
 		MYSQL_DATA_DIR_SUB="/mysqldb"
 	fi
-		
+
 	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "${clusterdir}${MYSQL_DATA_DIR_SUB}/db" ]; then
 		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
 		nls " MySQL can't be run."
 		exit 6
 	fi
-	
+
 	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid" ]; then
 		nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid"
 		nls " MySQL can't be run."
@@ -289,13 +289,13 @@ mysqlinit() {
 
 	show "Creating privilege mysql tables for $MYSQL_DATA_DIR"
 	busy
-	TMP=/tmp TMPDIR=/tmp 
+	TMP=/tmp TMPDIR=/tmp
 
-		
+
 	# Install this in the user table, too
 	hostname="`hostname --fqdn 2> /dev/null | tr -d '[:space:]'`"
 	[ -z "$hostname" ] && hostname="localhost-unknown"
-		
+
 	# Check if hostname is valid
 	if [ -z "$hostname" ]; then
 		deltext
@@ -303,7 +303,7 @@ mysqlinit() {
 		nls "Sorry, the host name is not configured."
 		nls "Please configure the 'hostname' command to return a hostname."
 		exit 1
-	elif ! hostname -i >/dev/null 2>&1; then 
+	elif ! hostname -i >/dev/null 2>&1; then
 		deltext
 		fail
 		nls "Sorry, the host '%s' could not be looked up." "$hostname"
@@ -346,7 +346,7 @@ mysqlinit() {
 
 	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y');
 	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y');"
-	    
+
 	fi
 
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/host.frm
@@ -553,7 +553,7 @@ mysqlinit() {
 	  c_tzt="$c_tzt   CHARACTER SET utf8"
 	  c_tzt="$c_tzt comment='Time zone transitions';"
 	fi
-	
+
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/time_zone_transition_type.frm
 	then
 	  c_tztt="$c_tztt CREATE TABLE time_zone_transition_type ("
@@ -628,7 +628,7 @@ $c_tzt
 $c_tztt
 $c_tzls
 END_OF_DATA
-	then 
+	then
 	    ok
 	cat << END_OF_MSG
 
@@ -645,7 +645,7 @@ mysqladmin section. See the manual for more instructions.
 IMPORTANT: The configuration file is mysqld.conf in MYSQL_DB_CLUSTERS directories.
 
 END_OF_MSG
-      else  
+      else
 	    fail
 	    cat << END_OF_MSG
 Installation of grant tables FAILED!
@@ -672,7 +672,7 @@ Please consult the MySQL manual section: 'Problems running
 mysql_install_db', and the manual section that describes problems on
 your OS.  Another information source is the MySQL email archive.
 Please check all of the above before mailing us!  And if you do mail
-us, you MUST use the /usr/bin/mysqlbug script!  
+us, you MUST use the /usr/bin/mysqlbug script!
 
 END_OF_MSG
 
