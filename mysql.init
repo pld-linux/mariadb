@@ -221,7 +221,7 @@ mysqlstop() {
 #  and give it both privs (flush-logs and shutdown)?
 
 	# try graceful shutdown -- send shutdown command
-	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown 2>/dev/null
+	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown >/dev/null 2>&1
 	mysqlstatus "$clusterdir"
 
 	[ "$MYSQL_PID" != "unknown" ] && kill -TERM "$MYSQL_PID" 2> /dev/null
