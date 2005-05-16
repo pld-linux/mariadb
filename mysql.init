@@ -737,7 +737,10 @@ case "$action" in
   flush-logs)
   	for mysqldir in $DB_CLUSTERS; do
 	    mysqlgetconfig "$mysqldir"
-	    /usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
+		# just if mysqld is really running
+		if /usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" ping >/dev/null 2>&1; then
+			/usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
+		fi
 	done
 	;;
   *)
