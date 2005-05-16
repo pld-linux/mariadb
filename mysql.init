@@ -645,8 +645,6 @@ This is done (after starting database) with:
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
-IMPORTANT: The configuration file is mysqld.conf in MYSQL_DB_CLUSTERS directories.
-
 END_OF_MSG
       else
 	    fail
@@ -669,7 +667,7 @@ logging in /etc/mysqld.conf gives you a log in /var/log/mysql/log that
 may be helpful. The latest information about MySQL is available on the
 web at http://www.mysql.com/.
 
-Please check PLD ftp site for newer versions of this package.
+Please check PLD Linux ftp site for newer versions of this package.
 
 Please consult the MySQL manual section: 'Problems running
 mysql_install_db', and the manual section that describes problems on
