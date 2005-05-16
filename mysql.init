@@ -275,6 +275,9 @@ mysqlinit() {
 		MYSQL_DATA_DIR="$clusterdir/mysqldb/db"
 		MYSQL_PIDFILE="$clusterdir/mysqldb/mysql.pid"
 		MYSQL_SOCKET="$clusterdir/mysqldb/mysql.sock"
+
+		# this $MYSQL_CONFIG will be created later
+		MYSQL_CONFIG="$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
 
 	nls "Initializing cluster %s" "$clusterdir"
