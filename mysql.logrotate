@@ -1,6 +1,18 @@
+# If the *mysql* root user has a password you have to set it in mysqld.conf
+#
+# [mysqladmin]
+# user = mysql
+# password = <secret> 
+#
+# where "<secret>" is the password. 
+#
+# You must do this for every cluster defined in /etc/mysql/clusters.conf
+#
+# ATTENTION: The mysqld.conf should be readable ONLY for *system* root!
+
 /var/log/mysql/log /var/log/mysql/isamlog.log /var/log/mysql/update* {
 	olddir /var/log/archiv/mysql
-        notifempty
+	notifempty
 	create 640 mysql mysql
 	sharedscripts
 	postrotate
