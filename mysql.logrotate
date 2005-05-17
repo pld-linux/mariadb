@@ -1,7 +1,7 @@
 # If the *mysql* root user has a password you have to set it in mysqld.conf
 #
 # [mysqladmin]
-# user = mysql
+# user = mysql_logrotate
 # password = <secret> 
 #
 # where "<secret>" is the password. 
