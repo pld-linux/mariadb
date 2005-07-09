@@ -215,12 +215,8 @@ mysqlstop() {
 	msg_stopping "MySQL $clusterdir"
 	busy
 
-# TODO
-#  graceful mysql shutdown with mysqladmin shutdown requires 'shutdown'
-#  privilege. create new user mysqlctl or rename mysql_logrotate to mysqlctl
-#  and give it both privs (flush-logs and shutdown)?
-
 	# try graceful shutdown -- send shutdown command
+	# requires mysql_logrotate user proper privs
 	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown >/dev/null 2>&1
 	mysqlstatus "$clusterdir"
 
