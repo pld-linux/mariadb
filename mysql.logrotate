@@ -2,9 +2,9 @@
 #
 # [mysqladmin]
 # user = mysql_logrotate
-# password = <secret> 
+# password = <secret>
 #
-# where "<secret>" is the password. 
+# where "<secret>" is the password.
 #
 # You must do this for every cluster defined in /etc/mysql/clusters.conf
 #
