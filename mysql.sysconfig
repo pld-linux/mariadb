@@ -10,4 +10,4 @@ MYSQL_RA_COMPAT="no"
 # Don't use **obsolete** MYSQL_DB_CLUSTERS option
 
 # Skip automatic mysqld restarts invoked from rpm installs.
-#RPM_SKIP_AUTO_RESTART=no
+#RPM_SKIP_AUTO_RESTART=yes
