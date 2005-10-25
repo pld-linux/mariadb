@@ -4,7 +4,7 @@ diff -urbB mysql-5.0.15.org/ndb/src/kernel/blocks/dbtc/Makefile.am mysql-5.0.15/
 @@ -1,5 +1,7 @@
  noinst_LIBRARIES = libdbtc.a
  
-+CXXFLAGS = -O0
++CXXFLAGS += -O0
 +
  libdbtc_a_SOURCES = DbtcInit.cpp DbtcMain.cpp
  
