@@ -1,0 +1,11 @@
+diff -urbB mysql-5.0.15.org/ndb/src/kernel/blocks/dbtc/Makefile.am mysql-5.0.15/ndb/src/kernel/blocks/dbtc/Makefile.am
+--- mysql-5.0.15.org/ndb/src/kernel/blocks/dbtc/Makefile.am	2005-10-17 03:27:27.000000000 +0200
++++ mysql-5.0.15/ndb/src/kernel/blocks/dbtc/Makefile.am	2005-10-25 15:15:29.000000000 +0200
+@@ -1,5 +1,7 @@
+ noinst_LIBRARIES = libdbtc.a
+ 
++CXXFLAGS = -O0
++
+ libdbtc_a_SOURCES = DbtcInit.cpp DbtcMain.cpp
+ 
+ include $(top_srcdir)/ndb/config/common.mk.am
