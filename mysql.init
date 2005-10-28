@@ -730,11 +730,11 @@ END_OF_DATA
 	cat << END_OF_MSG
 
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
-This is done (after starting database) with:
+This is done (after starting database; press enter when asked for password) with:
 
-/usr/bin/mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
-/usr/bin/mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
-/usr/bin/mysqladmin -u mysql_logrotate -S $MYSQL_SOCKET password 'password'
+/usr/bin/mysqladmin -u mysql -p -S $MYSQL_SOCKET password 'password'
+/usr/bin/mysqladmin -h $hostname -u mysql -p -S $MYSQL_SOCKET password 'password'
+/usr/bin/mysqladmin -u mysql_logrotate -p -S $MYSQL_SOCKET password 'password'
 
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
