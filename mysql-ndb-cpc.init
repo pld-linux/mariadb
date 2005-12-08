@@ -4,7 +4,7 @@
 #
 # chkconfig:	2345 80 30
 # description:	mysql-ndb-cpc is a mysql NDB engine
-#		
+#
 # processname:	ndbd
 
 # Source function library.
@@ -50,7 +50,7 @@ case "$1" in
 		rm -f /var/lock/subsys/mysql-ndb-cpc >/dev/null 2>&1
 	else
 		msg_not_running "mysql ndb_cpcd"
-	fi	
+	fi
 	;;
   restart|force-reload)
 	$0 stop

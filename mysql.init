@@ -351,7 +351,7 @@ mysqlinit() {
 
 	  i_d="INSERT INTO db VALUES ('%','test','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y','Y','Y','Y','N','N');
 	  INSERT INTO db VALUES ('%','test\_%','','Y','Y','Y','Y','Y','Y','N','Y','Y','Y','Y','Y','Y','Y','Y','N','N');"
-		
+
 	fi
 
 	if test ! -f $MYSQL_DATA_DIR/mysqldb/mysql/host.frm
