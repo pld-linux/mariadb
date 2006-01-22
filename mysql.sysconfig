@@ -9,5 +9,13 @@ MYSQL_RA_COMPAT="no"
 # For clusters configuration look into /etc/mysql/clusters.conf
 # Don't use **obsolete** MYSQL_DB_CLUSTERS option
 
+# Seconds to wait for fully initialized mysqld to start. mysqld takes longer to
+# start when it has to replay innodb logs, or create innodb pools at startup
+#MYSQL_START_WAIT_TIME=15
+
+# Seconds to wait for mysqld to terminate on shutdown. If timeout is exceeded
+# shutdown is considered failed
+#MYSQL_STOP_WAIT_TIME=900
+
 # Skip automatic mysqld restarts invoked from rpm installs.
 #RPM_SKIP_AUTO_RESTART=yes
