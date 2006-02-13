@@ -859,7 +859,7 @@ case "$action" in
 	status mysqld
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir"
-		echo -n "MySQL cluster $mysqldir"
+		show "MySQL cluster %s" "$mysqldir"
 		if [ "$MYSQL_STATUS" = "running" ]; then
 			progress "$MYSQL_STATUS"
 		else
