@@ -1,33 +1,30 @@
-diff -urbB mysql-5.0.13-rc.org/libmysqld/client.c mysql-5.0.13-rc/libmysqld/client.c
---- mysql-5.0.13-rc.org/libmysqld/client.c	2005-09-22 21:40:24.000000000 +0200
-+++ mysql-5.0.13-rc/libmysqld/client.c	2005-09-29 19:35:27.947950000 +0200
-@@ -1455,6 +1455,7 @@
+--- mysql-5.1.6-alpha/libmysqld/client.c~	2006-02-21 16:09:31.000000000 +0200
++++ mysql-5.1.6-alpha/libmysqld/client.c	2006-02-21 16:11:30.000000000 +0200
+@@ -1456,6 +1456,7 @@
  
    mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
    mysql->options.report_data_truncation= TRUE;  /* default */
 +  mysql_read_default_options(&mysql->options, "/etc/mysql/mysql-client.conf", NULL);
-   return mysql;
- }
  
-diff -urbB mysql-5.0.13-rc.org/sql/client.c mysql-5.0.13-rc/sql/client.c
---- mysql-5.0.13-rc.org/sql/client.c	2005-09-22 21:40:24.000000000 +0200
-+++ mysql-5.0.13-rc/sql/client.c	2005-09-29 19:35:38.164588500 +0200
-@@ -1455,6 +1455,7 @@
- 
-   mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
-   mysql->options.report_data_truncation= TRUE;  /* default */
-+  mysql_read_default_options(&mysql->options, "/etc/mysql/mysql-client.conf", NULL);
-   return mysql;
- }
- 
-diff -urbB mysql-5.0.13-rc.org/sql-common/client.c mysql-5.0.13-rc/sql-common/client.c
---- mysql-5.0.13-rc.org/sql-common/client.c	2005-09-22 21:40:24.000000000 +0200
-+++ mysql-5.0.13-rc/sql-common/client.c	2005-09-29 19:35:54.881633250 +0200
-@@ -1455,6 +1455,7 @@
+   /*
+     By default we don't reconnect because it could silently corrupt data (after
+--- mysql-5.1.6-alpha/sql/client.c~	2006-02-21 16:09:32.000000000 +0200
++++ mysql-5.1.6-alpha/sql/client.c	2006-02-21 16:12:13.000000000 +0200
+@@ -1456,6 +1456,7 @@
  
    mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
    mysql->options.report_data_truncation= TRUE;  /* default */
 +  mysql_read_default_options(&mysql->options, "/etc/mysql/mysql-client.conf", NULL);
-   return mysql;
- }
  
+   /*
+     By default we don't reconnect because it could silently corrupt data (after
+--- mysql-5.1.6-alpha/sql-common/client.c~	2006-02-21 16:09:34.000000000 +0200
++++ mysql-5.1.6-alpha/sql-common/client.c	2006-02-21 16:14:10.000000000 +0200
+@@ -1456,6 +1456,7 @@
+ 
+   mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
+   mysql->options.report_data_truncation= TRUE;  /* default */
++  mysql_read_default_options(&mysql->options, "/etc/mysql/mysql-client.conf", NULL);
+ 
+   /*
+     By default we don't reconnect because it could silently corrupt data (after

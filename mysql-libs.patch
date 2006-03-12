@@ -28,15 +28,14 @@ diff -urN mysql-4.1.7.org/configure.in mysql-4.1.7/configure.in
  
  # For sem_xxx functions on Solaris 2.6
  AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4, sem_init))
-diff -urN mysql-4.1.7.org/libmysql_r/Makefile.am mysql-4.1.7/libmysql_r/Makefile.am
---- mysql-4.1.7.org/libmysql_r/Makefile.am	2004-10-27 01:35:55.265121136 +0200
-+++ mysql-4.1.7/libmysql_r/Makefile.am	2004-10-27 01:36:23.574817408 +0200
-@@ -33,7 +33,7 @@
+--- mysql-5.0.19-nightly-20060111/libmysql_r/Makefile.am~	2006-01-13 12:17:05.000000000 +0200
++++ mysql-5.0.19-nightly-20060111/libmysql_r/Makefile.am	2006-01-13 12:17:50.000000000 +0200
+@@ -32,7 +32,7 @@
  libmysql_dir = $(top_srcdir)/libmysql
  
  libmysqlclient_r_la_SOURCES = $(target_sources)
--libmysqlclient_r_la_LIBADD = $(target_libadd)
-+libmysqlclient_r_la_LIBADD = $(target_libadd) -lpthread
+-libmysqlclient_r_la_LIBADD = $(target_libadd) $(yassl_libs_with_path)
++libmysqlclient_r_la_LIBADD = $(target_libadd) $(yassl_libs_with_path) -lpthread
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
  # This is called from the toplevel makefile
