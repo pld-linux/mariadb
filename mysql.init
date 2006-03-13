@@ -101,17 +101,17 @@ mysqlstatus() {
 		if [ ! -d "/proc/$MYSQL_PID" ]; then
 			MYSQL_STATUS="died"
 			return
-		elif (grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline); then
+		elif (grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null); then
 			MYSQL_STATUS="running"
 			return
 		fi
 	fi
 
 	if [ "$mode" = "start" ]; then
-		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mysqld.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline | awk -F "/" '{ print $3; exit; }')
+		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mysqld.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
 		if [ -n "$MYSQL_GREP_PID" ]; then
 			MYSQL_PID=$MYSQL_GREP_PID
-			if (grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline); then
+			if (grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null); then
 				if [ -f "$MYSQL_PIDFILE" ]; then
 					MYSQL_PIDFILE_PID=$(cat "$MYSQL_PIDFILE")
 				fi
