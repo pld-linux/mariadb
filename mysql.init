@@ -735,7 +735,8 @@ mysqlinit() {
 	fi
 
 	if [ ! -e /var/lib/mysql/mysql.sock ]; then
-	    ln -s "$MYSQL_SOCKET" /var/lib/mysql/mysql.sock
+		sock=$(echo "$MYSQL_SOCKET" | sed -e 's,^/var/lib/mysql/,,')
+	    ln -s "$sock" /var/lib/mysql/mysql.sock
 	fi
 
 	if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
