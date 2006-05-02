@@ -13,6 +13,7 @@
 /var/log/mysql/log /var/log/mysql/update* {
 	olddir /var/log/archiv/mysql
 	notifempty
+	missingok
 	create 640 mysql mysql
 	sharedscripts
 	postrotate
