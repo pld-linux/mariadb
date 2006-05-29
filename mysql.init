@@ -231,7 +231,7 @@ mysqlstart() {
 	busy
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 	rm -f "$MYSQL_PIDFILE"
-	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/bin/setsid /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE >> $MYSQL_ERRLOG 2>&1 &
+	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/bin/setsid /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE $MYSQL_OPTIONS >> $MYSQL_ERRLOG 2>&1 &
 	sleep 0.2
 	mysqlstatus "$clusterdir" start
 	# it takes longer for mysqld to start and create pidfile if it has to recover innodb transactions
