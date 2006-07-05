@@ -857,13 +857,13 @@ case "$action" in
 	mysqlsubsys
 	;;
   status)
-	status mysqld
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir"
-		show "MySQL cluster %s" "$mysqldir"
 		if [ "$MYSQL_STATUS" = "running" ]; then
+			show "MySQL cluster %s, PID %s" "$mysqldir" "$MYSQL_PID"
 			progress "$MYSQL_STATUS"
 		else
+			show "MySQL cluster %s" "$mysqldir"
 			progress "$MYSQL_STATUS" "$CFAIL"
 		fi
 		echo
