@@ -734,7 +734,7 @@ mysqlinit() {
 	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
 
-	if [ ! -e /var/lib/mysql/mysql.sock ]; then
+	if [ ! -e /var/lib/mysql/mysql.sock ] || [ -L /var/lib/mysql/mysql.sock ] && [ -z "$(readlink /var/lib/mysql/mysql.sock)" ]; then
 		sock=$(echo "$MYSQL_SOCKET" | sed -e 's,^/var/lib/mysql/,,')
 	    ln -s "$sock" /var/lib/mysql/mysql.sock
 	fi
