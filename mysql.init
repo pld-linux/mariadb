@@ -787,7 +787,7 @@ NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
 If you want to use new help tables in MySQL 4.1.x then you'll need to import the help data:
-/usr/bin/mysql -u mysql -p S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
+/usr/bin/mysql -u mysql -p -S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
 
 END_OF_MSG
       else
