@@ -17,6 +17,6 @@
 	create 640 mysql mysql
 	sharedscripts
 	postrotate
-		/etc/rc.d/init.d/mysql flush-logs
+		/sbin/service mysql flush-logs
 	endscript
 }
