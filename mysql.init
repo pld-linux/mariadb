@@ -825,9 +825,7 @@ END_OF_MSG
 # End of useful functions.
 #
 
-RETVAL=0
-case "$action" in
-  start)
+start() {
 	if [ ! -f $MYSQL_ERRLOG ]; then
 		touch $MYSQL_ERRLOG
 	fi
@@ -843,8 +841,9 @@ case "$action" in
 		fi
 	done
 	mysqlsubsys
-	;;
-  stop)
+}
+
+stop() {
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir" stop
 		if [ "$MYSQL_STATUS" = "not running" ]; then
@@ -854,6 +853,15 @@ case "$action" in
 		fi
 	done
 	mysqlsubsys
+}
+
+RETVAL=0
+case "$action" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   status)
 	for mysqldir in $DB_CLUSTERS; do
@@ -870,9 +878,8 @@ case "$action" in
 	exit $?
 	;;
   restart|force-reload)
-	$0 stop $DB_CLUSTERS
-	$0 start $DB_CLUSTERS
-	exit $?
+	stop
+	start
 	;;
   init)
 	for mysqldir in $DB_CLUSTERS; do
