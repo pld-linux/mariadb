@@ -26,7 +26,7 @@ if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 fi
 
 if [ -f /etc/mysql/clusters.conf ]; then
-	MYSQL_DB_CLUSTERS=$(grep -v '^#' /etc/mysql/clusters.conf | cut -s -f 2 -d '=')
+	MYSQL_DB_CLUSTERS=$(awk -F= '!/^#/{print $2}' /etc/mysql/clusters.conf)
 	if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
 		nls "Warning: there are no configured clusters."
 	fi
@@ -111,7 +111,7 @@ mysqlstatus() {
 		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mysqld.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
 		if [ -n "$MYSQL_GREP_PID" ]; then
 			MYSQL_PID=$MYSQL_GREP_PID
-			if (grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null); then
+			if grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null; then
 				if [ -f "$MYSQL_PIDFILE" ]; then
 					MYSQL_PIDFILE_PID=$(cat "$MYSQL_PIDFILE")
 				fi
@@ -141,27 +141,26 @@ mysqlgetconfig() {
 
 	# emulate old behaviour if only one cluster specified
 	if [ "$clusterdir" = "$MYSQL_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mysql" -a -f /etc/mysqld.conf ]; then
-		MYSQL_RA_COMPAT=yes; export MYSQL_RA_COMPAT
+		MYSQL_RA_COMPAT=yes
 		config_file=/etc/mysqld.conf
 	else
-		# TODO: convert this piece of crap to awk
-		config=`grep -v "^#" /etc/mysql/clusters.conf | grep "${clusterdir}$" | cut -s -f 1 -d '='`
-		if echo "$config" | grep -q '^/'; then
+		config=$(awk -F= -vclusterdir="$clusterdir" '!/^#/{ if (clusterdir == $2) print $1}' /etc/mysql/clusters.conf)
+		if [[ $config = /* ]]; then
 			config_file="$config"
 		elif [ -f "/etc/mysql/$config" ]; then
-			config_file=/etc/mysql/$config
+			config_file="/etc/mysql/$config"
 		else
 			config_file="$clusterdir/mysqld.conf"
 		fi
 	fi
 
-	MYSQL_CLUSTER_DIR="$clusterdir"; export MYSQL_CLUSTER_DIR
+	MYSQL_CLUSTER_DIR="$clusterdir"
 
 	if [ -z "$config_file" ]; then
 		nls "Error: Can't find config file for %s cluster" "$clusterdir"
 		exit 6
 	else
-		MYSQL_CONFIG="$config_file"; export MYSQL_CONFIG
+		MYSQL_CONFIG="$config_file"
 	fi
 
 	if [ ! -f "$config_file" ]; then
@@ -173,21 +172,18 @@ mysqlgetconfig() {
 	eval `awk '
 /^[ \t]*\[.*\][ \t]*$/ {
 	match($0,/\[.*\]/)
-	section=substr($0,RSTART+1,RSTART+RLENGTH-3)
+	section=substr($0, RSTART + 1, RSTART + RLENGTH - 3)
 }
-section=="mysqld" && $2~"=" {
-	if ($1=="datadir") {
+section == "mysqld" && $2 ~ "=" {
+	if ($1 == "datadir") {
 		printf("MYSQL_DATA_DIR=%s;", $3)
-	} else if ($1=="user") {
+	} else if ($1 == "user") {
 		printf("MYSQL_USER=%s;", $3)
-	} else if ($1=="pid-file") {
+	} else if ($1 == "pid-file") {
 		printf("MYSQL_PIDFILE=%s;", $3)
-	} else if ($1=="socket") {
+	} else if ($1 == "socket") {
 		printf("MYSQL_SOCKET=%s;", $3)
 	}
-}
-END {
-	print "export MYSQL_DATA_DIR MYSQL_USER MYSQL_PIDFILE MYSQL_SOCKET"
 }
 ' $config_file`
 
@@ -735,7 +731,7 @@ mysqlinit() {
 	fi
 
 	if [ ! -e /var/lib/mysql/mysql.sock ] || [ -L /var/lib/mysql/mysql.sock ] && [ -z "$(readlink /var/lib/mysql/mysql.sock)" ]; then
-		sock=$(echo "$MYSQL_SOCKET" | sed -e 's,^/var/lib/mysql/,,')
+		sock=${MYSQL_SOCKET#/var/lib/mysql/} # make it relative if possible
 	    ln -s "$sock" /var/lib/mysql/mysql.sock
 	fi
 
