@@ -19,5 +19,6 @@ MYSQL_RA_COMPAT="no"
 
 # Skip automatic mysqld restarts invoked from rpm installs.
 #RPM_SKIP_AUTO_RESTART=yes
-#
+
+# Any option passed directly to mysqld on startup.
 #MYSQL_OPTIONS=""
