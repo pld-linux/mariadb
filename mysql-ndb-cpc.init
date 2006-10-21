@@ -28,10 +28,7 @@ else
 	exit 0
 fi
 
-RETVAL=0
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Start daemons.
 	if [ ! -f /var/lock/subsys/mysql-ndb-cpc ]; then
 		msg_starting "mysql ndb_cpcd"
@@ -41,8 +38,9 @@ case "$1" in
 	else
 		msg_already_running "mysql ndb_cpcd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	# Stop daemons.
 	if [ -f /var/lock/subsys/mysql-ndb-cpc ]; then
 		msg_stopping "mysql ndb_cpcd"
@@ -51,20 +49,25 @@ case "$1" in
 	else
 		msg_not_running "mysql ndb_cpcd"
 	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   restart|force-reload)
-	$0 stop
-	$0 start
-	exit $?
+	stop
+	start
 	;;
   status)
 	status ndb_cpcd
 	exit $?
 	;;
-#  reload)
-#	msg_reloading "mysql ndb_cpcd"
-#	killproc ndb_cpcd -HUP
-#	;;
   *)
 	msg_usage "$0 {start|stop|restart|force-reload|status}"
 	exit 3

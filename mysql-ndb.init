@@ -28,10 +28,7 @@ else
 	exit 0
 fi
 
-RETVAL=0
-# See how we were called.
-case "$1" in
-  start)
+start() {
 	# Start daemons.
 	if [ ! -f /var/lock/subsys/mysql-ndb ]; then
 		msg_starting "mysql ndbd"
@@ -41,8 +38,9 @@ case "$1" in
 	else
 		msg_already_running "mysql ndbd"
 	fi
-	;;
-  stop)
+}
+
+stop() {
 	# Stop daemons.
 	if [ -f /var/lock/subsys/mysql-ndb ]; then
 		msg_stopping "mysql ndbd"
@@ -51,20 +49,25 @@ case "$1" in
 	else
 		msg_not_running "mysql ndbd"
 	fi
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
 	;;
   restart|force-reload)
-	$0 stop
-	$0 start
-	exit $?
+	stop
+	start
 	;;
   status)
 	status ndbd
 	exit $?
 	;;
-#  reload)
-#	msg_reloading "mysql ndbd"
-#	killproc ndbd -HUP
-#	;;
   *)
 	msg_usage "$0 {start|stop|restart|force-reload|status}"
 	exit 3
