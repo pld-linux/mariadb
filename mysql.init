@@ -332,7 +332,6 @@ mysqlinit() {
 	busy
 	TMP=/tmp TMPDIR=/tmp
 
-
 	# Install this in the user table, too
 	hostname="`hostname --fqdn 2> /dev/null | tr -d '[:space:]'`"
 	[ -z "$hostname" ] && hostname="localhost-unknown"
@@ -722,10 +721,12 @@ mysqlinit() {
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
 	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
-	    sed -e "s#\(datadir.*\)=.*#\1= $MYSQL_DATA_DIR#g" \
-		-e "s#\(pid-file.*\)=.*#\1= $MYSQL_PIDFILE#g" \
-		-e "s#\(socket.*\)=.*#\1= $MYSQL_SOCKET#g" \
-		/usr/share/mysql/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
+	    sed -e "
+		s#\(datadir.*\)=.*#\1= $MYSQL_DATA_DIR#g;
+		s#\(pid-file.*\)=.*#\1= $MYSQL_PIDFILE#g;
+		s#\(socket.*\)=.*#\1= $MYSQL_SOCKET#g;
+		s#@clusterdir@#$MYSQL_CLUSTER_DIR#g;
+		" /usr/share/mysql/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chown root:root "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
