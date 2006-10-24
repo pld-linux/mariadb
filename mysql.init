@@ -21,6 +21,8 @@ else
 	exit 1
 fi
 
+[ -z "$BASE_TABLETYPE" ] && BASE_TABLETYPE="InnoDB"
+
 if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
 fi
@@ -386,7 +388,7 @@ mysqlinit() {
 	  c_d="$c_d   Execute_priv enum('N','Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL,"
 	  c_d="$c_d PRIMARY KEY Host (Host,Db,User),"
 	  c_d="$c_d KEY User (User)"
-	  c_d="$c_d )"
+	  c_d="$c_d ) engine=${BASE_TABLETYPE} "
 	  c_d="$c_d CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_d="$c_d comment='Database privileges';"
 
@@ -418,7 +420,7 @@ mysqlinit() {
 	  c_h="$c_h  Alter_routine_priv enum('N','Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL,"
 	  c_h="$c_h  Execute_priv enum('N','Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL,"
 	  c_h="$c_h  PRIMARY KEY Host (Host,Db)"
-	  c_h="$c_h )"
+	  c_h="$c_h ) engine=${BASE_TABLETYPE} "
 	  c_h="$c_h CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_h="$c_h comment='Host privileges;  Merged with database privileges';"
 	fi
@@ -464,7 +466,7 @@ mysqlinit() {
 	  c_u="$c_u   max_connections int(11) unsigned DEFAULT 0  NOT NULL,"
 	  c_u="$c_u   max_user_connections int(11) unsigned DEFAULT 0  NOT NULL,"
 	  c_u="$c_u   PRIMARY KEY Host (Host,User)"
-	  c_u="$c_u ) engine=MyISAM"
+	  c_u="$c_u ) engine=${BASE_TABLETYPE} "
 	  c_u="$c_u CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_u="$c_u comment='Users and global privileges';"
 
@@ -484,7 +486,7 @@ mysqlinit() {
 	  c_f="$c_f   dl char(128) DEFAULT '' NOT NULL,"
 	  c_f="$c_f   type enum ('function','aggregate') COLLATE utf8_general_ci NOT NULL,"
 	  c_f="$c_f   PRIMARY KEY (name)"
-	  c_f="$c_f )"
+	  c_f="$c_f ) engine=${BASE_TABLETYPE} "
 	  c_f="$c_f CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_f="$c_f comment='User defined functions';"
 	fi
@@ -502,7 +504,7 @@ mysqlinit() {
 	  c_t="$c_t   Column_priv set('Select','Insert','Update','References') COLLATE utf8_general_ci DEFAULT '' NOT NULL,"
 	  c_t="$c_t   PRIMARY KEY (Host,Db,User,Table_name),"
 	  c_t="$c_t   KEY Grantor (Grantor)"
-	  c_t="$c_t )"
+	  c_t="$c_t ) engine=${BASE_TABLETYPE} "
 	  c_t="$c_t CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_t="$c_t comment='Table privileges';"
 	fi
@@ -518,7 +520,7 @@ mysqlinit() {
 	  c_c="$c_c   Timestamp timestamp(14),"
 	  c_c="$c_c   Column_priv set('Select','Insert','Update','References') COLLATE utf8_general_ci DEFAULT '' NOT NULL,"
 	  c_c="$c_c   PRIMARY KEY (Host,Db,User,Table_name,Column_name)"
-	  c_c="$c_c )"
+	  c_c="$c_c ) engine=${BASE_TABLETYPE} "
 	  c_c="$c_c CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_c="$c_c comment='Column privileges';"
 	fi
@@ -536,7 +538,7 @@ mysqlinit() {
 	  c_pp="$c_pp   Timestamp timestamp(14),"
 	  c_pp="$c_pp   PRIMARY KEY (Host,Db,User,Routine_name,Routine_type),"
 	  c_pp="$c_pp   KEY Grantor (Grantor)"
-	  c_pp="$c_pp )"
+	  c_pp="$c_pp ) engine=${BASE_TABLETYPE} "
 	  c_pp="$c_pp CHARACTER SET utf8 COLLATE utf8_bin"
 	  c_pp="$c_pp   comment='Procedure privileges';"
     fi
@@ -553,7 +555,7 @@ mysqlinit() {
 	  c_ht="$c_ht   url              varchar(128) not null,"
 	  c_ht="$c_ht   primary key      (help_topic_id),"
 	  c_ht="$c_ht   unique index     (name)"
-	  c_ht="$c_ht )"
+	  c_ht="$c_ht ) engine=${BASE_TABLETYPE} "
 	  c_ht="$c_ht CHARACTER SET utf8"
 	  c_ht="$c_ht comment='help topics';"
 	fi
@@ -567,7 +569,7 @@ mysqlinit() {
 	  c_hc="$c_hc   url                varchar(128) not null,"
 	  c_hc="$c_hc   primary key        (help_category_id),"
 	  c_hc="$c_hc   unique index       (name)"
-	  c_hc="$c_hc )"
+	  c_hc="$c_hc ) engine=${BASE_TABLETYPE} "
 	  c_hc="$c_hc   CHARACTER SET utf8"
 	  c_hc="$c_hc comment='help categories';"
 	fi
@@ -579,7 +581,7 @@ mysqlinit() {
 	  c_hk="$c_hk   name             varchar(64) not null,"
 	  c_hk="$c_hk   primary key      (help_keyword_id),"
 	  c_hk="$c_hk   unique index     (name)"
-	  c_hk="$c_hk )"
+	  c_hk="$c_hk ) engine=${BASE_TABLETYPE} "
 	  c_hk="$c_hk   CHARACTER SET utf8"
 	  c_hk="$c_hk comment='help keywords';"
 	fi
@@ -590,7 +592,7 @@ mysqlinit() {
 	  c_hr="$c_hr   help_topic_id    int unsigned not null references help_topic,"
 	  c_hr="$c_hr   help_keyword_id  int unsigned not null references help_keyword,"
 	  c_hr="$c_hr   primary key      (help_keyword_id, help_topic_id)"
-	  c_hr="$c_hr )"
+	  c_hr="$c_hr ) engine=${BASE_TABLETYPE} "
 	  c_hr="$c_hr   CHARACTER SET utf8"
 	  c_hr="$c_hr comment='keyword-topic relation';"
 	fi
@@ -601,7 +603,7 @@ mysqlinit() {
 	  c_tzn="$c_tzn   Name char(64) NOT NULL,"
 	  c_tzn="$c_tzn   Time_zone_id int unsigned NOT NULL,"
 	  c_tzn="$c_tzn   PRIMARY KEY Name (Name)"
-	  c_tzn="$c_tzn )"
+	  c_tzn="$c_tzn ) engine=${BASE_TABLETYPE} "
 	  c_tzn="$c_tzn   CHARACTER SET utf8"
 	  c_tzn="$c_tzn comment='Time zone names';"
 	fi
@@ -612,7 +614,7 @@ mysqlinit() {
 	  c_tz="$c_tz   Time_zone_id int unsigned NOT NULL auto_increment,"
 	  c_tz="$c_tz   Use_leap_seconds enum('Y','N') DEFAULT 'N' NOT NULL,"
 	  c_tz="$c_tz   PRIMARY KEY TzId (Time_zone_id)"
-	  c_tz="$c_tz )"
+	  c_tz="$c_tz ) engine=${BASE_TABLETYPE} "
 	  c_tz="$c_tz   CHARACTER SET utf8"
 	  c_tz="$c_tz comment='Time zones';"
 	fi
@@ -624,7 +626,7 @@ mysqlinit() {
 	  c_tzt="$c_tzt   Transition_time bigint signed NOT NULL,"
 	  c_tzt="$c_tzt   Transition_type_id int unsigned NOT NULL,"
 	  c_tzt="$c_tzt   PRIMARY KEY TzIdTranTime (Time_zone_id, Transition_time)"
-	  c_tzt="$c_tzt )"
+	  c_tzt="$c_tzt ) engine=${BASE_TABLETYPE} "
 	  c_tzt="$c_tzt   CHARACTER SET utf8"
 	  c_tzt="$c_tzt comment='Time zone transitions';"
 	fi
@@ -638,7 +640,7 @@ mysqlinit() {
 	  c_tztt="$c_tztt   Is_DST tinyint unsigned DEFAULT 0 NOT NULL,"
 	  c_tztt="$c_tztt   Abbreviation char(8) DEFAULT '' NOT NULL,"
 	  c_tztt="$c_tztt   PRIMARY KEY TzIdTrTId (Time_zone_id, Transition_type_id)"
-	  c_tztt="$c_tztt )"
+	  c_tztt="$c_tztt ) engine=${BASE_TABLETYPE} "
 	  c_tztt="$c_tztt   CHARACTER SET utf8"
 	  c_tztt="$c_tztt comment='Time zone transition types';"
 	fi
@@ -649,7 +651,7 @@ mysqlinit() {
 	  c_tzls="$c_tzls   Transition_time bigint signed NOT NULL,"
 	  c_tzls="$c_tzls   Correction int signed NOT NULL,"
 	  c_tzls="$c_tzls   PRIMARY KEY TranTime (Transition_time)"
-	  c_tzls="$c_tzls )"
+	  c_tzls="$c_tzls ) engine=${BASE_TABLETYPE} "
 	  c_tzls="$c_tzls CHARACTER SET utf8"
 	  c_tzls="$c_tzls   comment='Leap seconds information for time zones';"
 	fi
@@ -709,7 +711,7 @@ mysqlinit() {
 	  c_p="$c_p                     ) DEFAULT '' NOT NULL,"
 	  c_p="$c_p   comment           char(64) collate utf8_bin DEFAULT '' NOT NULL,"
 	  c_p="$c_p   PRIMARY KEY (db,name,type)"
-	  c_p="$c_p )"
+	  c_p="$c_p ) engine=${BASE_TABLETYPE} "
 	  c_p="$c_p character set utf8"
 	  c_p="$c_p comment='Stored Procedures';"
 	fi
