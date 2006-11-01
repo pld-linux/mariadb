@@ -1,0 +1,11 @@
+--- mysql-5.1.11-beta/client/mysql_upgrade.c~	2006-06-02 21:01:24.000000000 +0300
++++ mysql-5.1.11-beta/client/mysql_upgrade.c	2006-11-01 20:39:36.489202516 +0200
+@@ -18,7 +18,7 @@
+ #include <my_dir.h>
+ 
+ static my_bool opt_force= 0, opt_verbose= 0, tty_password= 0;
+-static char *user= (char*) "root", *basedir= 0, *datadir= 0, *opt_password= 0;
++static char *user= (char*) "mysql", *basedir= (char *)"/usr", *datadir= 0, *opt_password= 0;
+ static my_bool upgrade_defaults_created= 0;
+ static my_string opt_mysql_port, opt_mysql_unix_port= 0;
+ static char *default_dbug_option= (char*) "d:t:O,/tmp/comp_err.trace";
