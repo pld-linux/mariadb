@@ -59,7 +59,22 @@ action="$1"
 if [ $# -gt 1 ]; then
 	shift
 	# perform action for specified clusters only
-	DB_CLUSTERS="$@"
+	for a in "$@"; do
+		# try auto resolving from /etc/mysql/clusters.conf
+		if [[ "$a" != /* ]]; then
+			m=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $1}' /etc/mysql/clusters.conf)
+			if [ -z "$m" ]; then
+				echo >&2 "Cluster name '$a' did not match anything!"
+				exit 1
+			fi
+			if [ $(echo "$m" | wc -l) -gt 1 ]; then
+				echo >&2 "Cluster name '$a' ambiguous:" $m
+				exit 1
+			fi
+			a=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $2}' /etc/mysql/clusters.conf)
+		fi
+		DB_CLUSTERS="$DB_CLUSTERS $a"
+	done
 else
 	DB_CLUSTERS="$MYSQL_DB_CLUSTERS"
 fi
