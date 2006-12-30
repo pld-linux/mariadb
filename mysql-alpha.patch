@@ -9,27 +9,4 @@ diff -urbB mysql-5.0.15.org/ndb/src/kernel/blocks/dbtc/Makefile.am mysql-5.0.15/
  libdbtc_a_SOURCES = DbtcInit.cpp DbtcMain.cpp
  
  include $(top_srcdir)/ndb/config/common.mk.am
-diff -urN mysql-5.0.26.org/libmysqld/stacktrace.c mysql-5.0.26/libmysqld/stacktrace.c
---- mysql-5.0.26.org/libmysqld/stacktrace.c	2006-10-04 13:24:21.000000000 +0200
-+++ mysql-5.0.26/libmysqld/stacktrace.c	2006-10-13 14:03:32.000000000 +0200
-@@ -186,7 +186,7 @@
- 
- #if defined(__alpha__) && defined(__GNUC__)
-     uchar** new_fp = find_prev_fp(pc, fp);
--    if (frame_count == SIGRETURN_FRAME_COUNT - 1)
-+    if (frame_count == sigreturn_frame_count - 1)
-     {
-       new_fp += 90;
-     }
-diff -urN mysql-5.0.26.org/sql/stacktrace.c mysql-5.0.26/sql/stacktrace.c
---- mysql-5.0.26.org/sql/stacktrace.c	2006-10-04 13:24:21.000000000 +0200
-+++ mysql-5.0.26/sql/stacktrace.c	2006-10-13 14:03:32.000000000 +0200
-@@ -186,7 +186,7 @@
- 
- #if defined(__alpha__) && defined(__GNUC__)
-     uchar** new_fp = find_prev_fp(pc, fp);
--    if (frame_count == SIGRETURN_FRAME_COUNT - 1)
-+    if (frame_count == sigreturn_frame_count - 1)
-     {
-       new_fp += 90;
-     }
+
