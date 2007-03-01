@@ -38,14 +38,14 @@
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
  # This is called from the toplevel makefile
---- mysql-4.1.7.org/sql/Makefile.am	2004-10-27 01:35:55.971013824 +0200
-+++ mysql-4.1.7/sql/Makefile.am	2004-10-27 01:37:07.260176224 +0200
-@@ -44,7 +44,7 @@
-                         @innodb_system_libs@ \
- 			@ndbcluster_libs@ @ndbcluster_system_libs@ \
+--- mysql-5.1.16-beta/sql/Makefile.am~	2007-03-01 20:52:59.905932538 +0200
++++ mysql-5.1.16-beta/sql/Makefile.am	2007-03-01 20:53:31.026631850 +0200
+@@ -40,7 +40,7 @@
+ 			@pstack_libs@ \
+ 			@mysql_plugin_libs@ \
  			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ \
--                        @yassl_libs@ @openssl_libs@
-+                        @yassl_libs@ @openssl_libs@ @LIBCRYPT@
+-                        $(yassl_libs) $(openssl_libs)
++                        $(yassl_libs) $(openssl_libs) @LIBCRYPT
+ 
  noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
- 			item_strfunc.h item_timefunc.h item_uniq.h \
- 			item_create.h item_subselect.h item_row.h \
+ 			item_strfunc.h item_timefunc.h \
