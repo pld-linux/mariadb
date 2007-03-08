@@ -390,16 +390,20 @@ mysqlinit() {
 	    ln -s "$sock" /var/lib/mysql/mysql.sock
 	fi
 
-	if /usr/sbin/mysqld --bootstrap --skip-grant-tables \
-	    --datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER << END_OF_DATA
-
+	cat > $MYSQL_DATA_DIR/mysql-init.sql <<-EOF
 		CREATE DATABASE mysql;
 		use mysql;
 		$(sed -e "s,@ENGINE@,$BASE_TABLETYPE," /usr/share/mysql/init_db.sql)
 		$(sed -e "s,\$hostname,$hostname,g" /usr/share/mysql/init_db-data.sql)
-END_OF_DATA
+		"
+EOF
 
-	then
+	ok=0
+	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
+		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER < $MYSQL_DATA_DIR/mysql-init.sql && ok=1
+	[ -f $MYSQL_DATA_DIR/mysql/user.frm ] || ok=0
+	if [ "$ok" = 1 ]; then
+		rm -f $MYSQL_DATA_DIR/mysql-init.sql
 	    ok
 	cat << END_OF_MSG
 
@@ -422,8 +426,8 @@ END_OF_MSG
 	    cat << END_OF_MSG
 Installation of grant tables FAILED!
 
-Examine the logs in $MYSQL_DATA_DIR for more information.  You can
-also try to start the mysqld demon with:
+Examine the logs in /var/log/mysql for more information.  You can
+also try to start the mysqld daemon with:
 
 /usr/sbin/mysqld --skip-grant &
 
