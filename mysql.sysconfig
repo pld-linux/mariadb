@@ -22,3 +22,7 @@ MYSQL_RA_COMPAT="no"
 
 # Any option passed directly to mysqld on startup.
 #MYSQL_OPTIONS=""
+
+# Engine type for mysql database.
+# Possible values: MyISAM, InnoDB
+#BASE_TABLETYPE=MyISAM
