@@ -401,7 +401,7 @@ EOF
 	ok=0
 	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
 		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER < $MYSQL_DATA_DIR/mysql-init.sql && ok=1
-	[ -f $MYSQL_DATA_DIR/mysql/user.frm ] || ok=0
+	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
 	if [ "$ok" = 1 ]; then
 		rm -f $MYSQL_DATA_DIR/mysql-init.sql
 	    ok
