@@ -10,7 +10,11 @@
 #
 # ATTENTION: The mysqld.conf should be readable ONLY for *system* root!
 
-/var/log/mysql/log /var/log/mysql/error* /var/log/mysql/update* {
+/var/log/mysql/error*
+/var/log/mysql/log
+/var/log/mysql/mysql.err
+/var/log/mysql/update*
+{
 	olddir /var/log/archiv/mysql
 	notifempty
 	missingok
