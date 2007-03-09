@@ -21,8 +21,6 @@ else
 	exit 1
 fi
 
-[ -z "$BASE_TABLETYPE" ] && BASE_TABLETYPE="MyISAM"
-
 if [ -n "$MYSQL_DB_CLUSTERS" ]; then
 	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
 fi
