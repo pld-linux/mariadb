@@ -371,7 +371,7 @@ mysqlinit() {
 
 	cat > $MYSQL_DATA_DIR/mysql-init.sql <<-EOF
 		CREATE DATABASE mysql;
-		$(/usr/sbin/mysql_create_system_tables real)
+		$(/usr/sbin/mysql_create_system_tables real $MYSQL_DATA_DIR/mysql)
 EOF
 
 	ok=0
