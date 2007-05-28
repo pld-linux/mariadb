@@ -1,20 +1,11 @@
---- mysql-5.1.14-beta/client/mysql_upgrade.c	2006-12-13 12:10:17.331321518 +0200
-+++ mysql-5.1.17-beta/client/mysql_upgrade.c	2007-04-24 22:17:48.406948376 +0300
-@@ -40,7 +40,7 @@
- extern TYPELIB sql_protocol_typelib;
+--- mysql-5.1.18-beta/client/mysql_upgrade.c~	2007-05-29 01:42:34.215129171 +0300
++++ mysql-5.1.18-beta/client/mysql_upgrade.c	2007-05-29 01:45:02.148469038 +0300
+@@ -33,7 +33,7 @@
+ static char mysqlcheck_path[FN_REFLEN];
  
- static my_bool opt_force= 0, opt_verbose= 0, opt_compress= 0;
--static char *user= (char*) "root", *basedir= 0, *datadir= 0, *opt_password= 0;
-+static char *user= (char*) "mysql", *basedir= 0, *datadir= 0, *opt_password= 0;
- static char *current_host= 0;
- static char *opt_default_charset= 0, *opt_charsets_dir= 0;
- #ifdef HAVE_SMEM
-@@ -563,7 +563,7 @@
+ static my_bool opt_force, opt_verbose;
+-static char *opt_user= (char*)"root";
++static char *opt_user= (char*)"mysql";
  
-   /* Find mysqlcheck */
-   if (find_file(mysqlcheck_name, basedir, MYF(0), path, sizeof(path),
--                "bin", EXTRA_CLIENT_PATHS, NullS))
-+                "sbin", EXTRA_CLIENT_PATHS, NullS))
-   {
-      ret= 1;
-      fprintf(stderr,
+ static DYNAMIC_STRING ds_args;
+ 
