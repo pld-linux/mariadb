@@ -390,9 +390,9 @@ mysqlinit() {
 
 	cat > $MYSQL_DATA_DIR/mysql-init.sql <<-EOF
 		CREATE DATABASE mysql;
-		$(cat /usr/share/mysql/mysql_system_tables.sql)
 		use mysql;
-		$(sed -e "s,@@hostname,$hostname,g;s,'root','mysql',g" /usr/share/mysql/mysql_system_tables_data.sql)
+		$(cat /usr/share/mysql/mysql_system_tables.sql)
+		$(sed -e "s,@@hostname,'$hostname',g;s,'root','mysql',g" /usr/share/mysql/mysql_system_tables_data.sql)
 EOF
 
 	ok=0
