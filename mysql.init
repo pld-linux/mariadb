@@ -395,7 +395,9 @@ EOF
 
 	ok=0
 	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
-		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER < $MYSQL_DATA_DIR/mysql-init.sql && ok=1
+		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER < \
+		$MYSQL_DATA_DIR/mysql-init.sql 2>> /var/log/mysql/err && ok=1
+
 	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
 	if [ "$ok" = 1 ]; then
 		rm -f $MYSQL_DATA_DIR/mysql-init.sql
@@ -405,15 +407,15 @@ EOF
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
 This is done (after starting database; press enter when asked for password) with:
 
-/usr/bin/mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
-/usr/bin/mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
-/usr/bin/mysqladmin -u mysql_logrotate -S $MYSQL_SOCKET password 'password'
+mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
+mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
+mysqladmin -u mysql_logrotate -S $MYSQL_SOCKET password 'password'
 
 NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 
 If you want to use new help tables in MySQL 4.1.x then you'll need to import the help data:
-/usr/bin/mysql -u mysql -p -S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
+mysql -u mysql -p -S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
 
 END_OF_MSG
       else
@@ -428,10 +430,10 @@ also try to start the mysqld daemon with:
 
 /usr/sbin/mysqld --skip-grant &
 
-You can use the command line tool /usr/bin/mysql to connect to the mysql
+You can use the command line tool mysql to connect to the mysql
 database and look at the grant tables:
 
-shell> /usr/bin/mysql -u mysql mysql
+shell> mysql -u mysql mysql
 mysql> show tables
 
 Try 'mysqld --help' if you have problems with paths. Setting on
@@ -445,7 +447,7 @@ Please consult the MySQL manual section: 'Problems running
 mysql_install_db', and the manual section that describes problems on
 your OS.  Another information source is the MySQL email archive.
 Please check all of the above before mailing us!  And if you do mail
-us, you MUST use the /usr/bin/mysqlbug script!
+us, you MUST use the mysqlbug script!
 
 END_OF_MSG
 
