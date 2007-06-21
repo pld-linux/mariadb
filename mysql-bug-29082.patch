@@ -1,0 +1,16 @@
+--- mysql-5.0.41/scripts/mysqlhotcopy.sh~	2007-06-21 14:37:22.000000000 +0300
++++ mysql-5.0.41/scripts/mysqlhotcopy.sh	2007-06-21 14:37:24.924257114 +0300
+@@ -605,7 +605,12 @@
+ 	# add recursive option for scp
+ 	$cp.= " -r" if $^O =~ /m^(solaris|linux|freebsd|darwin)$/ && $method =~ /^scp\b/;
+ 
+-	my @non_raid = map { "'$_'" } grep { ! m:/$raid_dir_regex/[^/]+$: } @$files;
++	my @non_raid;
++	if (@$raid_dirs) {
++	    @non_raid = map { "'$_'" } grep { ! m:/$raid_dir_regex/[^/]+$: } @$files;
++	} else {
++	    @non_raid = @$files;
++	}
+ 
+ 	# add files to copy and the destination directory
+ 	safe_system( $cp, @non_raid, "'$target'" ) if (@non_raid);
