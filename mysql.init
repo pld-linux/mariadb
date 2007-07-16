@@ -242,14 +242,30 @@ mysqlstart() {
 	busy
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 	rm -f "$MYSQL_PIDFILE"
-	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} /usr/bin/setsid /usr/sbin/mysqld --defaults-file=$MYSQL_CONFIG --datadir=$MYSQL_DATA_DIR --pid-file=$MYSQL_PIDFILE $MYSQL_OPTIONS >> $MYSQL_ERRLOG 2>&1 &
-	sleep 0.2
+
+	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
+   		/usr/bin/setsid /usr/sbin/mysqld \
+			--defaults-file=$MYSQL_CONFIG \
+			--datadir=$MYSQL_DATA_DIR \
+			--pid-file=$MYSQL_PIDFILE $MYSQL_OPTIONS \
+		>> $MYSQL_ERRLOG 2>&1 &
+	pid=$!
+
+	sleep 0.1
 	mysqlstatus "$clusterdir" start
 	# it takes longer for mysqld to start and create pidfile if it has to recover innodb transactions
 	if [ "$MYSQL_STATUS" = "starting" ]; then
-		for nr in $(seq 1 $(($MYSQL_START_WAIT_TIME*10))); do
+		echo ""
+		show "Waiting for MySQL to start"
+		busy
+
+		# while the pid is running, mysql is starting up
+		# if the pidfile was created, it started up successfully
+		# if either case fails we break and report status
+		while true; do
+			[ -d /proc/$pid ] || break
 			[ -f "$MYSQL_PIDFILE" ] && break
-			sleep 0.1
+			sleep 0.2
 		done
 	fi
 
@@ -366,7 +382,7 @@ mysqlinit() {
 		exit 1
 	fi
 
-	mkdir -p "$MYSQL_DATA_DIR"
+	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	# Using mysql:mysql for MYSQL_CLUSTER_DIR is creating SECURITY hole, root:root is proper
 	chown root:root "$MYSQL_CLUSTER_DIR"
     chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
@@ -397,10 +413,11 @@ EOF
 
 	ok=0
 	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
-		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER < \
+		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
+		--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR < \
 		$MYSQL_DATA_DIR/mysql-init.sql 2>> /var/log/mysql/err && ok=1
-
 	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
+
 	if [ "$ok" = 1 ]; then
 		rm -f $MYSQL_DATA_DIR/mysql-init.sql
 	    ok
