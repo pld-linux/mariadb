@@ -349,7 +349,7 @@ mysqlinit() {
 		MYSQL_CONFIG="$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
 
-	nls "Initializing cluster %s" "$clusterdir"
+	show "Initializing cluster %s" "$clusterdir"; echo
 
 	# Check if not exist init database
 	if [ -d "$MYSQL_DATA_DIR/mysql" ]; then
