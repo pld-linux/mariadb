@@ -1,6 +1,6 @@
---- mysql-5.0.24/configure.in~	2006-08-07 01:15:28.845040985 +0300
-+++ mysql-5.0.24/configure.in	2006-08-07 02:06:21.203404560 +0300
-@@ -737,18 +737,20 @@
+--- mysql-5.1.21-beta/configure.in~	2007-08-29 19:00:29.000000000 +0300
++++ mysql-5.1.21-beta/configure.in	2007-08-29 19:00:35.000000000 +0300
+@@ -754,9 +754,9 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
@@ -10,11 +10,10 @@
 +AC_CHECK_FUNC(gethostbyname_r, [],
 +  [AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
 +     [AC_CHECK_LIB(nsl, gethostbyname_r)])])
+ AC_CHECK_LIB(mtmalloc, malloc)
  
  AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
--AC_CHECK_FUNC(yp_get_default_domain, ,
--  AC_CHECK_LIB(nsl, yp_get_default_domain))
- AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+@@ -766,7 +766,11 @@
  # This may get things to compile even if bind-8 is installed
  AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
@@ -22,11 +21,11 @@
 +save_LIBS="$LIBS"
 +AC_CHECK_LIB(crypt, crypt, [LIBS="-lcrypt $LIBS"; LIBCRYPT="-lcrypt"])
 +AC_SUBST(LIBCRYPT)
-+AC_CHECK_FUNC(crypt, AC_DEFINE([HAVE_CRYPT], [1], [crypt])) 
++AC_CHECK_FUNC(crypt, AC_DEFINE([HAVE_CRYPT], [1], [crypt]))
 +LIBS="$save_LIBS"
  
- # For sem_xxx functions on Solaris 2.6
- AC_CHECK_FUNC(sem_init, , AC_CHECK_LIB(posix4, sem_init))
+ # For the sched_yield() function on Solaris
+ AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield))
 --- mysql-5.0.21/libmysql_r/Makefile.am~	2006-05-02 16:55:15.179229923 +0300
 +++ mysql-5.0.21/libmysql_r/Makefile.am	2006-05-02 16:56:08.080408785 +0300
 @@ -32,7 +32,7 @@
@@ -38,15 +37,14 @@
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
  # This is called from the toplevel makefile
---- mysql-5.1.20-beta/sql/Makefile.am.org	2007-07-09 22:25:41.755403750 +0200
-+++ mysql-5.1.20-beta/sql/Makefile.am	2007-07-09 22:25:54.012712699 +0200
-@@ -38,7 +38,7 @@
+--- mysql-5.1.21-beta/sql/Makefile.am~	2007-08-29 18:58:33.000000000 +0300
++++ mysql-5.1.21-beta/sql/Makefile.am	2007-08-29 19:01:33.000000000 +0300
+@@ -43,7 +43,7 @@
  			@pstack_libs@ \
  			@mysql_plugin_libs@ \
  			$(LDADD)  $(CXXLDFLAGS) $(WRAPLIBS) @LIBDL@ \
--			$(yassl_libs) $(openssl_libs) \
-+			$(yassl_libs) $(openssl_libs) @LIBCRYPT@ \
- 			@MYSQLD_EXTRA_LIBS@
+-			$(yassl_libs) $(openssl_libs) @MYSQLD_EXTRA_LIBS@
++			$(yassl_libs) $(openssl_libs) @LIBCRYPT@ @MYSQLD_EXTRA_LIBS@
  
  noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
-
+ 			item_strfunc.h item_timefunc.h \
