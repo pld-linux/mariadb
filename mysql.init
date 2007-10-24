@@ -1,4 +1,5 @@
 #!/bin/sh
+# $Id$
 #
 # mysql         A very fast and reliable SQL database engine
 #
