@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 #
 # mysql         A very fast and reliable SQL database engine
 #
@@ -7,6 +6,8 @@
 #
 # description:  A very fast and reliable SQL database engine.
 #
+# $Id$
+
 # Source function library
 . /etc/rc.d/init.d/functions
 
