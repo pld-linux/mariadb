@@ -24,8 +24,8 @@ diff -ur mysql-5.1.22-rc.org/scripts/mysql_system_tables_data.sql mysql-5.1.22-r
 +INSERT INTO tmp_user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +REPLACE INTO tmp_user VALUES (@@hostname,'mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
-+INSERT INTO tmp_user VALUES ('localhost','mysql_logrotate','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES (@@hostname,'mysql_logrotate','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql_logrotate','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
++INSERT INTO tmp_user VALUES ('localhost','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
++REPLACE INTO tmp_user VALUES (@@hostname,'mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
++REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
  INSERT INTO user SELECT * FROM tmp_user WHERE @had_user_table=0;
  DROP TABLE tmp_user;
