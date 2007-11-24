@@ -291,7 +291,7 @@ mysqlstop() {
 	busy
 
 	# try graceful shutdown -- send shutdown command
-	# requires mysql_logrotate user proper privs
+	# requires mysql_sysadmin user proper privs
 	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown >/dev/null 2>&1
 	mysqlstatus "$clusterdir" stop
 
@@ -410,7 +410,7 @@ mysqlinit() {
 		CREATE DATABASE mysql;
 		use mysql;
 		$(cat /usr/share/mysql/mysql_system_tables.sql)
-		$(sed -e "s,@@hostname,'$hostname',g;s,'root','mysql',g" /usr/share/mysql/mysql_system_tables_data.sql)
+		$(sed -e "s,@@hostname,'$hostname',g" /usr/share/mysql/mysql_system_tables_data.sql)
 EOF
 
 	ok=0
@@ -430,10 +430,11 @@ This is done (after starting database; press enter when asked for password) with
 
 mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
 mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
-mysqladmin -u mysql_logrotate -S $MYSQL_SOCKET password 'password'
+mysqladmin -u mysql_sysadmin -S $MYSQL_SOCKET password 'password'
 
-NOTE: mysql_logrotate password should be placed to $MYSQL_CONFIG in
+NOTE: mysql_sysadmin password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
+(This user is used at logs rotation and server shutdown)
 
 If you want to use new help tables in MySQL 4.1.x then you'll need to import the help data:
 mysql -u mysql -p -S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
