@@ -1,0 +1,23 @@
+--- mysql-5.0/client/mysqldump.c	2008-01-11 15:43:27.000000000 +0100
++++ mysql-5.0/client//mysqldump.c	2008-01-31 12:40:02.093115455 +0100
+@@ -1687,10 +1687,16 @@
+ 
+       my_snprintf(buff, sizeof(buff), "show create table %s", result_table);
+ 
+-      if (switch_character_set_results(mysql, "binary") ||
+-          mysql_query_with_error_report(mysql, &result, buff) ||
+-          switch_character_set_results(mysql, default_charset))
+-        DBUG_RETURN(0);
++      if (switch_character_set_results(mysql, "binary"))
++	      if (opt_set_charset)
++		      DBUG_RETURN(0);
++
++      if (mysql_query_with_error_report(mysql, &result, buff))
++	      DBUG_RETURN(0);
++
++      if (switch_character_set_results(mysql, default_charset))
++	      if (opt_set_charset)
++		      DBUG_RETURN(0);
+ 
+       if (path)
+       {
