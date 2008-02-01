@@ -1,23 +1,58 @@
---- mysql-5.0/client/mysqldump.c	2008-01-11 15:43:27.000000000 +0100
-+++ mysql-5.0/client//mysqldump.c	2008-01-31 12:40:02.093115455 +0100
-@@ -1687,10 +1687,16 @@
+From: Chad&nbsp;MILLERDate: February 1 2008 5:53pm
+Subject: bk commit into 5.0 tree (cmiller:1.2572) BUG#34192
+
+Below is the list of changes that have just been committed into a local
+5.0 repository of cmiller.  When cmiller does a push these changes
+will be propagated to the main repository and, within 24 hours after the
+push, to the public repository.
+For information on how to access the public repository
+see http://dev.mysql.com/doc/mysql/en/installing-source-tree.html
+
+ChangeSet@stripped, 2008-02-01 11:53:48-05:00, cmiller@stripped +1 -0
+  Bug#34192: mysqldump from mysql 5.0.51 silently fails on dumping \
+  	databases from 4.0 server
+  
+  Contribution from Arkadiusz Miskiewicz.  No CLA required for this size.
+  
+  mysqldump treated a failure to set the results charset as a severe
+  error.  
+  
+  Now, don't try to set the charset for the SHOW CREATE TABLE statement,
+  if the dumper doesn't want SET NAMES or the remote server doesn't 
+  support changing charsets.
+  
+  (The original patch tried to set the charset to binary and back in 
+  any case, and only exited-with-failure if the dumper wanted it and
+  the remote server supported it.)
+
+  client/mysqldump.c@stripped, 2008-02-01 11:53:46-05:00, cmiller@stripped +13 -3
+    Don't set the charset for receiving results if it's not wanted or if
+    the server doesn't support it.
+
+diff -Nrup a/client/mysqldump.c b/client/mysqldump.c
+--- a/client/mysqldump.c	2007-12-04 22:07:00 -05:00
++++ b/client/mysqldump.c	2008-02-01 11:53:46 -05:00
+@@ -1705,10 +1705,20 @@ static uint get_table_structure(char *ta
  
        my_snprintf(buff, sizeof(buff), "show create table %s", result_table);
  
 -      if (switch_character_set_results(mysql, "binary") ||
 -          mysql_query_with_error_report(mysql, &result, buff) ||
 -          switch_character_set_results(mysql, default_charset))
--        DBUG_RETURN(0);
-+      if (switch_character_set_results(mysql, "binary"))
-+	      if (opt_set_charset)
-+		      DBUG_RETURN(0);
++      if (opt_set_charset)  /* Was forced to false if server is too old. */
++      {
++        if (switch_character_set_results(mysql, "binary") != 0)
++          DBUG_RETURN(0);
++      }
 +
-+      if (mysql_query_with_error_report(mysql, &result, buff))
-+	      DBUG_RETURN(0);
++      if (mysql_query_with_error_report(mysql, &result, buff) != 0)
+         DBUG_RETURN(0);
 +
-+      if (switch_character_set_results(mysql, default_charset))
-+	      if (opt_set_charset)
-+		      DBUG_RETURN(0);
++      if (opt_set_charset)  /* Was forced to false if server is too old. */
++      {
++        if (switch_character_set_results(mysql, default_charset) != 0)
++          DBUG_RETURN(0);
++      }
  
        if (path)
        {
