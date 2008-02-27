@@ -1,6 +1,6 @@
 --- mysql-5.1.21-beta/configure.in~	2007-08-29 19:00:29.000000000 +0300
 +++ mysql-5.1.21-beta/configure.in	2007-08-29 19:00:35.000000000 +0300
-@@ -754,9 +754,9 @@
+@@ -787,9 +787,9 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
@@ -9,11 +9,11 @@
 -AC_CHECK_FUNC(gethostbyname_r)
 +AC_CHECK_FUNC(gethostbyname_r, [],
 +  [AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
-+     [AC_CHECK_LIB(nsl, gethostbyname_r)])])
- AC_CHECK_LIB(mtmalloc, malloc)
++    [AC_CHECK_LIB(nsl, gethostbyname_r)])])
  
  AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
-@@ -766,7 +766,11 @@
+ AC_CHECK_FUNC(yp_get_default_domain, ,
+@@ -798,7 +798,11 @@
  # This may get things to compile even if bind-8 is installed
  AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
@@ -28,15 +28,15 @@
  AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield))
 --- mysql-5.0.21/libmysql_r/Makefile.am~	2006-05-02 16:55:15.179229923 +0300
 +++ mysql-5.0.21/libmysql_r/Makefile.am	2006-05-02 16:56:08.080408785 +0300
-@@ -32,7 +32,7 @@
- libmysql_dir = $(top_srcdir)/libmysql
+@@ -30,7 +30,7 @@
+ include $(top_srcdir)/libmysql/Makefile.shared
  
- libmysqlclient_r_la_SOURCES = $(target_sources)
+ nodist_libmysqlclient_r_la_SOURCES = $(target_sources)
 -libmysqlclient_r_la_LIBADD = $(target_libadd) $(yassl_las)
 +libmysqlclient_r_la_LIBADD = $(target_libadd) $(yassl_las) -lpthread
  libmysqlclient_r_la_LDFLAGS = $(target_ldflags)
  
- # This is called from the toplevel makefile
+ link_sources:
 --- mysql-5.1.21-beta/sql/Makefile.am~	2007-08-29 18:58:33.000000000 +0300
 +++ mysql-5.1.21-beta/sql/Makefile.am	2007-08-29 19:01:33.000000000 +0300
 @@ -43,7 +43,7 @@

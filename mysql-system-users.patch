@@ -1,10 +1,11 @@
 diff -ur mysql-5.1.22-rc.org/scripts/mysql_system_tables_data.sql mysql-5.1.22-rc/scripts/mysql_system_tables_data.sql
 --- mysql-5.1.22-rc.org/scripts/mysql_system_tables_data.sql	2007-09-24 12:29:43.000000000 +0200
 +++ mysql-5.1.22-rc/scripts/mysql_system_tables_data.sql	2007-11-24 20:22:08.360937978 +0100
-@@ -2,20 +2,14 @@
- -- The inital data for system tables of MySQL Server
- --
+@@ -7,23 +7,16 @@
+ -- containing "@current_hostname" are filtered out by mysql_install_db.
+ set @current_hostname= @@hostname;
  
+-
 --- Fill "db" table with default grants for anyone to
 --- access database 'test' and 'test_%' if "db" table didn't exist
 -CREATE TEMPORARY TABLE tmp_db LIKE db;
@@ -14,18 +15,20 @@ diff -ur mysql-5.1.22-rc.org/scripts/mysql_system_tables_data.sql mysql-5.1.22-r
 -DROP TABLE tmp_db;
 -
 -
---- Fill "users" table with default users allowing root access
-+-- Fill "users" table with default users allowing mysql access
+ -- Fill "users" table with default users allowing root access
  -- from local machine if "users" table didn't exist before
  CREATE TEMPORARY TABLE tmp_user LIKE user;
+ set @current_hostname= @@hostname;
 -INSERT INTO tmp_user VALUES ('localhost','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
--REPLACE INTO tmp_user VALUES (@@hostname,'root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
+-REPLACE INTO tmp_user VALUES (@current_hostname,'root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 -REPLACE INTO tmp_user VALUES ('127.0.0.1','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +INSERT INTO tmp_user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES (@@hostname,'mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
++REPLACE INTO tmp_user VALUES (@current_hostname,'mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +INSERT INTO tmp_user VALUES ('localhost','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES (@@hostname,'mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
++REPLACE INTO tmp_user VALUES (@current_hostname,'mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
 +REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
+ INSERT INTO tmp_user (host,user) VALUES ('localhost','');
+ INSERT INTO tmp_user (host,user) VALUES (@current_hostname,'');
  INSERT INTO user SELECT * FROM tmp_user WHERE @had_user_table=0;
- DROP TABLE tmp_user;
+
