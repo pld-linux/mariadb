@@ -10,6 +10,18 @@
 # - Using NDB Cluster... could not find sci transporter in /{include, lib}
 # - unpackaged:
 #   /usr/share/man/man1/mysql_tableinfo.1.gz
+#   /usr/lib/libmysqlclient.so.16
+#   /usr/lib/libmysqlclient_r.so.16
+#   /usr/lib/libndbclient.so.3
+#   /usr/lib/mysql/ha_blackhole.so
+#   /usr/lib/mysql/ha_blackhole.so.0
+#   /usr/lib/mysql/ha_example.so
+#   /usr/lib/mysql/ha_example.so.0
+#   /usr/sbin/ndb_mgmd
+#   /usr/share/man/man1/mysql_tableinfo.1.gz
+#   /usr/share/man/man1/mysqlbug.1.gz
+#   /usr/share/man/man8/ndb_mgmd.8.gz
+#   /usr/share/man/man8/ndbd.8.gz
 #
 # Conditional build:
 %bcond_without	innodb		# InnoDB storage engine support
@@ -37,7 +49,7 @@ Release:	0.1
 License:	GPL + MySQL FLOSS Exception
 Group:		Applications/Databases
 Source0:	http://mysql.tonnikala.org/Downloads/MySQL-5.1/mysql-%{version}-maria-alpha.tar.gz
-# Source0-md5:	d6ca3009eee24a8e396b8f667b3bd8df
+# Source0-md5:	d6b71f9b838090fc940ef2458b92d6ae
 Source100:	http://www.sphinxsearch.com/downloads/sphinx-0.9.7.tar.gz
 # Source100-md5:	32f2b7e98d8485c86108851d52c5cef4
 Source1:	mysql.init
@@ -52,7 +64,7 @@ Source10:	mysql-ndb-mgm.sysconfig
 Source11:	mysql-ndb-cpc.init
 Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
-Patch0:		mysql-libs.patch
+Patch0:		%{name}-libs.patch
 Patch1:		mysql-libwrap.patch
 Patch2:		mysql-c++.patch
 Patch3:		mysql-info.patch
@@ -452,7 +464,7 @@ Ten pakiet zawiera standardowego demona MySQL NDB CPC.
 %if %{with sphinx}
 mv sphinx-*/mysqlse storage/sphinx
 %endif
-#%patch0 -p1
+%patch0 -p1
 #%{?with_tcpd:%patch1 -p1}  # WHATS PURPOSE OF THIS PATCH?
 #%patch2 -p1 # NEEDS CHECK, which exact program needs -lc++
 %patch3 -p1
@@ -882,7 +894,7 @@ fi
 %attr(755,root,root) %{_sbindir}/ndbd
 %attr(754,root,root) /etc/rc.d/init.d/mysql-ndb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb
-%{_mandir}/man1/ndbd.1*
+#%{_mandir}/man1/ndbd.1*
 %{_mandir}/man1/ndbd_redo_log_reader.1*
 
 %files ndb-client
@@ -923,10 +935,10 @@ fi
 
 %files ndb-mgm
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_sbindir}/ndb_mgmd
+#%attr(755,root,root) %{_sbindir}/ndb_mgmd
 %attr(754,root,root) /etc/rc.d/init.d/mysql-ndb-mgm
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb-mgm
-%{_mandir}/man1/ndb_mgmd.1*
+#%{_mandir}/man1/ndb_mgmd.1*
 
 %files ndb-cpc
 %defattr(644,root,root,755)
