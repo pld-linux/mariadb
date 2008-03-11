@@ -22,3 +22,7 @@ MYSQL_RA_COMPAT="no"
 
 # Any option passed directly to mysqld on startup.
 #MYSQL_OPTIONS=""
+#MYSQL_OPTIONS="--open-files-limit=65535" 
+
+# fd limit increase
+#SERVICE_LIMITS="$DEFAULT_SERVICE_LIMITS -n 65535"
