@@ -367,6 +367,7 @@ mysqlinit() {
 
 	# Install this in the user table, too
 	hostname="`hostname --fqdn 2> /dev/null | tr -d '[:space:]'`"
+	[ "$hostname" = "localhost" -o -z "$hostname" ] && hostname="`hostname 2> /dev/null | tr -d '[:space:]'`"
 	[ -z "$hostname" ] && hostname="localhost-unknown"
 
 	# Check if hostname is valid
