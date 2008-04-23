@@ -13,7 +13,7 @@
  
  AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
  AC_CHECK_FUNC(yp_get_default_domain, ,
-@@ -798,7 +798,11 @@
+@@ -846,7 +846,11 @@
  # This may get things to compile even if bind-8 is installed
  AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
@@ -23,9 +23,9 @@
 +AC_SUBST(LIBCRYPT)
 +AC_CHECK_FUNC(crypt, AC_DEFINE([HAVE_CRYPT], [1], [crypt]))
 +LIBS="$save_LIBS"
+ # See if we need a library for address lookup.
+ AC_SEARCH_LIBS(inet_aton, [socket nsl resolv])
  
- # For the sched_yield() function on Solaris
- AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield))
 --- mysql-5.1.21-beta/sql/Makefile.am~	2007-08-29 18:58:33.000000000 +0300
 +++ mysql-5.1.21-beta/sql/Makefile.am	2007-08-29 19:01:33.000000000 +0300
 @@ -43,7 +43,7 @@
