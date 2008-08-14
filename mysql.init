@@ -539,11 +539,12 @@ case "$action" in
 			running="$running $pid"
 		fi
 	done
-	if [ "$running" ]; then
+
+	if [ $# -gt 1 -a "$running" ]; then
 		nls "Warning: MySQL Daemon processes not under clusters.conf control:"
 		# see if we can display their status
 		for pid in $running; do
-			datadir=$(cat /proc/14165/cmdline | tr '\0' '\n' | fgrep -- --datadir=)
+			datadir=$(cat /proc/$pid/cmdline | tr '\0' '\n' | fgrep -- --datadir=)
 			datadir=${datadir#--datadir=} # strip --datadir
 			mysqldir=${datadir%/mysqldb/db} # strip /mysqldb/db
 			mysqlstatus "$mysqldir"
