@@ -1,6 +1,6 @@
 --- mysql-5.1.21-beta/configure.in~	2007-08-29 19:00:29.000000000 +0300
 +++ mysql-5.1.21-beta/configure.in	2007-08-29 19:00:35.000000000 +0300
-@@ -787,9 +787,9 @@
+@@ -839,18 +839,20 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
@@ -12,8 +12,9 @@
 +    [AC_CHECK_LIB(nsl, gethostbyname_r)])])
  
  AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
- AC_CHECK_FUNC(yp_get_default_domain, ,
-@@ -846,7 +846,11 @@
+-AC_CHECK_FUNC(yp_get_default_domain, ,
+-  AC_CHECK_LIB(nsl, yp_get_default_domain))
+ AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
  # This may get things to compile even if bind-8 is installed
  AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
@@ -37,3 +38,19 @@
  
  noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
  			item_strfunc.h item_timefunc.h \
+--- mysql-5.1.26-rc/config/ac-macros/ssl.m4.orig	2008-07-01 00:35:01.000000000 +0200
++++ mysql-5.1.26-rc/config/ac-macros/ssl.m4	2008-08-25 19:53:00.258254465 +0200
+@@ -102,7 +102,12 @@
+   #
+   # Try to link with openSSL libs in <location>
+   #
+-  openssl_libs="-L$location/lib/ -lssl -lcrypto"
++  if test "$location" != "/usr"
++  then
++  openssl_libs="-L$location/lib -lssl -lcrypto"
++  else
++  openssl_libs="-lssl -lcrypto"
++  fi
+   MYSQL_CHECK_SSL_DIR([$openssl_includes], [$openssl_libs])
+ 
+   if test "$mysql_ssl_found" == "no"
