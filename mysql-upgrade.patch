@@ -1,5 +1,5 @@
---- mysql-5.1.22-rc/client/mysql_upgrade.c	2007-09-24 13:30:24.000000000 +0300
-+++ mysql-5.1.22-rc-upgrade/client/mysql_upgrade.c	2008-01-12 17:28:56.945615880 +0200
+--- mysql-5.1.28-rc/client/mysql_upgrade.c~	2008-09-14 23:53:11.000000000 +0300
++++ mysql-5.1.28-rc/client/mysql_upgrade.c	2008-09-15 00:02:34.047520349 +0300
 @@ -31,12 +31,12 @@
  # endif
  #endif
@@ -16,15 +16,15 @@
  
  static DYNAMIC_STRING ds_args;
  
-@@ -758,12 +673,6 @@
+@@ -761,12 +761,6 @@
    dynstr_append_os_quoted(&ds_args, "--user=", opt_user, NullS);
    dynstr_append(&ds_args, " ");
  
 -  /* Find mysql */
--  find_tool(mysql_path, IF_WIN("mysql.exe", "mysql"));
+-  find_tool(mysql_path, IF_WIN("mysql.exe", "mysql"), self_name);
 -
 -  /* Find mysqlcheck */
--  find_tool(mysqlcheck_path, IF_WIN("mysqlcheck.exe", "mysqlcheck"));
+-  find_tool(mysqlcheck_path, IF_WIN("mysqlcheck.exe", "mysqlcheck"), self_name);
 -
    /*
      Read the mysql_upgrade_info file to check if mysql_upgrade
