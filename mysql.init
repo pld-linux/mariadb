@@ -431,7 +431,7 @@ This is done (after starting database; press enter when asked for password) with
 
 mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
 mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
-mysqladmin -u mysql_sysadmin -S $MYSQL_SOCKET password 'password'
+echo "set password=password('newpassword');" | mysql -u mysql_sysadmin -S $MYSQL_SOCKET
 
 NOTE: mysql_sysadmin password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
