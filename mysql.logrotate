@@ -13,6 +13,7 @@
 /var/log/mysql/err*
 /var/log/mysql/log
 /var/log/mysql/mysql.err
+/var/log/mysql/slow
 /var/log/mysql/update*
 {
 	olddir /var/log/archive/mysql
