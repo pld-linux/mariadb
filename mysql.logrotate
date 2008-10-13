@@ -10,7 +10,6 @@
 #
 # ATTENTION: The mysqld.conf should be readable ONLY for *system* root!
 
-/var/log/mysql/err*
 /var/log/mysql/log
 /var/log/mysql/mysql.err
 /var/log/mysql/slow
