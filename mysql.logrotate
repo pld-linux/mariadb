@@ -1,14 +1,15 @@
-# If the *mysql* root user has a password you have to set it in mysqld.conf
+# This section is used from mysqld.conf for logrotation.
+# Be sure that the password in config matches the actual one.
+#
+# ATTENTION: The mysqld.conf should be readable ONLY for *system* root!
 #
 # [mysqladmin]
-# user = mysql_logrotate
+# user = mysql_sysadmin
 # password = <secret>
 #
 # where "<secret>" is the password.
 #
-# You must do this for every cluster defined in /etc/mysql/clusters.conf
-#
-# ATTENTION: The mysqld.conf should be readable ONLY for *system* root!
+# You must do this for every active cluster defined in /etc/mysql/clusters.conf
 
 /var/log/mysql/log
 /var/log/mysql/mysql.err
