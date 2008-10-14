@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# mysql         A very fast and reliable SQL database engine
+# mysql		A very fast and reliable SQL database engine
 #
-# chkconfig:    2345 84 25
+# chkconfig:	2345 84 25
 #
 # description:  A very fast and reliable SQL database engine.
 #
@@ -246,7 +246,7 @@ mysqlstart() {
 	rm -f "$MYSQL_PIDFILE"
 
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
-   		/usr/bin/setsid /usr/sbin/mysqld \
+		/usr/bin/setsid /usr/sbin/mysqld \
 			--defaults-file=$MYSQL_CONFIG \
 			--datadir=$MYSQL_DATA_DIR \
 			--pid-file=$MYSQL_PIDFILE $MYSQL_OPTIONS \
@@ -508,6 +508,16 @@ stop() {
 	mysqlsubsys
 }
 
+condrestart() {
+	if [ -f /var/lock/subsys/mysql ]; then
+		stop
+		start
+	else
+		msg_not_running "MySQL"
+		RETVAL=$1
+	fi
+}
+
 RETVAL=0
 case "$action" in
   start)
@@ -515,6 +525,16 @@ case "$action" in
 	;;
   stop)
   	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  try-restart)
+	condrestart 0
+	;;
+  force-reload)
+	condrestart 7
 	;;
   status)
 	for mysqldir in $DB_CLUSTERS; do
@@ -555,10 +575,6 @@ case "$action" in
 		done
 	fi
 	;;
-  restart|force-reload)
-	stop
-	start
-	;;
   init)
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlinit "$mysqldir"
@@ -575,7 +591,7 @@ case "$action" in
 	done
 	;;
   *)
-	msg_usage "$0 {start|stop|init|restart|force-reload|status}"
+	msg_usage "$0 {start|stop|init|restart|try-restart|force-reload|status}"
 	exit 3
 esac
 
