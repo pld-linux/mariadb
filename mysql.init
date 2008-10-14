@@ -361,34 +361,14 @@ mysqlinit() {
 		return
 	fi
 
-	show "Creating privilege mysql tables for $MYSQL_DATA_DIR"
+	show "Installing MySQL system tables for $MYSQL_DATA_DIR"
 	busy
 	TMP=/tmp TMPDIR=/tmp
-
-	# Install this in the user table, too
-	hostname="`hostname --fqdn 2> /dev/null | tr -d '[:space:]'`"
-	[ "$hostname" = "localhost" -o -z "$hostname" ] && hostname="`hostname 2> /dev/null | tr -d '[:space:]'`"
-	[ -z "$hostname" ] && hostname="localhost-unknown"
-
-	# Check if hostname is valid
-	if [ -z "$hostname" ]; then
-		deltext
-		fail
-		nls "Sorry, the host name is not configured."
-		nls "Please configure the 'hostname' command to return a hostname."
-		exit 1
-	elif ! hostname -i >/dev/null 2>&1; then
-		deltext
-		fail
-		nls "Sorry, the host '%s' could not be looked up." "$hostname"
-		nls "Please configure the 'hostname' command to return a correct hostname."
-		exit 1
-	fi
 
 	mkdir -p "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	# Using mysql:mysql for MYSQL_CLUSTER_DIR is creating SECURITY hole, root:root is proper
 	chown root:root "$MYSQL_CLUSTER_DIR"
-    chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
+	chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
 	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
@@ -411,7 +391,7 @@ mysqlinit() {
 		CREATE DATABASE mysql;
 		use mysql;
 		$(cat /usr/share/mysql/mysql_system_tables.sql)
-		$(sed -e "s,@@hostname,'$hostname',g" /usr/share/mysql/mysql_system_tables_data.sql)
+		$(sed -e "/@current_hostname/d" /usr/share/mysql/mysql_system_tables_data.sql)
 EOF
 
 	ok=0
@@ -423,27 +403,44 @@ EOF
 
 	if [ "$ok" = 1 ]; then
 		rm -f $MYSQL_DATA_DIR/mysql-init.sql
-	    ok
-	cat << END_OF_MSG
+		ok
+		cat << END_OF_MSG
 
 PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
-This is done (after starting database; press enter when asked for password) with:
+This is done, after starting database, in the order shown,
+with:
 
-mysqladmin -u mysql -S $MYSQL_SOCKET password 'password'
-mysqladmin -h $hostname -u mysql -S $MYSQL_SOCKET password 'password'
-echo "set password=password('newpassword');" | mysql -u mysql_sysadmin -S $MYSQL_SOCKET
+For 'mysql_sysadmin' (RELOAD and SHUTDOWN privileges):
+echo "update mysql.user set password=password('newpassword') where user='mysql_sysadmin'; FLUSH PRIVILEGES;" | mysql -u mysql -S $MYSQL_SOCKET
+
+For 'mysql' user (ALL privileges, DB admin):
+echo "update mysql.user set password=password('newpassword') where user='mysql'; FLUSH PRIVILEGES;" | mysql -u mysql -S $MYSQL_SOCKET
 
 NOTE: mysql_sysadmin password should be placed to $MYSQL_CONFIG in
 mysqladmin section. See the manual for more instructions.
 (This user is used at logs rotation and server shutdown)
 
-If you want to use new help tables in MySQL 4.1.x then you'll need to import the help data:
-mysql -u mysql -p -S $MYSQL_SOCKET mysql < /usr/share/mysql/fill_help_tables.sql
+END_OF_MSG
+		show "Filling help tables..."
+		ok=0
+		( echo "use mysql;"; cat /usr/share/mysql/fill_help_tables.sql ) | \
+			/usr/sbin/mysqld --bootstrap --skip-grant-tables \
+			--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
+			--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR < \
+			$MYSQL_DATA_DIR/mysql-init.sql 2>> /var/log/mysql/err && ok=1
+		if [ "$ok" = 1 ]; then
+			ok
+		else
+			cat << END_OF_MSG
+
+WARNING: HELP FILES ARE NOT COMPLETELY INSTALLED!
+The "HELP" command might not work properly.
 
 END_OF_MSG
-      else
-	    fail
-	    cat << END_OF_MSG
+		fi
+	else
+		fail
+		cat << END_OF_MSG
 Installation of grant tables FAILED!
 
 The initialization SQL script was preserved at $MYSQL_DATA_DIR/mysql-init.sql
@@ -473,8 +470,7 @@ Please check all of the above before mailing us!  And if you do mail
 us, you MUST use the mysqlbug script!
 
 END_OF_MSG
-
-	exit 1
+		exit 1
 	fi
 }
 
