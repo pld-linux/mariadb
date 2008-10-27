@@ -11,9 +11,9 @@
 #
 # You must do this for every active cluster defined in /etc/mysql/clusters.conf
 
-/var/log/mysql/log
-/var/log/mysql/mysql.err
-/var/log/mysql/slow
+/var/log/mysql/query.log
+/var/log/mysql/mysqld.log
+/var/log/mysql/slow.log
 /var/log/mysql/update*
 {
 	olddir /var/log/archive/mysql
