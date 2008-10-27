@@ -20,15 +20,15 @@ diff -ur mysql-5.1.22-rc.org/scripts/mysql_system_tables_data.sql mysql-5.1.22-r
  CREATE TEMPORARY TABLE tmp_user LIKE user;
  set @current_hostname= @@hostname;
 -INSERT INTO tmp_user VALUES ('localhost','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
--REPLACE INTO tmp_user VALUES (@current_hostname,'root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
+-REPLACE INTO tmp_user SELECT @current_hostname,'root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0 FROM dual WHERE LOWER( @current_hostname) != 'localhost';
 -REPLACE INTO tmp_user VALUES ('127.0.0.1','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +INSERT INTO tmp_user VALUES ('localhost','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES (@current_hostname,'mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
++REPLACE INTO tmp_user SELECT @current_hostname,'mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0 FROM dual WHERE LOWER( @current_hostname) != 'localhost';
 +REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql','','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','','','','',0,0,0,0);
 +INSERT INTO tmp_user VALUES ('localhost','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
-+REPLACE INTO tmp_user VALUES (@current_hostname,'mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
++REPLACE INTO tmp_user SELECT @current_hostname,'mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0 FROM dual WHERE LOWER( @current_hostname) != 'localhost';
 +REPLACE INTO tmp_user VALUES ('127.0.0.1','mysql_sysadmin','','N','N','N','N','N','N','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','','','','',0,0,0,0);
  INSERT INTO tmp_user (host,user) VALUES ('localhost','');
- INSERT INTO tmp_user (host,user) VALUES (@current_hostname,'');
+ INSERT INTO tmp_user (host,user) SELECT @current_hostname,'' FROM dual WHERE LOWER(@current_hostname ) != 'localhost';
  INSERT INTO user SELECT * FROM tmp_user WHERE @had_user_table=0;
 
