@@ -402,8 +402,8 @@ EOF
 	ok=0
 	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
 		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
-		--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR < \
-		$MYSQL_DATA_DIR/mysql-init.sql 2>> /var/log/mysql/err && ok=1
+		--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR --log-error=$MYSQL_ERRLOG \
+		< $MYSQL_DATA_DIR/mysql-init.sql && ok=1
 	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
 
 	if [ "$ok" = 1 ]; then
@@ -431,8 +431,8 @@ END_OF_MSG
 		( echo "use mysql;"; cat /usr/share/mysql/fill_help_tables.sql ) | \
 			/usr/sbin/mysqld --bootstrap --skip-grant-tables \
 			--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
-			--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR \
-			2>> /var/log/mysql/err && ok=1
+			--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR --log-error=$MYSQL_ERRLOG \
+			&& ok=1
 		if [ "$ok" = 1 ]; then
 			ok
 		else
