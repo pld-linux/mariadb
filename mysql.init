@@ -79,8 +79,8 @@ else
 	DB_CLUSTERS="$MYSQL_DB_CLUSTERS"
 fi
 
-MYSQL_ERRLOG=/var/log/mysql/err
-MYSQL_START_WAIT_TIME=${MYSQL_START_WAIT_TIME:-15}
+# global error log, if mysqld.conf hasn't migrated to log-error style
+MYSQL_ERRLOG=/var/log/mysql/mysqld.log
 MYSQL_STOP_WAIT_TIME=${MYSQL_STOP_WAIT_TIME:-900}
 
 #
@@ -245,12 +245,17 @@ mysqlstart() {
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 	rm -f "$MYSQL_PIDFILE"
 
+	if [ "$(grep -c ^log-error $MYSQL_CONFIG)" -lt 1 ]; then
+		# error log not defined in config file. add one
+		MYSQL_OPTIONS="$MYSQL_OPTIONS --log-error=$MYSQL_ERRLOG"
+	fi
+
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
 		/usr/bin/setsid /usr/sbin/mysqld \
 			--defaults-file=$MYSQL_CONFIG \
 			--datadir=$MYSQL_DATA_DIR \
-			--pid-file=$MYSQL_PIDFILE $MYSQL_OPTIONS \
-		>> $MYSQL_ERRLOG 2>&1 &
+			--pid-file=$MYSQL_PIDFILE \
+			$MYSQL_OPTIONS &
 	pid=$!
 
 	sleep 0.1
@@ -479,12 +484,6 @@ END_OF_MSG
 #
 
 start() {
-	if [ ! -f $MYSQL_ERRLOG ]; then
-		touch $MYSQL_ERRLOG
-	fi
-	chown mysql:mysql $MYSQL_ERRLOG
-	chmod 640 $MYSQL_ERRLOG
-
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir" start
 		if [ "$MYSQL_STATUS" = "running" ]; then
