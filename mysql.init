@@ -400,9 +400,15 @@ mysqlinit() {
 EOF
 
 	ok=0
-	/usr/sbin/mysqld --bootstrap --skip-grant-tables \
-		--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
-		--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR --log-error=$MYSQL_ERRLOG \
+	/usr/sbin/mysqld \
+		--defaults-file=$MYSQL_CLUSTER_DIR/mysqld.conf \
+		--bootstrap \
+		--skip-grant-tables \
+		--datadir=$MYSQL_DATA_DIR \
+		--user=$MYSQL_USER \
+		--slave-load-tmpdir=$MYSQL_DATA_DIR \
+		--tmpdir=$MYSQL_DATA_DIR \
+		--log-error=$MYSQL_ERRLOG \
 		< $MYSQL_DATA_DIR/mysql-init.sql && ok=1
 	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
 
