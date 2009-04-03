@@ -1,24 +1,21 @@
 --- mysql-5.1.21-beta/configure.in~	2007-08-29 19:00:29.000000000 +0300
 +++ mysql-5.1.21-beta/configure.in	2007-08-29 19:00:35.000000000 +0300
-@@ -839,18 +839,20 @@
+@@ -836,8 +836,9 @@
  
  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
  
 -AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
 -  AC_CHECK_LIB(nsl, gethostbyname_r))
--AC_CHECK_FUNC(gethostbyname_r)
-+AC_CHECK_FUNC(gethostbyname_r, [],
-+  [AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
-+    [AC_CHECK_LIB(nsl, gethostbyname_r)])])
++AC_CHECK_FUNC(gethostbyname_r, [], [
++ AC_CHECK_LIB(nsl_r, gethostbyname_r, [],
++  AC_CHECK_LIB(nsl, gethostbyname_r)) ])
+ AC_CHECK_FUNC(gethostbyname_r)
  
- AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
--AC_CHECK_FUNC(yp_get_default_domain, ,
--  AC_CHECK_LIB(nsl, yp_get_default_domain))
- AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
- # This may get things to compile even if bind-8 is installed
- AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+ AC_SEARCH_LIBS(setsockopt, socket)
+@@ -845,6 +846,11 @@
+ AC_SEARCH_LIBS(bind, bind)
  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
--AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
+ AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 +save_LIBS="$LIBS"
 +AC_CHECK_LIB(crypt, crypt, [LIBS="-lcrypt $LIBS"; LIBCRYPT="-lcrypt"])
 +AC_SUBST(LIBCRYPT)
