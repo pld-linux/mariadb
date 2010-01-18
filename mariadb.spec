@@ -33,6 +33,7 @@
 %bcond_with	autodeps	# BR packages needed only for resolving deps
 %bcond_with	sphinx		# Sphinx storage engine support
 %bcond_with	tests		# FIXME: don't run correctly
+%bcond_with	ndb
 #
 %include	/usr/lib/rpm/macros.perl
 Summary:	MySQL Maria Engine Preview
@@ -43,13 +44,13 @@ Summary(pt_BR.UTF-8):	MySQL: Um servidor SQL rápido e confiável
 Summary(ru.UTF-8):	MySQL - быстрый SQL-сервер
 Summary(uk.UTF-8):	MySQL - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MySQL数据库服务器
-Name:		mysql-maria
-Version:	5.1.23a
+Name:		mariadb
+Version:	5.1.41
 Release:	0.1
 License:	GPL + MySQL FLOSS Exception
 Group:		Applications/Databases
-Source0:	http://mysql.tonnikala.org/Downloads/MySQL-5.1/mysql-%{version}-maria-alpha.tar.gz
-# Source0-md5:	d6b71f9b838090fc940ef2458b92d6ae
+Source0:	http://launchpad.net/maria/5.1/ongoing/+download/%{name}-%{version}-rc.tar.gz
+# Source0-md5:	e3888c0e974155924c2d66712d6d7d59
 Source100:	http://www.sphinxsearch.com/downloads/sphinx-0.9.7.tar.gz
 # Source100-md5:	32f2b7e98d8485c86108851d52c5cef4
 Source1:	mysql.init
@@ -64,7 +65,7 @@ Source10:	mysql-ndb-mgm.sysconfig
 Source11:	mysql-ndb-cpc.init
 Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
-Patch0:		%{name}-libs.patch
+Patch0:		mysql-maria-libs.patch
 Patch1:		mysql-libwrap.patch
 Patch2:		mysql-c++.patch
 Patch3:		mysql-info.patch
@@ -78,7 +79,7 @@ Patch10:	mysql-alpha.patch
 Patch11:	mysql-upgrade.patch
 #Patch12: mysql-NDB_CXXFLAGS.patch
 #Patch14: mysql-bug-18156.patch
-Patch16:	mysql-bug-29082.patch
+#Patch16:	mysql-bug-29082.patch
 URL:		http://www.mysql.com/products/database/mysql/community_edition.html
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -460,14 +461,14 @@ This package contains the standard MySQL NDB CPC Daemon.
 Ten pakiet zawiera standardowego demona MySQL NDB CPC.
 
 %prep
-%setup -q -n mysql-%{version}-maria-alpha %{?with_sphinx:-a100}
+%setup -q -n %{name}-%{version}-rc %{?with_sphinx:-a100}
 %if %{with sphinx}
 mv sphinx-*/mysqlse storage/sphinx
 %endif
 %patch0 -p1
 #%{?with_tcpd:%patch1 -p1}  # WHATS PURPOSE OF THIS PATCH?
 #%patch2 -p1 # NEEDS CHECK, which exact program needs -lc++
-%patch3 -p1
+#%patch3 -p1 # NEEDS UPDATE
 %ifarch alpha
 # this is strange: mysqld functions for UDF modules are not explicitly defined,
 # so -rdynamic is used; in such case gcc3+ld on alpha doesn't like C++ vtables
@@ -484,7 +485,7 @@ mv sphinx-*/mysqlse storage/sphinx
 %patch11 -p1
 #%patch12 -p1 # OUTDATED?
 #%patch14 -p1 # OUTDATED?
-%patch16 -p1
+#%patch16 -p1 # NO FILE IN CVS
 
 %build
 %{__libtoolize}
@@ -529,10 +530,14 @@ CFLAGS="%{rpmcflags} %{!?debug:-fomit-frame-pointer}"
 	%{?with_federated:--with-federated-storage-engine} \
 	--with-fast-mutexes \
 	--with-vio \
-	--with-ndbcluster \
 	--without-readline \
 	--without-libedit \
+%if %{with ndb}
+	--with-ndbcluster \
 	--with-ndb-docs \
+%else
+	--without-ndbcluster \
+%endif
 	--with-docs
 
 #--with-error-inject
@@ -586,6 +591,7 @@ awk 'BEGIN { RS="\n\n" } !/bdb/ { printf("%s\n\n", $0) }' < mysqld.tmp > mysqld.
 install mysqld.conf $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.conf
 cp -a %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/mysql/mysql-client.conf
 
+%if %{with ndb}
 # NDB
 install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
@@ -593,6 +599,7 @@ install %{SOURCE9} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-mgm
 install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
 install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
 install %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
+%endif
 
 mv -f $RPM_BUILD_ROOT%{_libdir}/mysql/lib* $RPM_BUILD_ROOT%{_libdir}
 sed -i -e 's,%{_libdir}/mysql,%{_libdir},' $RPM_BUILD_ROOT{%{_libdir}/libmysqlclient{,_r}.la,%{_bindir}/mysql_config}
@@ -642,13 +649,10 @@ rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
 rm $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
 rm $RPM_BUILD_ROOT%{_bindir}/resolveip
 rm $RPM_BUILD_ROOT%{_mandir}/man1/resolveip.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/make_win_bin_dist.1*
 rm $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
 rm $RPM_BUILD_ROOT%{_bindir}/mysql_client_test
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/mi_test_all
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/mi_test_all.res
 rm $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld_multi.server
 rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test.1*
 rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test_embedded.1*
@@ -737,8 +741,9 @@ fi
 %attr(755,root,root) %{_sbindir}/mysql_fix_privilege_tables
 %attr(755,root,root) %{_sbindir}/mysql_upgrade
 %dir %{_libdir}/mysql
-%attr(755,root,root) %{_libdir}/mysql/ha_blackhole.so.*.*.*
-%attr(755,root,root) %{_libdir}/mysql/ha_example.so.*.*.*
+%dir %{_libdir}/mysql/plugin
+%attr(755,root,root) %{_libdir}/mysql/plugin/ha_blackhole.so.*.*.*
+%attr(755,root,root) %{_libdir}/mysql/plugin/ha_example.so.*.*.*
 %{_mandir}/man1/innochecksum.1*
 %{_mandir}/man1/myisamchk.1*
 %{_mandir}/man1/myisamlog.1*
@@ -802,6 +807,11 @@ fi
 
 %files extras
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/maria_chk
+%attr(755,root,root) %{_bindir}/maria_dump_log
+%attr(755,root,root) %{_bindir}/maria_ftdump
+%attr(755,root,root) %{_bindir}/maria_pack
+%attr(755,root,root) %{_bindir}/maria_read_log
 %attr(755,root,root) %{_bindir}/msql2mysql
 %attr(755,root,root) %{_bindir}/myisam_ftdump
 %attr(755,root,root) %{_bindir}/mysql_secure_installation
@@ -858,9 +868,16 @@ fi
 %files libs
 %defattr(644,root,root,755)
 %doc EXCEPTIONS-CLIENT
-%attr(755,root,root) %{_libdir}/lib*.so.*.*
 %attr(751,root,root) %dir %{_sysconfdir}/mysql
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/mysql/mysql-client.conf
+%attr(755,root,root) %{_libdir}/libmysqlclient.so.*.*.*
+%attr(755,root,root) %ghost %{_libdir}/libmysqlclient.so.16
+%attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
+%attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.16
+%if %{with ndb}
+%attr(755,root,root) %{_libdir}/libndbclient.so.*.*.*
+%attr(755,root,root) %ghost %{_libdir}/libndbclient.so.3
+%endif
 
 %files devel
 %defattr(644,root,root,755)
@@ -889,6 +906,7 @@ fi
 #%defattr(644,root,root,755)
 #%doc Docs/manual.html Docs/manual_toc.html
 
+%if %{with ndb}
 %files ndb
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_sbindir}/ndbd
@@ -946,3 +964,4 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/mysql-ndb-cpc
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb-cpc
 %{_mandir}/man1/ndb_cpcd.1*
+%endif
