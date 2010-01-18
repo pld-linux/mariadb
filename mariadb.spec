@@ -84,6 +84,7 @@ URL:		http://www.mysql.com/products/database/mysql/community_edition.html
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	doxygen
+BuildRequires:	groff
 BuildRequires:	libstdc++-devel >= 5:3.0
 BuildRequires:	libtool
 %{?with_tcpd:BuildRequires:	libwrap-devel}
