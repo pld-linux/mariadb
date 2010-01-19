@@ -1,0 +1,13 @@
+--- mariadb-5.1.41-rc/config/ac-macros/libevent.m4.org	2010-01-19 08:57:40.482393507 +0100
++++ mariadb-5.1.41-rc/config/ac-macros/libevent.m4	2010-01-19 08:58:17.459054751 +0100
+@@ -12,8 +12,8 @@
+   libevent_dir="libevent"
+   AC_SUBST([libevent_dir])
+ 
+-  libevent_libs="\$(top_builddir)/extra/libevent/libevent.a"
+-  libevent_includes="-I\$(top_srcdir)/extra/libevent"
++  libevent_libs="-levent"
++  libevent_includes=""
+   libevent_test_option="--mysqld=--thread-handling=pool-of-threads"
+   AC_SUBST(libevent_libs)
+   AC_SUBST(libevent_includes)

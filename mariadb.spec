@@ -80,6 +80,7 @@ Patch11:	mysql-upgrade.patch
 #Patch12: mysql-NDB_CXXFLAGS.patch
 #Patch14: mysql-bug-18156.patch
 #Patch16:	mysql-bug-29082.patch
+Patch17:	%{name}-libevent.patch
 URL:		http://askmonty.org/wiki/index.php/MariaDB
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -479,6 +480,7 @@ mv sphinx-*/mysqlse storage/sphinx
 #%patch12 -p1 # OUTDATED?
 #%patch14 -p1 # OUTDATED?
 #%patch16 -p1 # NO FILE IN CVS
+%patch17 -p1
 
 %build
 %{__libtoolize}
