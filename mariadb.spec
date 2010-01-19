@@ -108,14 +108,12 @@ Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(triggerpostun):	sed >= 4.0
 Requires:	/usr/bin/setsid
-Requires:	mysql-charsets = %{version}-%{release}
+Requires:	%{name}-charsets = %{version}-%{release}
 Requires:	rc-scripts >= 0.2.0
 Provides:	MariaDB-server
 Provides:	group(mysql)
 Provides:	msqlormysql
 Provides:	user(mysql)
-Obsoletes:	MariaDB
-Obsoletes:	mysql-server
 Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -248,7 +246,7 @@ klienta.
 Summary:	MariaDB additional utilities
 Summary(pl.UTF-8):	Dodatkowe narzędzia do MariaDB
 Group:		Applications/Databases
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description extras
 MariaDB additional utilities except Perl scripts (they may be found in
@@ -262,7 +260,7 @@ pakiecie mysql-extras-perl).
 Summary:	MariaDB additional utilities written in Perl
 Summary(pl.UTF-8):	Dodatkowe narzędzia do MariaDB napisane w Perlu
 Group:		Applications/Databases
-Requires:	mysql-extras = %{version}-%{release}
+Requires:	%{name}-extras = %{version}-%{release}
 Requires:	perl(DBD::mysql)
 
 %description extras-perl
@@ -278,9 +276,8 @@ Summary(pt.UTF-8):	MariaDB - Cliente
 Summary(ru.UTF-8):	MariaDB клиент
 Summary(uk.UTF-8):	MariaDB клієнт
 Group:		Applications/Databases
-Requires:	mysql-charsets = %{version}-%{release}
-Requires:	mysql-libs = %{version}-%{release}
-Obsoletes:	MariaDB-client
+Requires:	%{name}-charsets = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description client
 This package contains the standard MariaDB clients.
@@ -304,8 +301,6 @@ Este pacote contém os clientes padrão para o MariaDB.
 Summary:	Shared libraries for MariaDB
 Summary(pl.UTF-8):	Biblioteki dzielone MariaDB
 Group:		Libraries
-Obsoletes:	libmysql10
-Obsoletes:	mysql-doc < 4.1.12
 
 %description libs
 Shared libraries for MariaDB.
@@ -320,11 +315,9 @@ Summary(pt.UTF-8):	MariaDB - Medições de desempenho
 Summary(ru.UTF-8):	MariaDB - хедеры и библиотеки разработчика
 Summary(uk.UTF-8):	MariaDB - хедери та бібліотеки програміста
 Group:		Development/Libraries
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 %{?with_ssl:Requires:	openssl-devel}
 Requires:	zlib-devel
-Obsoletes:	MariaDB-devel
-Obsoletes:	libmysql10-devel
 
 %description devel
 This package contains the development header files and libraries
@@ -357,8 +350,7 @@ Summary(pl.UTF-8):	Biblioteki statyczne MariaDB
 Summary(ru.UTF-8):	MariaDB - статические библиотеки
 Summary(uk.UTF-8):	MariaDB - статичні бібліотеки
 Group:		Development/Libraries
-Requires:	mysql-devel = %{version}-%{release}
-Obsoletes:	MariaDB-static
+Requires:	%{name}-devel = %{version}-%{release}
 
 %description static
 MariaDB static libraries.
@@ -381,10 +373,9 @@ Summary(pt.UTF-8):	MariaDB - Medições de desempenho
 Summary(ru.UTF-8):	MariaDB - бенчмарки
 Summary(uk.UTF-8):	MariaDB - бенчмарки
 Group:		Applications/Databases
-Requires:	mysql = %{version}-%{release}
-Requires:	mysql-client
+Requires:	%{name} = %{version}-%{release}
+Requires:	%{name}-client
 Requires:	perl(DBD::mysql)
-Obsoletes:	MariaDB-bench
 
 %description bench
 This package contains MariaDB benchmark scripts and data.
@@ -417,7 +408,7 @@ Podręcznik MariaDB-a w formacie HTML.
 Summary:	MariaDB - NDB Storage Engine Daemon
 Summary(pl.UTF-8):	MariaDB - demon silnika przechowywania danych NDB
 Group:		Applications/Databases
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description ndb
 This package contains the standard MariaDB NDB Storage Engine Daemon.
@@ -430,7 +421,7 @@ NDB.
 Summary:	MariaDB - NDB Clients
 Summary(pl.UTF-8):	MariaDB - programy klienckie NDB
 Group:		Applications/Databases
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description ndb-client
 This package contains the standard MariaDB NDB Clients.
@@ -442,7 +433,7 @@ Ten pakiet zawiera standardowe programy klienckie MariaDB NDB.
 Summary:	MariaDB - NDB Management Daemon
 Summary(pl.UTF-8):	MariaDB - demon zarządzający NDB
 Group:		Applications/Databases
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description ndb-mgm
 This package contains the standard MariaDB NDB Management Daemon.
@@ -454,7 +445,7 @@ Ten pakiet zawiera standardowego demona zarządzającego MariaDB NDB.
 Summary:	MariaDB - NDB CPC Daemon
 Summary(pl.UTF-8):	MariaDB - demon NDB CPC
 Group:		Applications/Databases
-Requires:	mysql-libs = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 
 %description ndb-cpc
 This package contains the standard MariaDB NDB CPC Daemon.
