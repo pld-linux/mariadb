@@ -36,18 +36,18 @@
 %bcond_with	ndb
 #
 %include	/usr/lib/rpm/macros.perl
-Summary:	MySQL Maria Engine Preview
-Summary(de.UTF-8):	MySQL: ist eine SQL-Datenbank
-Summary(fr.UTF-8):	MySQL: un serveur SQL rapide et fiable
-Summary(pl.UTF-8):	MySQL: bardzo szybka i niezawodna baza danych (SQL)
-Summary(pt_BR.UTF-8):	MySQL: Um servidor SQL rápido e confiável
-Summary(ru.UTF-8):	MySQL - быстрый SQL-сервер
-Summary(uk.UTF-8):	MySQL - швидкий SQL-сервер
-Summary(zh_CN.UTF-8):	MySQL数据库服务器
+Summary:	MariaDB Maria Engine Preview
+Summary(de.UTF-8):	MariaDB: ist eine SQL-Datenbank
+Summary(fr.UTF-8):	MariaDB: un serveur SQL rapide et fiable
+Summary(pl.UTF-8):	MariaDB: bardzo szybka i niezawodna baza danych (SQL)
+Summary(pt_BR.UTF-8):	MariaDB: Um servidor SQL rápido e confiável
+Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
+Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
+Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
 Version:	5.1.41
 Release:	0.1
-License:	GPL + MySQL FLOSS Exception
+License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 Source0:	http://launchpad.net/maria/5.1/ongoing/+download/%{name}-%{version}-rc.tar.gz
 # Source0-md5:	e3888c0e974155924c2d66712d6d7d59
@@ -80,7 +80,7 @@ Patch11:	mysql-upgrade.patch
 #Patch12: mysql-NDB_CXXFLAGS.patch
 #Patch14: mysql-bug-18156.patch
 #Patch16:	mysql-bug-29082.patch
-URL:		http://www.mysql.com/products/database/mysql/community_edition.html
+URL:		http://askmonty.org/wiki/index.php/MariaDB
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	doxygen
@@ -109,11 +109,11 @@ Requires(triggerpostun):	sed >= 4.0
 Requires:	/usr/bin/setsid
 Requires:	mysql-charsets = %{version}-%{release}
 Requires:	rc-scripts >= 0.2.0
-Provides:	MySQL-server
+Provides:	MariaDB-server
 Provides:	group(mysql)
 Provides:	msqlormysql
 Provides:	user(mysql)
-Obsoletes:	MySQL
+Obsoletes:	MariaDB
 Obsoletes:	mysql-server
 Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -130,109 +130,109 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %description
 Maria Engine is an extended version of MyISAM which is crash safe.
 
-MySQL is a true multi-user, multi-threaded SQL (Structured Query
+MariaDB is a true multi-user, multi-threaded SQL (Structured Query
 Language) database server. SQL is the most popular database language
-in the world. MySQL is a client/server implementation that consists of
+in the world. MariaDB is a client/server implementation that consists of
 a server daemon mysqld and many different client programs/libraries.
 
-The main goals of MySQL are speed, robustness and easy to use. MySQL
+The main goals of MariaDB are speed, robustness and easy to use. MariaDB
 was originally developed because we at Tcx needed a SQL server that
 could handle very big databases with magnitude higher speed than what
-any database vendor could offer to us. We have now been using MySQL
+any database vendor could offer to us. We have now been using MariaDB
 since 1996 in a environment with more than 40 databases, 10,000
 tables, of which more than 500 have more than 7 million rows. This is
 about 50G of mission critical data.
 
-The base upon which MySQL is built is a set of routines that have been
+The base upon which MariaDB is built is a set of routines that have been
 used in a highly demanding production environment for many years.
-While MySQL is still in development, it already offers a rich and
+While MariaDB is still in development, it already offers a rich and
 highly useful function set.
 
 %description -l fr.UTF-8
-MySQL est un serveur de bases de donnees SQL vraiment multi-usagers et
+MariaDB est un serveur de bases de donnees SQL vraiment multi-usagers et
 multi-taches. Le langage SQL est le langage de bases de donnees le
-plus populaire au monde. MySQL est une implementation client/serveur
+plus populaire au monde. MariaDB est une implementation client/serveur
 qui consiste en un serveur (mysqld) et differents
 programmes/bibliotheques clientes.
 
-Les objectifs principaux de MySQL sont: vitesse, robustesse et
-facilite d'utilisation. MySQL fut originalement developpe parce que
+Les objectifs principaux de MariaDB sont: vitesse, robustesse et
+facilite d'utilisation. MariaDB fut originalement developpe parce que
 nous, chez Tcx, avions besoin d'un serveur SQL qui pouvait gerer de
 tres grandes bases de donnees avec une vitesse d'un ordre de magnitude
 superieur a ce que n'importe quel vendeur pouvait nous offrir. Nous
-utilisons MySQL depuis 1996 dans un environnement avec plus de 40
+utilisons MariaDB depuis 1996 dans un environnement avec plus de 40
 bases de donnees, 10000 tables, desquelles plus de 500 ont plus de 7
 millions de lignes. Ceci represente environ 50G de donnees critiques.
 
-A la base de la conception de MySQL, on retrouve une serie de routines
+A la base de la conception de MariaDB, on retrouve une serie de routines
 qui ont ete utilisees dans un environnement de production pendant
-plusieurs annees. Meme si MySQL est encore en developpement, il offre
+plusieurs annees. Meme si MariaDB est encore en developpement, il offre
 deja une riche et utile serie de fonctions.
 
 %description -l pl.UTF-8
-MySQL to prawdziwie wieloużytkownikowy, wielowątkowy serwer baz danych
+MariaDB to prawdziwie wieloużytkownikowy, wielowątkowy serwer baz danych
 SQL. SQL jest najpopularniejszym na świecie językiem używanym do baz
-danych. MySQL to implementacja klient/serwer składająca się z demona
+danych. MariaDB to implementacja klient/serwer składająca się z demona
 mysqld i wielu różnych programów i bibliotek klienckich.
 
-Głównymi celami MySQL-a są szybkość, potęga i łatwość użytkowania.
-MySQL oryginalnie był tworzony, ponieważ autorzy w Tcx potrzebowali
+Głównymi celami MariaDB-a są szybkość, potęga i łatwość użytkowania.
+MariaDB oryginalnie był tworzony, ponieważ autorzy w Tcx potrzebowali
 serwera SQL do obsługi bardzo dużych baz danych z szybkością o wiele
 większą, niż mogli zaoferować inni producenci baz danych. Używają go
 od 1996 roku w środowisku z ponad 40 bazami danych, 10 000 tabel, z
 których ponad 500 zawiera ponad 7 milionów rekordów - w sumie około
 50GB krytycznych danych.
 
-Baza, na której oparty jest MySQL, składa się ze zbioru procedur,
+Baza, na której oparty jest MariaDB, składa się ze zbioru procedur,
 które były używane w bardzo wymagającym środowisku produkcyjnym przez
-wiele lat. Pomimo, że MySQL jest ciągle rozwijany, już oferuje bogaty
+wiele lat. Pomimo, że MariaDB jest ciągle rozwijany, już oferuje bogaty
 i użyteczny zbiór funkcji.
 
 %description -l de.UTF-8
-MySQL ist eine SQL-Datenbank. Allerdings ist sie im Gegensatz zu
+MariaDB ist eine SQL-Datenbank. Allerdings ist sie im Gegensatz zu
 Oracle, DB2 oder PostgreSQL keine relationale Datenbank. Die Daten
 werden zwar in zweidimensionalen Tabellen gespeichert und können mit
 einem Primärschlüssel versehen werden. Es ist aber keine Definition
 eines Fremdschlüssels möglich. Der Benutzer ist somit bei einer
-MySQL-Datenbank völlig allein für die (referenzielle) Integrität der
+MariaDB-Datenbank völlig allein für die (referenzielle) Integrität der
 Daten verantwortlich. Allein durch die Nutzung externer
 Tabellenformate, wie InnoDB bzw Berkeley DB wird eine Relationalität
-ermöglicht. Diese Projekte sind aber getrennt von MySQL zu betrachten.
+ermöglicht. Diese Projekte sind aber getrennt von MariaDB zu betrachten.
 
 %description -l pt_BR.UTF-8
-O MySQL é um servidor de banco de dados SQL realmente multiusuário e
+O MariaDB é um servidor de banco de dados SQL realmente multiusuário e
 multi-tarefa. A linguagem SQL é a mais popular linguagem para banco de
-dados no mundo. O MySQL é uma implementação cliente/servidor que
+dados no mundo. O MariaDB é uma implementação cliente/servidor que
 consiste de um servidor chamado mysqld e diversos
-programas/bibliotecas clientes. Os principais objetivos do MySQL são:
-velocidade, robustez e facilidade de uso. O MySQL foi originalmente
+programas/bibliotecas clientes. Os principais objetivos do MariaDB são:
+velocidade, robustez e facilidade de uso. O MariaDB foi originalmente
 desenvolvido porque nós na Tcx precisávamos de um servidor SQL que
 pudesse lidar com grandes bases de dados e com uma velocidade muito
 maior do que a que qualquer vendedor podia nos oferecer. Estamos
-usando o MySQL desde 1996 em um ambiente com mais de 40 bases de dados
+usando o MariaDB desde 1996 em um ambiente com mais de 40 bases de dados
 com 10.000 tabelas, das quais mais de 500 têm mais de 7 milhões de
 linhas. Isto é o equivalente a aproximadamente 50G de dados críticos.
-A base da construção do MySQL é uma série de rotinas que foram usadas
+A base da construção do MariaDB é uma série de rotinas que foram usadas
 em um ambiente de produção com alta demanda por muitos anos. Mesmo o
-MySQL estando ainda em desenvolvimento, ele já oferece um conjunto de
+MariaDB estando ainda em desenvolvimento, ele já oferece um conjunto de
 funções muito ricas e úteis. Veja a documentação para maiores
 informações.
 
 %description -l ru.UTF-8
-MySQL - это SQL (Structured Query Language) сервер базы данных. MySQL
+MariaDB - это SQL (Structured Query Language) сервер базы данных. MariaDB
 была написана Michael'ом (monty) Widenius'ом. См. файл CREDITS в
 дистрибутиве на предмет других участников проекта и прочей информации
-о MySQL.
+о MariaDB.
 
 %description -l uk.UTF-8
-MySQL - це SQL (Structured Query Language) сервер бази даних. MySQL
+MariaDB - це SQL (Structured Query Language) сервер бази даних. MariaDB
 було написано Michael'ом (monty) Widenius'ом. Див. файл CREDITS в
 дистрибутиві для інформації про інших учасників проекту та іншої
 інформації.
 
 %package charsets
-Summary:	MySQL - character sets definitions
-Summary(pl.UTF-8):	MySQL - definicje kodowań znaków
+Summary:	MariaDB - character sets definitions
+Summary(pl.UTF-8):	MariaDB - definicje kodowań znaków
 Group:		Applications/Databases
 
 %description charsets
@@ -244,103 +244,103 @@ Ten pakiet zawiera definicje kodowań znaków potrzebne dla serwera i
 klienta.
 
 %package extras
-Summary:	MySQL additional utilities
-Summary(pl.UTF-8):	Dodatkowe narzędzia do MySQL
+Summary:	MariaDB additional utilities
+Summary(pl.UTF-8):	Dodatkowe narzędzia do MariaDB
 Group:		Applications/Databases
 Requires:	mysql-libs = %{version}-%{release}
 
 %description extras
-MySQL additional utilities except Perl scripts (they may be found in
+MariaDB additional utilities except Perl scripts (they may be found in
 mysql-extras-perl package).
 
 %description extras -l pl.UTF-8
-Dodatkowe narzędzia do MySQL - z wyjątkiem skryptów Perla (które są w
+Dodatkowe narzędzia do MariaDB - z wyjątkiem skryptów Perla (które są w
 pakiecie mysql-extras-perl).
 
 %package extras-perl
-Summary:	MySQL additional utilities written in Perl
-Summary(pl.UTF-8):	Dodatkowe narzędzia do MySQL napisane w Perlu
+Summary:	MariaDB additional utilities written in Perl
+Summary(pl.UTF-8):	Dodatkowe narzędzia do MariaDB napisane w Perlu
 Group:		Applications/Databases
 Requires:	mysql-extras = %{version}-%{release}
 Requires:	perl(DBD::mysql)
 
 %description extras-perl
-MySQL additional utilities written in Perl.
+MariaDB additional utilities written in Perl.
 
 %description extras-perl -l pl.UTF-8
-Dodatkowe narzędzia do MySQL napisane w Perlu.
+Dodatkowe narzędzia do MariaDB napisane w Perlu.
 
 %package client
-Summary:	MySQL - Client
-Summary(pl.UTF-8):	MySQL - Klient
-Summary(pt.UTF-8):	MySQL - Cliente
-Summary(ru.UTF-8):	MySQL клиент
-Summary(uk.UTF-8):	MySQL клієнт
+Summary:	MariaDB - Client
+Summary(pl.UTF-8):	MariaDB - Klient
+Summary(pt.UTF-8):	MariaDB - Cliente
+Summary(ru.UTF-8):	MariaDB клиент
+Summary(uk.UTF-8):	MariaDB клієнт
 Group:		Applications/Databases
 Requires:	mysql-charsets = %{version}-%{release}
 Requires:	mysql-libs = %{version}-%{release}
-Obsoletes:	MySQL-client
+Obsoletes:	MariaDB-client
 
 %description client
-This package contains the standard MySQL clients.
+This package contains the standard MariaDB clients.
 
 %description client -l fr.UTF-8
-Ce package contient les clients MySQL standards.
+Ce package contient les clients MariaDB standards.
 
 %description client -l pl.UTF-8
-Standardowe programy klienckie MySQL.
+Standardowe programy klienckie MariaDB.
 
 %description client -l pt_BR.UTF-8
-Este pacote contém os clientes padrão para o MySQL.
+Este pacote contém os clientes padrão para o MariaDB.
 
 %description client -l ru.UTF-8
-Этот пакет содержит только клиент MySQL.
+Этот пакет содержит только клиент MariaDB.
 
 %description client -l uk.UTF-8
-Цей пакет містить тільки клієнта MySQL.
+Цей пакет містить тільки клієнта MariaDB.
 
 %package libs
-Summary:	Shared libraries for MySQL
-Summary(pl.UTF-8):	Biblioteki dzielone MySQL
+Summary:	Shared libraries for MariaDB
+Summary(pl.UTF-8):	Biblioteki dzielone MariaDB
 Group:		Libraries
 Obsoletes:	libmysql10
 Obsoletes:	mysql-doc < 4.1.12
 
 %description libs
-Shared libraries for MySQL.
+Shared libraries for MariaDB.
 
 %description libs -l pl.UTF-8
-Biblioteki dzielone MySQL.
+Biblioteki dzielone MariaDB.
 
 %package devel
-Summary:	MySQL - Development header files and libraries
-Summary(pl.UTF-8):	MySQL - Pliki nagłówkowe i biblioteki dla programistów
-Summary(pt.UTF-8):	MySQL - Medições de desempenho
-Summary(ru.UTF-8):	MySQL - хедеры и библиотеки разработчика
-Summary(uk.UTF-8):	MySQL - хедери та бібліотеки програміста
+Summary:	MariaDB - Development header files and libraries
+Summary(pl.UTF-8):	MariaDB - Pliki nagłówkowe i biblioteki dla programistów
+Summary(pt.UTF-8):	MariaDB - Medições de desempenho
+Summary(ru.UTF-8):	MariaDB - хедеры и библиотеки разработчика
+Summary(uk.UTF-8):	MariaDB - хедери та бібліотеки програміста
 Group:		Development/Libraries
 Requires:	mysql-libs = %{version}-%{release}
 %{?with_ssl:Requires:	openssl-devel}
 Requires:	zlib-devel
-Obsoletes:	MySQL-devel
+Obsoletes:	MariaDB-devel
 Obsoletes:	libmysql10-devel
 
 %description devel
 This package contains the development header files and libraries
-necessary to develop MySQL client applications.
+necessary to develop MariaDB client applications.
 
 %description devel -l fr.UTF-8
 Ce package contient les fichiers entetes et les librairies de
 developpement necessaires pour developper des applications clientes
-MySQL.
+MariaDB.
 
 %description devel -l pl.UTF-8
 Pliki nagłówkowe i biblioteki konieczne do kompilacji aplikacji
-klienckich MySQL.
+klienckich MariaDB.
 
 %description devel -l pt_BR.UTF-8
 Este pacote contém os arquivos de cabeçalho (header files) e
-bibliotecas necessárias para desenvolver aplicações clientes do MySQL.
+bibliotecas necessárias para desenvolver aplicações clientes do MariaDB.
 
 %description devel -l ru.UTF-8
 Этот пакет содержит хедеры и библиотеки разработчика, необходимые для
@@ -351,19 +351,19 @@ bibliotecas necessárias para desenvolver aplicações clientes do MySQL.
 розробки програм-клієнтів.
 
 %package static
-Summary:	MySQL static libraries
-Summary(pl.UTF-8):	Biblioteki statyczne MySQL
-Summary(ru.UTF-8):	MySQL - статические библиотеки
-Summary(uk.UTF-8):	MySQL - статичні бібліотеки
+Summary:	MariaDB static libraries
+Summary(pl.UTF-8):	Biblioteki statyczne MariaDB
+Summary(ru.UTF-8):	MariaDB - статические библиотеки
+Summary(uk.UTF-8):	MariaDB - статичні бібліотеки
 Group:		Development/Libraries
 Requires:	mysql-devel = %{version}-%{release}
-Obsoletes:	MySQL-static
+Obsoletes:	MariaDB-static
 
 %description static
-MySQL static libraries.
+MariaDB static libraries.
 
 %description static -l pl.UTF-8
-Biblioteki statyczne MySQL.
+Biblioteki statyczne MariaDB.
 
 %description static -l ru.UTF-8
 Этот пакет содержит статические библиотеки разработчика, необходимые
@@ -374,92 +374,92 @@ Biblioteki statyczne MySQL.
 розробки програм-клієнтів.
 
 %package bench
-Summary:	MySQL - Benchmarks
-Summary(pl.UTF-8):	MySQL - Programy testujące szybkość działania bazy
-Summary(pt.UTF-8):	MySQL - Medições de desempenho
-Summary(ru.UTF-8):	MySQL - бенчмарки
-Summary(uk.UTF-8):	MySQL - бенчмарки
+Summary:	MariaDB - Benchmarks
+Summary(pl.UTF-8):	MariaDB - Programy testujące szybkość działania bazy
+Summary(pt.UTF-8):	MariaDB - Medições de desempenho
+Summary(ru.UTF-8):	MariaDB - бенчмарки
+Summary(uk.UTF-8):	MariaDB - бенчмарки
 Group:		Applications/Databases
 Requires:	mysql = %{version}-%{release}
 Requires:	mysql-client
 Requires:	perl(DBD::mysql)
-Obsoletes:	MySQL-bench
+Obsoletes:	MariaDB-bench
 
 %description bench
-This package contains MySQL benchmark scripts and data.
+This package contains MariaDB benchmark scripts and data.
 
 %description bench -l pl.UTF-8
-Programy testujące szybkość serwera MySQL.
+Programy testujące szybkość serwera MariaDB.
 
 %description bench -l pt_BR.UTF-8
-Este pacote contém medições de desempenho de scripts e dados do MySQL.
+Este pacote contém medições de desempenho de scripts e dados do MariaDB.
 
 %description bench -l ru.UTF-8
 Этот пакет содержит скрипты и данные для оценки производительности
-MySQL.
+MariaDB.
 
 %description bench -l uk.UTF-8
-Цей пакет містить скрипти та дані для оцінки продуктивності MySQL.
+Цей пакет містить скрипти та дані для оцінки продуктивності MariaDB.
 
 %package doc
-Summary:	MySQL manual
-Summary(pl.UTF-8):	Podręcznik użytkownika MySQL
+Summary:	MariaDB manual
+Summary(pl.UTF-8):	Podręcznik użytkownika MariaDB
 Group:		Applications/Databases
 
 %description doc
 This package contains manual in HTML format.
 
 %description doc -l pl.UTF-8
-Podręcznik MySQL-a w formacie HTML.
+Podręcznik MariaDB-a w formacie HTML.
 
 %package ndb
-Summary:	MySQL - NDB Storage Engine Daemon
-Summary(pl.UTF-8):	MySQL - demon silnika przechowywania danych NDB
+Summary:	MariaDB - NDB Storage Engine Daemon
+Summary(pl.UTF-8):	MariaDB - demon silnika przechowywania danych NDB
 Group:		Applications/Databases
 Requires:	mysql-libs = %{version}-%{release}
 
 %description ndb
-This package contains the standard MySQL NDB Storage Engine Daemon.
+This package contains the standard MariaDB NDB Storage Engine Daemon.
 
 %description ndb -l pl.UTF-8
 Ten pakiet zawiera standardowego demona silnika przechowywania danych
 NDB.
 
 %package ndb-client
-Summary:	MySQL - NDB Clients
-Summary(pl.UTF-8):	MySQL - programy klienckie NDB
+Summary:	MariaDB - NDB Clients
+Summary(pl.UTF-8):	MariaDB - programy klienckie NDB
 Group:		Applications/Databases
 Requires:	mysql-libs = %{version}-%{release}
 
 %description ndb-client
-This package contains the standard MySQL NDB Clients.
+This package contains the standard MariaDB NDB Clients.
 
 %description ndb-client -l pl.UTF-8
-Ten pakiet zawiera standardowe programy klienckie MySQL NDB.
+Ten pakiet zawiera standardowe programy klienckie MariaDB NDB.
 
 %package ndb-mgm
-Summary:	MySQL - NDB Management Daemon
-Summary(pl.UTF-8):	MySQL - demon zarządzający NDB
+Summary:	MariaDB - NDB Management Daemon
+Summary(pl.UTF-8):	MariaDB - demon zarządzający NDB
 Group:		Applications/Databases
 Requires:	mysql-libs = %{version}-%{release}
 
 %description ndb-mgm
-This package contains the standard MySQL NDB Management Daemon.
+This package contains the standard MariaDB NDB Management Daemon.
 
 %description ndb-mgm -l pl.UTF-8
-Ten pakiet zawiera standardowego demona zarządzającego MySQL NDB.
+Ten pakiet zawiera standardowego demona zarządzającego MariaDB NDB.
 
 %package ndb-cpc
-Summary:	MySQL - NDB CPC Daemon
-Summary(pl.UTF-8):	MySQL - demon NDB CPC
+Summary:	MariaDB - NDB CPC Daemon
+Summary(pl.UTF-8):	MariaDB - demon NDB CPC
 Group:		Applications/Databases
 Requires:	mysql-libs = %{version}-%{release}
 
 %description ndb-cpc
-This package contains the standard MySQL NDB CPC Daemon.
+This package contains the standard MariaDB NDB CPC Daemon.
 
 %description ndb-cpc -l pl.UTF-8
-Ten pakiet zawiera standardowego demona MySQL NDB CPC.
+Ten pakiet zawiera standardowego demona MariaDB NDB CPC.
 
 %prep
 %setup -q -n %{name}-%{version}-rc %{?with_sphinx:-a100}
@@ -517,7 +517,7 @@ CFLAGS="%{rpmcflags} %{!?debug:-fomit-frame-pointer}"
 	--with%{!?with_ssl:out}-ssl=/usr \
 	--with%{!?with_tcpd:out}-libwrap \
 	%{?with_big_tables:--with-big-tables} \
-	--with-comment="PLD Linux Distribution MySQL RPM" \
+	--with-comment="PLD Linux Distribution MariaDB RPM" \
 	--with%{!?debug:out}-debug%{?debug:=full} \
 	--with%{!?debug:out}-ndb-debug \
 	--with-embedded-server \
@@ -671,7 +671,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %pre
 %groupadd -g 89 mysql
-%useradd -u 89 -d %{_mysqlhome} -s /bin/sh -g mysql -c "MySQL Server" mysql
+%useradd -u 89 -d %{_mysqlhome} -s /bin/sh -g mysql -c "MariaDB Server" mysql
 
 %post
 [ ! -x /usr/sbin/fix-info-dir ] || /usr/sbin/fix-info-dir -c %{_infodir} >/dev/null 2>&1
