@@ -85,6 +85,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	doxygen
 BuildRequires:	groff
+BuildRequires:	libevent-devel
 BuildRequires:	libstdc++-devel >= 5:3.0
 BuildRequires:	libtool
 %{?with_tcpd:BuildRequires:	libwrap-devel}
@@ -531,6 +532,7 @@ CFLAGS="%{rpmcflags} %{!?debug:-fomit-frame-pointer}"
 	%{?with_federated:--with-federated-storage-engine} \
 	--with-fast-mutexes \
 	--with-vio \
+	--with-libevent \
 	--without-readline \
 	--without-libedit \
 %if %{with ndb}
