@@ -19,7 +19,7 @@ if [ -f /etc/sysconfig/mysql ]; then
 	. /etc/sysconfig/mysql
 else
 	nls "Error: %s not found" /etc/sysconfig/mysql
-	nls "%s can't be run." MySQL
+	nls "%s can't be run." MariaDB
 	exit 1
 fi
 
@@ -46,7 +46,7 @@ fi
 # Check that networking is up
 if is_yes "${NETWORKING}"; then
 	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status -a "$1" != init ]; then
-		msg_network_down MySQL
+		msg_network_down MariaDB
 		exit 1
 	fi
 else
@@ -182,7 +182,7 @@ mysqlgetconfig() {
 
 	if [ ! -f "$config_file" ]; then
 		nls "Error: config file %s not found" "$config_file"
-		nls "MySQL can't be run. Did you initialize DB by doing \`$0 init'?"
+		nls "MariaDB can't be run. Did you initialize DB by doing \`$0 init'?"
 		exit 6
 	fi
 
@@ -213,18 +213,18 @@ section == "mysqld" && $2 ~ "=" {
 
 	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "${clusterdir}${MYSQL_DATA_DIR_SUB}/db" ]; then
 		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
-		nls " MySQL can't be run."
+		nls " MariaDB can't be run."
 		exit 6
 	fi
 
 	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid" ]; then
 		nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid"
-		nls " MySQL can't be run."
+		nls " MariaDB can't be run."
 		exit 6
 	fi
 
 	if [ -z $MYSQL_USER ]; then
-		echo "$(nls 'MySQL user not configured properly')"'!' >&2
+		echo "$(nls 'MariaDB user not configured properly')"'!' >&2
 		nls "Edit %s and configure it." "$config_file" >&2
 		exit 6
 	fi
@@ -235,12 +235,12 @@ mysqlstart() {
 	clusterdir="$1"
 	mysqlgetconfig "$clusterdir"
 	if [ ! -d "$MYSQL_DATA_DIR/mysql" ]; then
-		nls "MySQL cluster %s not initialized." "$clusterdir"
+		nls "MariaDB cluster %s not initialized." "$clusterdir"
 		nls "Try \`%s init %s' before start." "$0" "$clusterdir"
 		exit 6
 	fi
 
-	msg_starting "MySQL $clusterdir"
+	msg_starting "MariaDB $clusterdir"
 	busy
 	[ -z "$DEFAULT_SERVICE_RUN_NICE_LEVEL" ] && DEFAULT_SERVICE_RUN_NICE_LEVEL=0
 	rm -f "$MYSQL_PIDFILE"
@@ -263,7 +263,7 @@ mysqlstart() {
 	# it takes longer for mysqld to start and create pidfile if it has to recover innodb transactions
 	if [ "$MYSQL_STATUS" = "starting" ]; then
 		echo ""
-		show "Waiting for MySQL to start"
+		show "Waiting for MariaDB to start"
 		busy
 
 		# while the pid is running, mysql is starting up
@@ -292,7 +292,7 @@ mysqlstart() {
 mysqlstop() {
 	clusterdir="$1"
 	mysqlstatus "$clusterdir" stop
-	msg_stopping "MySQL $clusterdir"
+	msg_stopping "MariaDB $clusterdir"
 	busy
 
 	# try graceful shutdown -- send shutdown command
@@ -366,7 +366,7 @@ mysqlinit() {
 		return
 	fi
 
-	show "Installing MySQL system tables for $MYSQL_DATA_DIR"
+	show "Installing MariaDB system tables for $MYSQL_DATA_DIR"
 	busy
 	TMP=/tmp TMPDIR=/tmp
 
@@ -417,7 +417,7 @@ EOF
 		ok
 		cat << END_OF_MSG
 
-PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL USERS!
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MariaDB USERS!
 This is done, after starting database, in the order shown,
 with:
 
@@ -469,14 +469,14 @@ mysql> show tables
 
 Try 'mysqld --help' if you have problems with paths. Setting on
 logging in /etc/mysqld.conf gives you a log in /var/log/mysql/log that
-may be helpful. The latest information about MySQL is available on the
+may be helpful. The latest information about MariaDB is available on the
 web at http://www.mysql.com/.
 
 Please check PLD Linux ftp site for newer versions of this package.
 
-Please consult the MySQL manual section: 'Problems running
+Please consult the MariaDB manual section: 'Problems running
 mysql_install_db', and the manual section that describes problems on
-your OS.  Another information source is the MySQL email archive.
+your OS.  Another information source is the MariaDB email archive.
 Please check all of the above before mailing us!  And if you do mail
 us, you MUST use the mysqlbug script!
 
@@ -493,7 +493,7 @@ start() {
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir" start
 		if [ "$MYSQL_STATUS" = "running" ]; then
-			msg_already_running "MySQL $mysqldir"
+			msg_already_running "MariaDB $mysqldir"
 		else
 			mysqlstart "$mysqldir"
 		fi
@@ -505,7 +505,7 @@ stop() {
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir" stop
 		if [ "$MYSQL_STATUS" = "not running" ]; then
-			msg_not_running "MySQL $mysqldir"
+			msg_not_running "MariaDB $mysqldir"
 		else
 			mysqlstop "$mysqldir"
 		fi
@@ -518,7 +518,7 @@ condrestart() {
 		stop
 		start
 	else
-		msg_not_running "MySQL"
+		msg_not_running "MariaDB"
 		RETVAL=$1
 	fi
 }
@@ -545,11 +545,11 @@ case "$action" in
 	for mysqldir in $DB_CLUSTERS; do
 		mysqlstatus "$mysqldir"
 		if [ "$MYSQL_STATUS" = "running" ]; then
-			show "MySQL cluster %s, PID %s" "$mysqldir" "$MYSQL_PID"
+			show "MariaDB cluster %s, PID %s" "$mysqldir" "$MYSQL_PID"
 			pids="$pids/$MYSQL_PID/"
 			progress "$MYSQL_STATUS"
 		else
-			show "MySQL cluster %s" "$mysqldir"
+			show "MariaDB cluster %s" "$mysqldir"
 			progress "$MYSQL_STATUS" "$CFAIL"
 		fi
 		echo
@@ -562,7 +562,7 @@ case "$action" in
 	done
 
 	if [ $# -gt 1 -a "$running" ]; then
-		nls "Warning: MySQL Daemon processes not under clusters.conf control:"
+		nls "Warning: MariaDB Daemon processes not under clusters.conf control:"
 		# see if we can display their status
 		for pid in $running; do
 			datadir=$(cat /proc/$pid/cmdline | tr '\0' '\n' | fgrep -- --datadir=)
@@ -570,10 +570,10 @@ case "$action" in
 			mysqldir=${datadir%/mysqldb/db} # strip /mysqldb/db
 			mysqlstatus "$mysqldir"
 			if [ "$MYSQL_STATUS" = "running" ]; then
-				show "MySQL cluster %s, PID %s" "$mysqldir" "$pid"
+				show "MariaDB cluster %s, PID %s" "$mysqldir" "$pid"
 				progress "$MYSQL_STATUS"
 			else
-				show "MySQL cluster %s" "$mysqldir"
+				show "MariaDB cluster %s" "$mysqldir"
 				progress "$MYSQL_STATUS" "$CFAIL"
 			fi
 			echo
