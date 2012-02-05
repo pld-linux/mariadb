@@ -115,7 +115,7 @@ Provides:	MariaDB-server
 Provides:	group(mysql)
 Provides:	msqlormysql
 Provides:	user(mysql)
-Conflicts:	logrotate < 3.7-4
+Conflicts:	logrotate < 3.8.0
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_libexecdir	%{_sbindir}

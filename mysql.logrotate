@@ -16,6 +16,7 @@
 /var/log/mysql/slow.log
 /var/log/mysql/update*
 {
+	su mysql mysql
 	olddir /var/log/archive/mysql
 	notifempty
 	missingok
