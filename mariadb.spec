@@ -1,4 +1,8 @@
 # TODO:
+# - package not conflicting with mysql
+# - /etc/my.cnf.d/ -> /etc/mariadb.d/
+# - /etc/my.cnf -> /etc/mariadb.conf
+# MYSQL TODO:
 # - sanitize mysql_config:
 #   - kill optflags (-f.*/-g.*/-m.*) from --cflags
 #   - kill -lnsl from --libs/--libs_r/--libmysqld-libs
@@ -84,6 +88,7 @@ Patch10:	mysql-alpha.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
+BuildRequires:	cmake >= 2.6
 BuildRequires:	doxygen
 BuildRequires:	groff
 BuildRequires:	libevent-devel
@@ -119,7 +124,7 @@ Conflicts:	logrotate < 3.8.0
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_libexecdir	%{_sbindir}
-%define		_localstatedir	/var/lib/mysql
+%define		_localstatedir	/var/lib/%{name}
 %define		_mysqlhome	/home/services/mysql
 
 %define		_noautoreqdep	'perl(DBD::mysql)'
@@ -487,96 +492,63 @@ mv sphinx-*/mysqlse storage/sphinx
 #%patch17 -p1
 
 %build
-%{__libtoolize}
-%{__aclocal} -I config/ac-macros
-%{__automake}
-%{__autoconf}
-
-# The compiler flags are as per their "official" spec ;)
-CXXFLAGS="%{rpmcflags} -felide-constructors -fno-rtti -fno-exceptions %{!?debug:-fomit-frame-pointer}"
-CFLAGS="%{rpmcflags} %{!?debug:-fomit-frame-pointer}"
-
-# NOTE: the PS, FIND_PROC, KILL, CHECK_PID are not used by PLD Linux
-# and therefore do not add BR on these. These are here just to satisfy
-# configure.
-
-%configure \
-	PS='/bin/ps' \
-	FIND_PROC='/bin/ps p $$PID' \
-	KILL='/bin/kill' \
-	CHECK_PID='/bin/kill -0 $$PID' \
-	--enable-assembler \
-	--enable-largefile=yes \
-	--enable-shared \
-	--enable-static \
-	--enable-thread-safe-client \
-	--with%{!?with_innodb:out}-innodb \
-	--with%{!?with_raid:out}-raid \
-	--with%{!?with_ssl:out}-ssl=/usr \
-	--with%{!?with_tcpd:out}-libwrap \
-	%{?with_big_tables:--with-big-tables} \
-	--with-comment="PLD Linux Distribution MariaDB RPM" \
-	--with%{!?debug:out}-debug%{?debug:=full} \
-	--with%{!?debug:out}-ndb-debug \
-	--with-embedded-server \
-	--with-extra-charsets=all \
-	--with-low-memory \
-	--with-mysqld-user=mysql \
-	--with-named-curses-libs="-lncurses" \
-	--with-named-thread-libs="-lpthread" \
-	--with-unix-socket-path=/var/lib/mysql/mysql.sock \
-	--with-archive-storage-engine \
-	%{?with_federated:--with-federated-storage-engine} \
-	--with-fast-mutexes \
-	--with-vio \
-	--with-libevent \
-	--without-readline \
-	--without-libedit \
-%if %{with ndb}
-	--with-ndbcluster \
-	--with-ndb-docs \
-%else
-	--without-ndbcluster \
-%endif
-	--with-docs
-
-#--with-error-inject
-
-# NOTE that /var/lib/mysql/mysql.sock is symlink to real sock file
+install -d build
+cd build
+# NOTE that /var/lib/mariadb/mariadb.sock is symlink to real sock file
 # (it defaults to first cluster but user may change it to whatever
 # cluster it wants)
 
-echo -e "all:\ninstall:\nclean:\nlink_sources:\n" > libmysqld/examples/Makefile
+%cmake \
+	-DCMAKE_BUILD_TYPE=%{!?debug:RelWithDebInfo}%{?debug:Debug} \
+	-DFEATURE_SET="community" \
+	-DCMAKE_C_FLAGS_RELEASE="%{rpmcflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
+	-DCMAKE_CXX_FLAGS_RELEASE="%{rpmcxxflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
+	-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+	-DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
+	%{?debug:-DWITH_DEBUG=ON} \
+	-DWITH_FAST_MUTEXES=ON \
+	-DWITH_PIC=ON \
+	-DWITH_LIBEDIT=OFF \
+	-DWITH_READLINE=OFF \
+	-DWITH_CURSES=OFF \
+	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
+	-DWITH_ZLIB=system \
+	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
+	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
+	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
+	-DCURSES_INCLUDE_PATH=/usr/include/ncurses \
+	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
+	-DINSTALL_LAYOUT=RPM \
+	-DINSTALL_MYSQLTESTDIR_RPM="" \
+	-DINSTALL_SQLBENCHDIR=%{_datadir} \
+	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
+	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
+	-DINSTALL_LIBDIR=%{_lib} \
+	..
 
-%{__make} \
-	benchdir=$RPM_BUILD_ROOT%{_datadir}/sql-bench
-
-%{__make} -C Docs mysql.info
+%{__make}
 
 %{?with_tests:%{__make} test}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,mysql} \
-	   $RPM_BUILD_ROOT/var/{log/{archive,}/mysql,lib/mysql} \
-	   $RPM_BUILD_ROOT{%{_infodir},%{_mysqlhome}}
+install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} \
+	   $RPM_BUILD_ROOT/var/{log/{archive,}/%{name},lib/%{name}} \
+	   $RPM_BUILD_ROOT{%{_infodir},%{_mysqlhome}} \
+	   $RPM_BUILD_ROOT%{_libdir}
 
-# Make install
-%{__make} install \
-	DESTDIR=$RPM_BUILD_ROOT \
-	benchdir=%{_datadir}/sql-bench \
-	libsdir=/tmp
-# libsdir is to avoid installing innodb static libs in $RPM_BUILD_ROOT../libs
+%{__make} -C build install \
+	DESTDIR=$RPM_BUILD_ROOT
 
-install Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
+cp -a Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
-install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
-install %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mysql
+install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
+cp -a %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
+cp -a %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mysql
 # This is template for configuration file which is created after 'service mysql init'
-install %{SOURCE4} mysqld.conf
-install %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/mysql/clusters.conf
-touch $RPM_BUILD_ROOT/var/log/mysql/{err,log,update}
+cp -a %{SOURCE4} mysqld.conf
+cp -a %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/clusters.conf
+touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 
 # remove innodb directives from mysqld.conf if mysqld is configured without
 %if %{without innodb}
@@ -584,86 +556,78 @@ touch $RPM_BUILD_ROOT/var/log/mysql/{err,log,update}
 	awk 'BEGIN { RS="\n\n" } !/innodb/ { printf("%s\n\n", $0) }' < mysqld.tmp > mysqld.conf
 %endif
 
-# remove berkeley-db directives from mysqld.conf if mysqld is configured without
-cp mysqld.conf mysqld.tmp
-awk 'BEGIN { RS="\n\n" } !/bdb/ { printf("%s\n\n", $0) }' < mysqld.tmp > mysqld.conf
+cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.conf
+cp -a %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
 
-install mysqld.conf $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.conf
-cp -a %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/mysql/mysql-client.conf
-
-%if %{with ndb}
 # NDB
-install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb
-install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
-install %{SOURCE9} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-mgm
-install %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
-install %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
-install %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
+%if %{with ndb}
+install -p %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb
+cp -a %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
+install -p %{SOURCE9} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-mgm
+cp -a %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
+install -p %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
+cp -a %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
 %endif
 
-mv -f $RPM_BUILD_ROOT%{_libdir}/mysql/lib* $RPM_BUILD_ROOT%{_libdir}
-sed -i -e 's,%{_libdir}/mysql,%{_libdir},' $RPM_BUILD_ROOT{%{_libdir}/libmysqlclient{,_r}.la,%{_bindir}/mysql_config}
+# symlinks point to the .so file, fix it
+ln -sf libmysqlclient.so.18 $RPM_BUILD_ROOT%{_libdir}/libmysqlclient_r.so.18
+ln -sf libmysqlclient.so.18.0.0 $RPM_BUILD_ROOT%{_libdir}/libmysqlclient_r.so.18.0.0
+
+sed -i -e 's,/usr//usr,%{_prefix},g' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 
 # remove known unpackaged files
-rm -rf $RPM_BUILD_ROOT%{_prefix}/mysql-test
-
-# remove .txt variants for .sys messages
-rm -f $RPM_BUILD_ROOT%{_datadir}/mysql/*/*.txt
+%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/%{name}-support
 
 # rename not to be so generic name
 mv $RPM_BUILD_ROOT%{_bindir}/{,mysql_}resolve_stack_dump
 mv $RPM_BUILD_ROOT%{_mandir}/man1/{,mysql_}resolve_stack_dump.1
 
 # not useful without -debug build
-%{!?debug:rm -f $RPM_BUILD_ROOT%{_bindir}/mysql_resolve_stack_dump}
-%{!?debug:rm -f $RPM_BUILD_ROOT%{_mandir}/man1/mysql_resolve_stack_dump.1}
+%{!?debug:%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_resolve_stack_dump}
+%{!?debug:%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_resolve_stack_dump.1}
 # generate symbols file, so one can generate backtrace using it
-# mysql_resolve_stack_dump -s %{_datadir}/mysql/mysqld.sym -n mysqld.stack.
+# mysql_resolve_stack_dump -s %{_datadir}/%{name}/mysqld.sym -n mysqld.stack.
 # http://dev.mysql.com/doc/refman/5.0/en/using-stack-trace.html
-%{?debug:nm -n $RPM_BUILD_ROOT%{_sbindir}/mysqld > $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.sym}
+%{?debug:nm -n $RPM_BUILD_ROOT%{_sbindir}/mysqld > $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.sym}
 
 # do not clobber users $PATH
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_plugin
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_upgrade
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/innochecksum
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamchk
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamlog
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisampack
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_fix_privilege_tables
+#mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_fix_privilege_tables
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/my_print_defaults
+sed -i -e 's#/usr/bin/my_print_defaults#%{_sbindir}/my_print_defaults#g' $RPM_BUILD_ROOT%{_bindir}/mysql_install_db
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 
-# functionality in initscript / rpm
-rm $RPM_BUILD_ROOT%{_bindir}/mysql_install_db
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_install_db.1*
-rm $RPM_BUILD_ROOT%{_bindir}/mysqld_safe
-rm $RPM_BUILD_ROOT%{_bindir}/mysqld_multi
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysqld_{multi,safe}*
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/mysql-log-rotate
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/mysql.server
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/binary-configure
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/errmsg.txt
-rm $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_waitpid.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
-rm $RPM_BUILD_ROOT%{_bindir}/resolveip
-rm $RPM_BUILD_ROOT%{_mandir}/man1/resolveip.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
+# delete - functionality in initscript / rpm
+# note: mysql_install_db (and thus resolveip) are needed by digikam
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysqld_safe
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysqld_multi
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqld_{multi,safe}*
+#rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql-log-rotate
+#rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql.server
+#rm $RPM_BUILD_ROOT%{_datadir}/%{name}/binary-configure
+%{__rm} $RPM_BUILD_ROOT%{_datadir}/mysql/errmsg-utf8.txt
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_waitpid.1*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
+#%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
-rm $RPM_BUILD_ROOT%{_bindir}/mysql_client_test
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld_multi.server
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test_embedded.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql-stress-test.pl.1*
-rm $RPM_BUILD_ROOT%{_mandir}/man1/mysql-test-run.pl.1*
-
-# in %doc
-rm $RPM_BUILD_ROOT%{_datadir}/mysql/*.{ini,cnf}
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_client_test
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test.1*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test_embedded.1*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-stress-test.pl.1*
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-test-run.pl.1*
+%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/mysql-test
 
 # not needed
-rm -f $RPM_BUILD_ROOT%{_libdir}/mysql/ha_{example,blackhole,federated}.{a,la}
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/libdaemon_example.*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -726,11 +690,11 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc support-files/*.cnf support-files/*.ini
+%doc KNOWN_BUGS.txt README
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/mysql
 %attr(754,root,root) /etc/rc.d/init.d/mysql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql
-%attr(640,root,mysql) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/mysql/clusters.conf
+%attr(640,root,mysql) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/clusters.conf
 %attr(755,root,root) %{_sbindir}/innochecksum
 %attr(755,root,root) %{_sbindir}/myisamchk
 %attr(755,root,root) %{_sbindir}/myisamlog
@@ -738,12 +702,37 @@ fi
 %attr(755,root,root) %{_sbindir}/my_print_defaults
 %attr(755,root,root) %{_sbindir}/mysqlcheck
 %attr(755,root,root) %{_sbindir}/mysqld
-%attr(755,root,root) %{_sbindir}/mysql_fix_privilege_tables
+#%attr(755,root,root) %{_sbindir}/mysql_fix_privilege_tables
 %attr(755,root,root) %{_sbindir}/mysql_upgrade
-%dir %{_libdir}/mysql
-%dir %{_libdir}/mysql/plugin
-%attr(755,root,root) %{_libdir}/mysql/plugin/ha_blackhole.so.*.*.*
-%attr(755,root,root) %{_libdir}/mysql/plugin/ha_example.so.*.*.*
+%dir %{_libdir}/%{name}
+%dir %{_libdir}/%{name}/plugin
+%{_libdir}/%{name}/plugin/daemon_example.ini
+%attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_socket.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/feedback.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federated.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federatedx.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_innodb.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_oqgraph.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_client.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_master.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_slave.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
+%if %{with sphinx}
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
+%endif
 %{_mandir}/man1/innochecksum.1*
 %{_mandir}/man1/myisamchk.1*
 %{_mandir}/man1/myisamlog.1*
@@ -760,12 +749,26 @@ fi
 %{_mandir}/man1/*resolve_stack_dump.1*
 %endif
 
+
+%{_sysconfdir}/my.cnf
+%{_sysconfdir}/my.cnf.d/client.cnf
+%{_sysconfdir}/my.cnf.d/mysql-clients.cnf
+%{_sysconfdir}/my.cnf.d/server.cnf
+%attr(755,root,root) %{_bindir}/mysql_install_db
+%attr(755,root,root) %{_bindir}/mytop
+%attr(755,root,root) %{_bindir}/resolveip
+%attr(755,root,root) %{_sbindir}/mysql_plugin
+%{_mandir}/man1/mysql_install_db.1*
+%{_mandir}/man1/mysqlbug.1*
+%{_mandir}/man1/mysqldumpslow.1*
+%{_mandir}/man1/resolveip.1*
+
 %attr(700,mysql,mysql) %{_mysqlhome}
 # root:root is proper here for mysql.rpm while mysql:mysql is potential security hole
-%attr(751,root,root) /var/lib/mysql
-%attr(750,mysql,mysql) %dir /var/log/mysql
-%attr(750,mysql,mysql) %dir /var/log/archive/mysql
-%attr(640,mysql,mysql) %ghost /var/log/mysql/*
+#%attr(751,root,root) /var/lib/mysql
+%attr(750,mysql,mysql) %dir /var/log/%{name}
+%attr(750,mysql,mysql) %dir /var/log/archive/%{name}
+%attr(640,mysql,mysql) %ghost /var/log/%{name}/*
 
 %{_infodir}/mysql.info*
 # This is template for configuration file which is created after 'service mysql init'
@@ -776,7 +779,7 @@ fi
 
 %{_datadir}/mysql/english
 %{_datadir}/mysql/fill_help_tables.sql
-%{_datadir}/mysql/mysql_fix_privilege_tables.sql
+#%{_datadir}/mysql/mysql_fix_privilege_tables.sql
 %lang(cs) %{_datadir}/mysql/czech
 %lang(da) %{_datadir}/mysql/danish
 %lang(de) %{_datadir}/mysql/german
@@ -807,11 +810,11 @@ fi
 
 %files extras
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_bindir}/maria_chk
-%attr(755,root,root) %{_bindir}/maria_dump_log
-%attr(755,root,root) %{_bindir}/maria_ftdump
-%attr(755,root,root) %{_bindir}/maria_pack
-%attr(755,root,root) %{_bindir}/maria_read_log
+%attr(755,root,root) %{_bindir}/aria_chk
+%attr(755,root,root) %{_bindir}/aria_dump_log
+%attr(755,root,root) %{_bindir}/aria_ftdump
+%attr(755,root,root) %{_bindir}/aria_pack
+%attr(755,root,root) %{_bindir}/aria_read_log
 %attr(755,root,root) %{_bindir}/msql2mysql
 %attr(755,root,root) %{_bindir}/myisam_ftdump
 %attr(755,root,root) %{_bindir}/mysql_secure_installation
@@ -853,7 +856,7 @@ fi
 %attr(755,root,root) %{_bindir}/mysqlimport
 %attr(755,root,root) %{_bindir}/mysqlshow
 %attr(755,root,root) %{_bindir}/mysqlslap
-%attr(755,root,root) %{_sbindir}/mysqlmanager
+#%attr(755,root,root) %{_sbindir}/mysqlmanager
 %{_mandir}/man1/mysql.1*
 %{_mandir}/man1/mysqladmin.1*
 %{_mandir}/man1/mysqlbinlog.1*
@@ -867,13 +870,13 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
-%doc EXCEPTIONS-CLIENT
-%attr(751,root,root) %dir %{_sysconfdir}/mysql
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/mysql/mysql-client.conf
+#%doc EXCEPTIONS-CLIENT
+%attr(751,root,root) %dir %{_sysconfdir}/%{name}
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %attr(755,root,root) %{_libdir}/libmysqlclient.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libmysqlclient.so.16
+%attr(755,root,root) %ghost %{_libdir}/libmysqlclient.so.18
 %attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.16
+%attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.18
 %if %{with ndb}
 %attr(755,root,root) %{_libdir}/libndbclient.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libndbclient.so.3
@@ -883,7 +886,7 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/mysql_config
 %attr(755,root,root) %{_libdir}/lib*.so
-%{_libdir}/lib*.la
+#%{_libdir}/lib*.la
 %{_libdir}/lib*[!tr].a
 %{_includedir}/mysql
 %{_aclocaldir}/mysql.m4
