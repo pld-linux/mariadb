@@ -34,9 +34,9 @@
 %bcond_with	sphinx		# Sphinx storage engine support
 %bcond_with	tests		# FIXME: don't run correctly
 %bcond_with	ndb
-#
+
 %include	/usr/lib/rpm/macros.perl
-Summary:	MariaDB Maria Engine Preview
+Summary:	An enhanced, drop-in replacement for MySQL
 Summary(de.UTF-8):	MariaDB: ist eine SQL-Datenbank
 Summary(fr.UTF-8):	MariaDB: un serveur SQL rapide et fiable
 Summary(pl.UTF-8):	MariaDB: bardzo szybka i niezawodna baza danych (SQL)
@@ -45,12 +45,12 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	5.1.41
+Version:	5.5.28a
 Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
-Source0:	http://launchpad.net/maria/5.1/ongoing/+download/%{name}-%{version}-rc.tar.gz
-# Source0-md5:	e3888c0e974155924c2d66712d6d7d59
+Source0:	http://ftp.osuosl.org/pub/mariadb/%{name}-%{version}/kvm-tarbake-jaunty-x86/%{name}-%{version}.tar.gz
+# Source0-md5:	a2d20a040ef1e49944a4ffe65ed7fefa
 Source100:	http://www.sphinxsearch.com/downloads/sphinx-0.9.7.tar.gz
 # Source100-md5:	32f2b7e98d8485c86108851d52c5cef4
 Source1:	mysql.init
@@ -65,23 +65,23 @@ Source10:	mysql-ndb-mgm.sysconfig
 Source11:	mysql-ndb-cpc.init
 Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
-Patch0:		mysql-maria-libs.patch
+#Patch0:		mysql-maria-libs.patch
 Patch1:		mysql-libwrap.patch
 Patch2:		mysql-c++.patch
 Patch3:		mysql-info.patch
 Patch4:		mysql-sql-cxx-pic.patch
-Patch5:		mysql-noproc.patch
-Patch6:		mysql-system-users.patch
+#Patch5:		mysql-noproc.patch
+#Patch6:		mysql-system-users.patch
 Patch7:		mysql-bug-34192.patch
 Patch8:		mysql-client-config.patch
 Patch9:		mysql-build.patch
 Patch10:	mysql-alpha.patch
-Patch11:	mysql-upgrade.patch
+#Patch11:	mysql-upgrade.patch
 #Patch12: mysql-NDB_CXXFLAGS.patch
 #Patch14: mysql-bug-18156.patch
 #Patch16:	mysql-bug-29082.patch
-Patch17:	%{name}-libevent.patch
-URL:		http://askmonty.org/wiki/index.php/MariaDB
+#Patch17:	%{name}-libevent.patch
+URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	doxygen
@@ -108,8 +108,8 @@ Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(triggerpostun):	sed >= 4.0
-Requires:	/usr/bin/setsid
 Requires:	%{name}-charsets = %{version}-%{release}
+Requires:	/usr/bin/setsid
 Requires:	rc-scripts >= 0.2.0
 Provides:	MariaDB-server
 Provides:	group(mysql)
@@ -132,25 +132,26 @@ Maria Engine is an extended version of MyISAM which is crash safe.
 
 MariaDB is a true multi-user, multi-threaded SQL (Structured Query
 Language) database server. SQL is the most popular database language
-in the world. MariaDB is a client/server implementation that consists of
-a server daemon mysqld and many different client programs/libraries.
+in the world. MariaDB is a client/server implementation that consists
+of a server daemon mysqld and many different client
+programs/libraries.
 
-The main goals of MariaDB are speed, robustness and easy to use. MariaDB
-was originally developed because we at Tcx needed a SQL server that
-could handle very big databases with magnitude higher speed than what
-any database vendor could offer to us. We have now been using MariaDB
-since 1996 in a environment with more than 40 databases, 10,000
-tables, of which more than 500 have more than 7 million rows. This is
-about 50G of mission critical data.
+The main goals of MariaDB are speed, robustness and easy to use.
+MariaDB was originally developed because we at Tcx needed a SQL server
+that could handle very big databases with magnitude higher speed than
+what any database vendor could offer to us. We have now been using
+MariaDB since 1996 in a environment with more than 40 databases,
+10,000 tables, of which more than 500 have more than 7 million rows.
+This is about 50G of mission critical data.
 
-The base upon which MariaDB is built is a set of routines that have been
-used in a highly demanding production environment for many years.
+The base upon which MariaDB is built is a set of routines that have
+been used in a highly demanding production environment for many years.
 While MariaDB is still in development, it already offers a rich and
 highly useful function set.
 
 %description -l fr.UTF-8
-MariaDB est un serveur de bases de donnees SQL vraiment multi-usagers et
-multi-taches. Le langage SQL est le langage de bases de donnees le
+MariaDB est un serveur de bases de donnees SQL vraiment multi-usagers
+et multi-taches. Le langage SQL est le langage de bases de donnees le
 plus populaire au monde. MariaDB est une implementation client/serveur
 qui consiste en un serveur (mysqld) et differents
 programmes/bibliotheques clientes.
@@ -164,16 +165,16 @@ utilisons MariaDB depuis 1996 dans un environnement avec plus de 40
 bases de donnees, 10000 tables, desquelles plus de 500 ont plus de 7
 millions de lignes. Ceci represente environ 50G de donnees critiques.
 
-A la base de la conception de MariaDB, on retrouve une serie de routines
-qui ont ete utilisees dans un environnement de production pendant
-plusieurs annees. Meme si MariaDB est encore en developpement, il offre
-deja une riche et utile serie de fonctions.
+A la base de la conception de MariaDB, on retrouve une serie de
+routines qui ont ete utilisees dans un environnement de production
+pendant plusieurs annees. Meme si MariaDB est encore en developpement,
+il offre deja une riche et utile serie de fonctions.
 
 %description -l pl.UTF-8
-MariaDB to prawdziwie wieloużytkownikowy, wielowątkowy serwer baz danych
-SQL. SQL jest najpopularniejszym na świecie językiem używanym do baz
-danych. MariaDB to implementacja klient/serwer składająca się z demona
-mysqld i wielu różnych programów i bibliotek klienckich.
+MariaDB to prawdziwie wieloużytkownikowy, wielowątkowy serwer baz
+danych SQL. SQL jest najpopularniejszym na świecie językiem używanym
+do baz danych. MariaDB to implementacja klient/serwer składająca się z
+demona mysqld i wielu różnych programów i bibliotek klienckich.
 
 Głównymi celami MariaDB-a są szybkość, potęga i łatwość użytkowania.
 MariaDB oryginalnie był tworzony, ponieważ autorzy w Tcx potrzebowali
@@ -185,8 +186,8 @@ których ponad 500 zawiera ponad 7 milionów rekordów - w sumie około
 
 Baza, na której oparty jest MariaDB, składa się ze zbioru procedur,
 które były używane w bardzo wymagającym środowisku produkcyjnym przez
-wiele lat. Pomimo, że MariaDB jest ciągle rozwijany, już oferuje bogaty
-i użyteczny zbiór funkcji.
+wiele lat. Pomimo, że MariaDB jest ciągle rozwijany, już oferuje
+bogaty i użyteczny zbiór funkcji.
 
 %description -l de.UTF-8
 MariaDB ist eine SQL-Datenbank. Allerdings ist sie im Gegensatz zu
@@ -197,38 +198,39 @@ eines Fremdschlüssels möglich. Der Benutzer ist somit bei einer
 MariaDB-Datenbank völlig allein für die (referenzielle) Integrität der
 Daten verantwortlich. Allein durch die Nutzung externer
 Tabellenformate, wie InnoDB bzw Berkeley DB wird eine Relationalität
-ermöglicht. Diese Projekte sind aber getrennt von MariaDB zu betrachten.
+ermöglicht. Diese Projekte sind aber getrennt von MariaDB zu
+betrachten.
 
 %description -l pt_BR.UTF-8
 O MariaDB é um servidor de banco de dados SQL realmente multiusuário e
 multi-tarefa. A linguagem SQL é a mais popular linguagem para banco de
 dados no mundo. O MariaDB é uma implementação cliente/servidor que
 consiste de um servidor chamado mysqld e diversos
-programas/bibliotecas clientes. Os principais objetivos do MariaDB são:
-velocidade, robustez e facilidade de uso. O MariaDB foi originalmente
-desenvolvido porque nós na Tcx precisávamos de um servidor SQL que
-pudesse lidar com grandes bases de dados e com uma velocidade muito
-maior do que a que qualquer vendedor podia nos oferecer. Estamos
-usando o MariaDB desde 1996 em um ambiente com mais de 40 bases de dados
-com 10.000 tabelas, das quais mais de 500 têm mais de 7 milhões de
-linhas. Isto é o equivalente a aproximadamente 50G de dados críticos.
-A base da construção do MariaDB é uma série de rotinas que foram usadas
-em um ambiente de produção com alta demanda por muitos anos. Mesmo o
-MariaDB estando ainda em desenvolvimento, ele já oferece um conjunto de
-funções muito ricas e úteis. Veja a documentação para maiores
-informações.
+programas/bibliotecas clientes. Os principais objetivos do MariaDB
+são: velocidade, robustez e facilidade de uso. O MariaDB foi
+originalmente desenvolvido porque nós na Tcx precisávamos de um
+servidor SQL que pudesse lidar com grandes bases de dados e com uma
+velocidade muito maior do que a que qualquer vendedor podia nos
+oferecer. Estamos usando o MariaDB desde 1996 em um ambiente com mais
+de 40 bases de dados com 10.000 tabelas, das quais mais de 500 têm
+mais de 7 milhões de linhas. Isto é o equivalente a aproximadamente
+50G de dados críticos. A base da construção do MariaDB é uma série de
+rotinas que foram usadas em um ambiente de produção com alta demanda
+por muitos anos. Mesmo o MariaDB estando ainda em desenvolvimento, ele
+já oferece um conjunto de funções muito ricas e úteis. Veja a
+documentação para maiores informações.
 
 %description -l ru.UTF-8
-MariaDB - это SQL (Structured Query Language) сервер базы данных. MariaDB
-была написана Michael'ом (monty) Widenius'ом. См. файл CREDITS в
-дистрибутиве на предмет других участников проекта и прочей информации
-о MariaDB.
+MariaDB - это SQL (Structured Query Language) сервер базы данных.
+MariaDB была написана Michael'ом (monty) Widenius'ом. См. файл CREDITS
+в дистрибутиве на предмет других участников проекта и прочей
+информации о MariaDB.
 
 %description -l uk.UTF-8
-MariaDB - це SQL (Structured Query Language) сервер бази даних. MariaDB
-було написано Michael'ом (monty) Widenius'ом. Див. файл CREDITS в
-дистрибутиві для інформації про інших учасників проекту та іншої
-інформації.
+MariaDB - це SQL (Structured Query Language) сервер бази даних.
+MariaDB було написано Michael'ом (monty) Widenius'ом. Див. файл
+CREDITS в дистрибутиві для інформації про інших учасників проекту та
+іншої інформації.
 
 %package charsets
 Summary:	MariaDB - character sets definitions
@@ -254,8 +256,8 @@ MariaDB additional utilities except Perl scripts (they may be found in
 mysql-extras-perl package).
 
 %description extras -l pl.UTF-8
-Dodatkowe narzędzia do MariaDB - z wyjątkiem skryptów Perla (które są w
-pakiecie mysql-extras-perl).
+Dodatkowe narzędzia do MariaDB - z wyjątkiem skryptów Perla (które są
+w pakiecie mysql-extras-perl).
 
 %package extras-perl
 Summary:	MariaDB additional utilities written in Perl
@@ -335,7 +337,8 @@ klienckich MariaDB.
 
 %description devel -l pt_BR.UTF-8
 Este pacote contém os arquivos de cabeçalho (header files) e
-bibliotecas necessárias para desenvolver aplicações clientes do MariaDB.
+bibliotecas necessárias para desenvolver aplicações clientes do
+MariaDB.
 
 %description devel -l ru.UTF-8
 Этот пакет содержит хедеры и библиотеки разработчика, необходимые для
@@ -385,7 +388,8 @@ This package contains MariaDB benchmark scripts and data.
 Programy testujące szybkość serwera MariaDB.
 
 %description bench -l pt_BR.UTF-8
-Este pacote contém medições de desempenho de scripts e dados do MariaDB.
+Este pacote contém medições de desempenho de scripts e dados do
+MariaDB.
 
 %description bench -l ru.UTF-8
 Этот пакет содержит скрипты и данные для оценки производительности
@@ -455,14 +459,14 @@ This package contains the standard MariaDB NDB CPC Daemon.
 Ten pakiet zawiera standardowego demona MariaDB NDB CPC.
 
 %prep
-%setup -q -n %{name}-%{version}-rc %{?with_sphinx:-a100}
+%setup -q %{?with_sphinx:-a100}
 %if %{with sphinx}
 mv sphinx-*/mysqlse storage/sphinx
 %endif
-%patch0 -p1
+#%patch0 -p1
 #%{?with_tcpd:%patch1 -p1}  # WHATS PURPOSE OF THIS PATCH?
-#%patch2 -p1 # NEEDS CHECK, which exact program needs -lc++
-#%patch3 -p1 # NEEDS UPDATE
+#%%patch2 -p1 # NEEDS CHECK, which exact program needs -lc++
+#%%patch3 -p1 # NEEDS UPDATE
 %ifarch alpha
 # this is strange: mysqld functions for UDF modules are not explicitly defined,
 # so -rdynamic is used; in such case gcc3+ld on alpha doesn't like C++ vtables
@@ -471,16 +475,16 @@ mv sphinx-*/mysqlse storage/sphinx
 # gcc 3.3.x ICE
 %patch10 -p1
 %endif
-%patch5 -p1
-%patch6 -p1
+#%patch5 -p1
+#%patch6 -p1
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%patch11 -p1
-#%patch12 -p1 # OUTDATED?
-#%patch14 -p1 # OUTDATED?
-#%patch16 -p1 # NO FILE IN CVS
-%patch17 -p1
+#%patch11 -p1
+#%%patch12 -p1 # OUTDATED?
+#%%patch14 -p1 # OUTDATED?
+#%%patch16 -p1 # NO FILE IN CVS
+#%patch17 -p1
 
 %build
 %{__libtoolize}
