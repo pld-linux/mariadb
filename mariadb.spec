@@ -49,12 +49,12 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	5.5.28a
+Version:	5.5.31
 Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 Source0:	http://ftp.osuosl.org/pub/mariadb/%{name}-%{version}/kvm-tarbake-jaunty-x86/%{name}-%{version}.tar.gz
-# Source0-md5:	a2d20a040ef1e49944a4ffe65ed7fefa
+# Source0-md5:	3fe756bc76f0e7a3af2757e48ce0f3f4
 Source100:	http://www.sphinxsearch.com/downloads/sphinx-0.9.7.tar.gz
 # Source100-md5:	32f2b7e98d8485c86108851d52c5cef4
 Source1:	mysql.init
