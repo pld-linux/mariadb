@@ -2,6 +2,12 @@
 # - package not conflicting with mysql
 # - /etc/my.cnf.d/ -> /etc/mariadb.d/
 # - /etc/my.cnf -> /etc/mariadb.conf
+# - unpackaged:
+#        /etc/init.d/mysql
+#        /usr/lib/mariadb/plugin/auth_0x0100.so
+#        /usr/lib/mariadb/plugin/query_cache_info.so
+#        /usr/share/mysql/mysql_performance_tables.sql
+#        /usr/share/sql-bench/myisam.cnf
 # MYSQL TODO:
 # - sanitize mysql_config:
 #   - kill optflags (-f.*/-g.*/-m.*) from --cflags
@@ -540,14 +546,16 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-cp -a Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
+%{__rm} -r $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
+
+cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
 install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
-cp -a %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
-cp -a %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mysql
+cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
+cp -p %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mysql
 # This is template for configuration file which is created after 'service mysql init'
-cp -a %{SOURCE4} mysqld.conf
-cp -a %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/clusters.conf
+cp -p %{SOURCE4} mysqld.conf
+cp -p %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/clusters.conf
 touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 
 # remove innodb directives from mysqld.conf if mysqld is configured without
@@ -557,16 +565,16 @@ touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 %endif
 
 cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.conf
-cp -a %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
+cp -p %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
 
 # NDB
 %if %{with ndb}
 install -p %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb
-cp -a %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
+cp -p %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
 install -p %{SOURCE9} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-mgm
-cp -a %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
+cp -p %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
 install -p %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
-cp -a %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
+cp -p %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
 %endif
 
 # symlinks point to the .so file, fix it
