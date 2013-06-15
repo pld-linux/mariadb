@@ -312,18 +312,18 @@ Este pacote contém os clientes padrão para o MariaDB.
 Цей пакет містить тільки клієнта MariaDB.
 
 %package libs
-Summary:	Shared libraries for MariaDB
+Summary:	Shared libraries for MariaDB/MySQL clients
 Summary(pl.UTF-8):	Biblioteki dzielone MariaDB
 Group:		Libraries
 
 %description libs
-Shared libraries for MariaDB.
+Shared libraries for any MariaDB/MySQL client program or interface.
 
 %description libs -l pl.UTF-8
 Biblioteki dzielone MariaDB.
 
 %package devel
-Summary:	MariaDB - Development header files and libraries
+Summary:	Files for development of MariaDB/MySQL applications
 Summary(pl.UTF-8):	MariaDB - Pliki nagłówkowe i biblioteki dla programistów
 Summary(pt.UTF-8):	MariaDB - Medições de desempenho
 Summary(ru.UTF-8):	MariaDB - хедеры и библиотеки разработчика
@@ -334,8 +334,8 @@ Requires:	%{name}-libs = %{version}-%{release}
 Requires:	zlib-devel
 
 %description devel
-This package contains the development header files and libraries
-necessary to develop MariaDB client applications.
+This package contains the libraries and header files that are needed
+for developing MariaDB/MySQL client applications.
 
 %description devel -l fr.UTF-8
 Ce package contient les fichiers entetes et les librairies de
