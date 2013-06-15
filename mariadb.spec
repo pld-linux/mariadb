@@ -6,7 +6,6 @@
 #        /etc/init.d/mysql
 #        /usr/lib/mariadb/plugin/auth_0x0100.so
 #        /usr/lib/mariadb/plugin/query_cache_info.so
-#        /usr/share/mysql/mysql_performance_tables.sql
 #        /usr/share/sql-bench/myisam.cnf
 # MYSQL TODO:
 # - sanitize mysql_config:
@@ -784,6 +783,7 @@ fi
 %{_datadir}/mysql/mysql_system_tables.sql
 %{_datadir}/mysql/mysql_system_tables_data.sql
 %{_datadir}/mysql/mysql_test_data_timezone.sql
+%{_datadir}/mysql/mysql_performance_tables.sql
 
 %{_datadir}/mysql/english
 %{_datadir}/mysql/fill_help_tables.sql
