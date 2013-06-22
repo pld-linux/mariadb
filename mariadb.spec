@@ -1,36 +1,7 @@
 # TODO:
-# - package not conflicting with mysql
-# - /etc/my.cnf.d/ -> /etc/mariadb.d/
-# - /etc/my.cnf -> /etc/mariadb.conf
-# - unpackaged:
-#        /etc/init.d/mysql
-#        /usr/lib/mariadb/plugin/auth_0x0100.so
-#        /usr/lib/mariadb/plugin/query_cache_info.so
-#        /usr/share/sql-bench/myisam.cnf
-# MYSQL TODO:
-# - sanitize mysql_config:
-#   - kill optflags (-f.*/-g.*/-m.*) from --cflags
-#   - kill -lnsl from --libs/--libs_r/--libmysqld-libs
-# - C(XX)FLAGS for innodb subdirs are overriden by ./configure!
-# - http://bugs.mysql.com/bug.php?id=16470
-# - innodb are dynamic (= as plugins) ?
-# - missing have_archive, have_merge
-# - is plugin_dir lib64 safe?
-# - Using NDB Cluster... could not find sci transporter in /{include, lib}
-# - unpackaged:
-#   /usr/share/man/man1/mysql_tableinfo.1.gz
-#   /usr/lib/libmysqlclient.so.16
-#   /usr/lib/libmysqlclient_r.so.16
-#   /usr/lib/libndbclient.so.3
-#   /usr/lib/mysql/ha_blackhole.so
-#   /usr/lib/mysql/ha_blackhole.so.0
-#   /usr/lib/mysql/ha_example.so
-#   /usr/lib/mysql/ha_example.so.0
-#   /usr/sbin/ndb_mgmd
-#   /usr/share/man/man1/mysql_tableinfo.1.gz
-#   /usr/share/man/man1/mysqlbug.1.gz
-#   /usr/share/man/man8/ndb_mgmd.8.gz
-#   /usr/share/man/man8/ndbd.8.gz
+# - package not conflicting with mysql (or just easily replacing mysql)
+# - something wrong in //libmysql/CMakeLists.txt and thus symbols like
+#   libmysqlclient.so.18(libmysqlclient_16) are missing
 #
 # Conditional build:
 %bcond_without	innodb		# InnoDB storage engine support
@@ -506,25 +477,25 @@ cd build
 %cmake \
 	-DCMAKE_BUILD_TYPE=%{!?debug:RelWithDebInfo}%{?debug:Debug} \
 	-DFEATURE_SET="community" \
-	-DCMAKE_C_FLAGS_RELEASE="%{rpmcflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
-	-DCMAKE_CXX_FLAGS_RELEASE="%{rpmcxxflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
+	-DCMAKE_C_FLAGS="%{rpmcflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
+	-DCMAKE_CXX_FLAGS="%{rpmcxxflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
+	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
 	-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
 	-DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
 	%{?debug:-DWITH_DEBUG=ON} \
 	-DWITH_FAST_MUTEXES=ON \
 	-DWITH_PIC=ON \
 	-DWITH_LIBEDIT=OFF \
-	-DWITH_READLINE=OFF \
-	-DWITH_CURSES=OFF \
 	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
 	-DWITH_ZLIB=system \
 	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
 	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
 	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
-	-DCURSES_INCLUDE_PATH=/usr/include/ncurses \
 	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
 	-DINSTALL_LAYOUT=RPM \
 	-DINSTALL_MYSQLTESTDIR_RPM="" \
+	-DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir}/%{name} \
+	-DINSTALL_SYSCONFDIR=%{_sysconfdir}/%{name} \
 	-DINSTALL_SQLBENCHDIR=%{_datadir} \
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
 	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
@@ -548,6 +519,9 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 %{__rm} -r $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 
 cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
+
+# we use our own
+rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/{logrotate.d/mysql,init.d/mysql}
 
 install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
 cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
@@ -715,6 +689,7 @@ fi
 %dir %{_libdir}/%{name}/plugin
 %{_libdir}/%{name}/plugin/daemon_example.ini
 %attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_0x0100.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_socket.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
@@ -734,6 +709,7 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_client.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/query_cache_info.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_master.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_slave.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
@@ -757,10 +733,12 @@ fi
 %endif
 
 
-%{_sysconfdir}/my.cnf
-%{_sysconfdir}/my.cnf.d/client.cnf
-%{_sysconfdir}/my.cnf.d/mysql-clients.cnf
-%{_sysconfdir}/my.cnf.d/server.cnf
+%dir %{_sysconfdir}/%{name}
+%{_sysconfdir}/%{name}/my.cnf
+%dir %{_sysconfdir}/%{name}/my.cnf.d
+%{_sysconfdir}/%{name}/my.cnf.d/client.cnf
+%{_sysconfdir}/%{name}/my.cnf.d/mysql-clients.cnf
+%{_sysconfdir}/%{name}/my.cnf.d/server.cnf
 %attr(755,root,root) %{_bindir}/mysql_install_db
 %attr(755,root,root) %{_bindir}/mytop
 %attr(755,root,root) %{_bindir}/resolveip
@@ -909,6 +887,7 @@ fi
 %attr(755,root,root) %{_bindir}/mysqltest
 %dir %{_datadir}/sql-bench
 %{_datadir}/sql-bench/[CDRl]*
+%{_datadir}/sql-bench/myisam.cnf
 %attr(755,root,root) %{_datadir}/sql-bench/[bcgirst]*
 %{_mandir}/man1/mysqltest.1*
 %{_mandir}/man1/mysqltest_embedded.1*
