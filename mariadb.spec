@@ -28,14 +28,14 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	10.0.10
-Release:	0.5
+Version:	10.1.18
+Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
-Source0:	http://ftp.osuosl.org/pub/mariadb/%{name}-%{version}/kvm-tarbake-jaunty-x86/mariadb-%{version}.tar.gz
-# Source0-md5:	14ce22b8197d4eae88d237776d47220f
-Source100:	http://sphinxsearch.com/files/sphinx-2.1.7-release.tar.gz
-# Source100-md5:	f4bda397e0499df965af41939a489df3
+Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
+# Source0-md5:	173b88ab54bdd1fc51483b6b26bef849
+Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
+# Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mysql.init
 Source2:	mysql.sysconfig
 Source3:	mysql.logrotate
@@ -48,23 +48,7 @@ Source10:	mysql-ndb-mgm.sysconfig
 Source11:	mysql-ndb-cpc.init
 Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
-#Patch0: mysql-maria-libs.patch
-Patch1:		mysql-libwrap.patch
-Patch2:		mysql-c++.patch
-Patch3:		mysql-info.patch
-Patch4:		mysql-sql-cxx-pic.patch
-#Patch5: mysql-noproc.patch
-#Patch6: mysql-system-users.patch
-Patch7:		mysql-bug-34192.patch
-Patch8:		mysql-client-config.patch
-Patch9:		mysql-build.patch
-Patch10:	mysql-alpha.patch
-#Patch11: mysql-upgrade.patch
-#Patch12: mysql-NDB_CXXFLAGS.patch
-#Patch14: mysql-bug-18156.patch
-#Patch16: mysql-bug-29082.patch
-#Patch17: %{name}-libevent.patch
-Patch18:	mysql-bug-67018.patch
+Patch0:		mysql-client-config.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -251,7 +235,7 @@ Summary:	MariaDB additional utilities written in Perl
 Summary(pl.UTF-8):	Dodatkowe narzędzia do MariaDB napisane w Perlu
 Group:		Applications/Databases
 Requires:	%{name}-extras = %{version}-%{release}
-Requires:	perl(DBD::mysql)
+Requires:	perl-DBD-mysql
 
 %description extras-perl
 MariaDB additional utilities written in Perl.
@@ -366,7 +350,7 @@ Summary(uk.UTF-8):	MariaDB - бенчмарки
 Group:		Applications/Databases
 Requires:	%{name} = %{version}-%{release}
 Requires:	%{name}-client
-Requires:	perl(DBD::mysql)
+Requires:	perl-DBD-mysql
 
 %description bench
 This package contains MariaDB benchmark scripts and data.
@@ -460,29 +444,8 @@ process.
 %if %{with sphinx}
 mv sphinx-*/mysqlse storage/sphinx
 %endif
-#%patch0 -p1
-#%{?with_tcpd:%patch1 -p1}  # WHATS PURPOSE OF THIS PATCH?
-#%%patch2 -p1 # NEEDS CHECK, which exact program needs -lc++
-#%%patch3 -p1 # NEEDS UPDATE
-%ifarch alpha
-# this is strange: mysqld functions for UDF modules are not explicitly defined,
-# so -rdynamic is used; in such case gcc3+ld on alpha doesn't like C++ vtables
-# in objects compiled without -fPIC
-%patch4 -p1
-# gcc 3.3.x ICE
-%patch10 -p1
-%endif
-#%patch5 -p1
-#%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-#%patch11 -p1
-#%%patch12 -p1 # OUTDATED?
-#%%patch14 -p1 # OUTDATED?
-#%%patch16 -p1 # NO FILE IN CVS
-#%patch17 -p1
-%patch18 -p1
+
+%patch0 -p1
 
 %build
 install -d build
@@ -546,9 +509,6 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
-
-%{__mv} $RPM_BUILD_ROOT%{_docdir}/{COPYING,COPYING.LESSER,CREDITS,INFO_BIN,INFO_SRC} .
-%{__mv} $RPM_BUILD_ROOT%{_docdir}/{INSTALL-BINARY,README,README-TOKUDB,README.md,TODO} .
 
 cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
@@ -628,7 +588,7 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_waitpid.1*
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
+#%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
 #%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
@@ -706,7 +666,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc KNOWN_BUGS.txt README COPYING.LESSER CREDITS TODO COPYING INFO_BIN INFO_SRC INSTALL-BINARY README-TOKUDB README.md
+%doc KNOWN_BUGS.txt README COPYING.LESSER CREDITS COPYING
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/mysql
 %attr(754,root,root) /etc/rc.d/init.d/mysql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql
@@ -730,7 +690,7 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/feedback.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/feedback.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federated.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_innodb.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
@@ -774,7 +734,7 @@ fi
 %{_mandir}/man1/myisampack.1*
 %{_mandir}/man1/my_print_defaults.1*
 %{_mandir}/man1/mysqlcheck.1*
-%{_mandir}/man1/mysql_fix_privilege_tables.1*
+#%{_mandir}/man1/mysql_fix_privilege_tables.1*
 %{_mandir}/man1/mysql_upgrade.1*
 %{_mandir}/man1/mysql_plugin.1*
 %{_mandir}/man8/mysqld.8*
@@ -914,7 +874,7 @@ fi
 #%{_mandir}/man1/mysqlmanager-pwgen.1*
 %{_mandir}/man1/mysqlshow.1*
 %{_mandir}/man1/mysqlslap.1*
-%{_mandir}/man8/mysqlmanager.8*
+#%{_mandir}/man8/mysqlmanager.8*
 
 %files libs
 %defattr(644,root,root,755)
