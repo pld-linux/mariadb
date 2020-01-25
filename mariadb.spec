@@ -18,7 +18,6 @@
 %bcond_without	cassandra	# Cassandra Storage Engine
 %bcond_with	fixme		# FIXME: 
 
-%include	/usr/lib/rpm/macros.perl
 Summary:	An enhanced, drop-in replacement for MySQL
 Summary(de.UTF-8):	MariaDB: ist eine SQL-Datenbank
 Summary(fr.UTF-8):	MariaDB: un serveur SQL rapide et fiable
