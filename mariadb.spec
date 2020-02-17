@@ -6,17 +6,28 @@
 # Conditional build:
 %bcond_without	innodb		# InnoDB storage engine support
 %bcond_without	big_tables	# Support tables with more than 4G rows even on 32 bit platforms
-%bcond_without	federated	# Federated storage engine support
+%bcond_with	connect		# Connect Storage Engine
+%bcond_without	federated	# Federated Storage Engine support
 %bcond_without	raid		# RAID support
 %bcond_without	ssl		# OpenSSL support
 %bcond_without	tcpd		# libwrap (tcp_wrappers) support
 %bcond_without	tokudb		# TokuDB engine support (available only for x86_64 ??)
+%bcond_without	mroonga		# https://mariadb.com/kb/en/mariadb/about-mroonga/ (only for x86_64)
+%bcond_without	rocksdb		# https://mariadb.com/kb/en/library/about-myrocks-for-mariadb/ (only for x86_64)
 %bcond_with	autodeps	# BR packages needed only for resolving deps
+%bcond_without	oqgraph		# Open Query GRAPH engine (OQGRAPH)
 %bcond_without	sphinx		# Sphinx storage engine support
+%bcond_without	cracklib	# cracklib support
+%bcond_without	lz4		# lz4 page compression for InnoDB & XtraDB
 %bcond_with	tests		# FIXME: don't run correctly
 %bcond_with	ndb
-%bcond_without	cassandra	# Cassandra Storage Engine
-%bcond_with	fixme		# FIXME: 
+%bcond_with	cassandra	# Cassandra Storage Engine (https://jira.mariadb.org/browse/MDEV-21368)
+
+%ifnarch %{x8664}
+%unglobal	with_tokudb
+%unglobal	with_mroonga
+%unglobal	with_rocksdb
+%endif
 
 Summary:	An enhanced, drop-in replacement for MySQL
 Summary(de.UTF-8):	MariaDB: ist eine SQL-Datenbank
@@ -27,12 +38,12 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	10.1.18
+Version:	10.4.12
 Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
-# Source0-md5:	173b88ab54bdd1fc51483b6b26bef849
+# Source0-md5:	97d7c0f508c04a31c138fdb24e95dbc4
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mysql.init
@@ -48,16 +59,21 @@ Source11:	mysql-ndb-cpc.init
 Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
 Patch0:		mysql-client-config.patch
+Patch1:		heimdal.patch
+Patch2:		build.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	cmake >= 2.6
+%{?with_cracklib:BuildRequires:	cracklib-devel}
 BuildRequires:	doxygen
 BuildRequires:	groff
+BuildRequires:	libbson-devel >= 1.16.0
 BuildRequires:	libevent-devel
 BuildRequires:	libstdc++-devel >= 5:3.0
 BuildRequires:	libtool
 %{?with_tcpd:BuildRequires:	libwrap-devel}
+%{?with_lz4:BuildRequires:	lz4-devel}
 BuildRequires:	ncurses-devel >= 4.2
 %{?with_ssl:BuildRequires:	openssl-devel >= 0.9.7d}
 %{?with_autodeps:BuildRequires:	perl-DBI}
@@ -68,7 +84,7 @@ BuildRequires:	rpmbuild(macros) >= 1.414
 BuildRequires:	sed >= 4.0
 BuildRequires:	texinfo
 # FIXME: to get thrift-devel 0.9.1 build it without php
-%{?with_cassandra:BuildRequires:	thrift-devel >= 0.9.1}
+%{?with_cassandra:BuildRequires:	thrift-devel >= 0.13}
 BuildRequires:	zlib-devel
 Requires(post,preun):	/sbin/chkconfig
 Requires(postun):	/usr/sbin/groupdel
@@ -445,6 +461,8 @@ mv sphinx-*/mysqlse storage/sphinx
 %endif
 
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
 
 %build
 install -d build
@@ -460,19 +478,30 @@ cd build
 	-DCMAKE_CXX_FLAGS="%{rpmcxxflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
 	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
 	-DCMAKE_INSTALL_PREFIX="%{_prefix}" \
-	-DWITH_ARCHIVE_STORAGE_ENGINE=ON \
-	-DWITH_ARIA_STORAGE_ENGINE=ON \
-	-DWITH_BLACKHOLE_STORAGE_ENGINE=ON \
-	-DWITH_CONNECT_STORAGE_ENGINE=ON \
-	-DWITH_FEDERATEDX_STORAGE_ENGINE=ON \
-	-DWITH_PARTITION_STORAGE_ENGINE=ON \
-	-DWITH_PERFSCHEMA_STORAGE_ENGINE=ON \
-	-DWITH_SEQUENCE_STORAGE_ENGINE=ON \
-	-DWITH_SPHINX_STORAGE_ENGINE=ON \
-	-DWITH_TEST_SQL_DISCOVERY_STORAGE_ENGINE=ON \
-	-DWITH_XTRADB_STORAGE_ENGINE=ON \
+	-DDAEMON_NAME="%{name}" \
+	-DDAEMON_NO_PREFIX="%{name}" \
+	-DPLUGIN_CASSANDRA=%{?with_cassandra:DYNAMIC}%{!?with_cassandra:NO} \
+	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
+	-DPLUGIN_MROONGA=%{?with_mroonga:DYNAMIC}%{!?with_mroonga:NO} \
+	-DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
+	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
+	-DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
+	-DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
+	-DPLUGIN_TOKUDB=%{?with_tokudb:DYNAMIC}%{!?with_tokudb:NO} \
+	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
+	-DPLUGIN_CLIENT_ED25519=OFF \
+	-DPYTHON_SHEBANG=%{python_path} \
+	-DPLUGIN_CACHING_SHA2_PASSWORD=%{?with_clibrary:DYNAMIC}%{!?with_clibrary:OFF} \
+	-DPLUGIN_AWS_KEY_MANAGEMENT=NO \
+        -DPYTHON_SHEBANG=%{__python3} \
+	-DENABLED_LOCAL_INFILE=ON \
+	-DSECURITY_HARDENED=ON \
 	%{?debug:-DWITH_DEBUG=ON} \
 	-DWITH_FAST_MUTEXES=ON \
+	-DLZ4_LIBS=%{_libdir}/liblz4.so \
+	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
+	-DWITH_INNODB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
+	-DWITH_ROCKSDB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
 	-DWITH_PIC=ON \
 	-DWITH_LIBEDIT=OFF \
 	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
@@ -480,10 +509,10 @@ cd build
 	-DWITH_PCRE=ON \
 	-DWITH_READLINE=ON \
 	-DWITH_EMBEDDED_SERVER=ON \
+	-DNICE_PROJECT_NAME="MariaDB" \
 	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
 	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
 	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
-	-DWITHOUT_TOKUDB=%{!?with_tokudb:ON}%{?with_tokudb:OFF} \
 	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
 	-DINSTALL_LAYOUT=RPM \
 	-DINSTALL_MYSQLTESTDIR_RPM="" \
@@ -493,6 +522,8 @@ cd build
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
 	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
 	-DINSTALL_LIBDIR=%{_lib} \
+	-DCONNECT_WITH_MONGO=OFF \
+	-DCONNECT_WITH_JDBC=OFF \
 	..
 
 %{__make}
@@ -512,7 +543,7 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
 # we use our own
-rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/{logrotate.d/mysql,init.d/mysql}
+rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mysql
 
 install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
 cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
@@ -598,6 +629,9 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-test-run.pl.1*
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/mysql-test
 
+# mariadb groff symlink to oracle mysql man pages
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/{mariadb-client-test-embedded,mariadb-client-test,mariadb-waitpid,mariadbd-multi,mariadbd-safe,mariadbd-safe-helper}.1
+
 # not needed
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/libdaemon_example.*
 
@@ -665,7 +699,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc KNOWN_BUGS.txt README COPYING.LESSER CREDITS COPYING
+%doc KNOWN_BUGS.txt README.md CREDITS COPYING THIRDPARTY
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/mysql
 %attr(754,root,root) /etc/rc.d/init.d/mysql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql
@@ -685,13 +719,11 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_0x0100.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_socket.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/feedback.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federated.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_innodb.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
@@ -699,8 +731,6 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_cache_info.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_master.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/semisync_slave.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_example.so
@@ -715,16 +745,14 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_response_time.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/server_audit.so
 
-%if %{with fixme}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federatedx.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_connect.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sequence.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
-#%if %{with sphinx}
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federatedx.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_connect.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sequence.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
+%if %{with sphinx}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
-#%endif
 %endif
 
 %{_mandir}/man1/innochecksum.1*
@@ -754,14 +782,13 @@ fi
 %{_sysconfdir}/my.cnf.d/mysql-clients.cnf
 %{_sysconfdir}/my.cnf.d/server.cnf
 %if %{with tokudb}
-%{_sysconfdir}/my.cnf.d/tokudb.cnf
+#%{_sysconfdir}/my.cnf.d/tokudb.cnf
 %endif
 %attr(755,root,root) %{_bindir}/mysql_install_db
 %attr(755,root,root) %{_bindir}/mytop
 %attr(755,root,root) %{_bindir}/resolveip
 %attr(755,root,root) %{_sbindir}/mysql_plugin
 %{_mandir}/man1/mysql_install_db.1*
-%{_mandir}/man1/mysqlbug.1*
 %{_mandir}/man1/mysqldumpslow.1*
 %{_mandir}/man1/resolveip.1*
 
@@ -844,21 +871,18 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_fix_extensions
 %attr(755,root,root) %{_bindir}/mysqlhotcopy
 %attr(755,root,root) %{_bindir}/mysql_setpermission
-%attr(755,root,root) %{_bindir}/mysql_zap
 %{_mandir}/man1/mysqlaccess.1*
 %{_mandir}/man1/mysql_convert_table_format.1*
 %{_mandir}/man1/mysql_find_rows.1*
 %{_mandir}/man1/mysql_fix_extensions.1*
 %{_mandir}/man1/mysqlhotcopy.1*
 %{_mandir}/man1/mysql_setpermission.1*
-%{_mandir}/man1/mysql_zap.1*
 
 %files client
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/mysql
 %attr(755,root,root) %{_bindir}/mysqladmin
 %attr(755,root,root) %{_bindir}/mysqlbinlog
-%attr(755,root,root) %{_bindir}/mysqlbug
 %attr(755,root,root) %{_bindir}/mysqldump
 %attr(755,root,root) %{_bindir}/mysqlimport
 %attr(755,root,root) %{_bindir}/mysqlshow
@@ -877,11 +901,9 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
-#%doc EXCEPTIONS-CLIENT
+%doc EXCEPTIONS-CLIENT
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
-%attr(755,root,root) %{_libdir}/libmysqlclient.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libmysqlclient.so.18
 %attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.18
 %if %{with ndb}
@@ -978,4 +1000,3 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_client_test_embedded
 %attr(755,root,root) %{_bindir}/mysql_embedded
 %attr(755,root,root) %{_bindir}/mysqltest_embedded
-%attr(755,root,root) %{_libdir}/libmysqld.so.18
