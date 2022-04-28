@@ -753,21 +753,46 @@ fi
 %{_libdir}/%{name}/plugin/daemon_example.ini
 %attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_0x0100.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_ed25519.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi_client.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_tool_dir/auth_pam_tool
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_v1.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/cracklib_password_check.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/debug_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
-#%attr(755,root,root) %{_libdir}/%{name}/plugin/feedback.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/disks.so
+#%attr(755,root,root) %{_libdir}/%{name}/plugin/example_key_management.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/file_key_management.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/func_test.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federated.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federatedx.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_mroonga.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_oqgraph.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_rocksdb.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_s3.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_client.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_cache_info.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/sha256_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/simple_password_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/test_sql_service.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/test_versioning.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_example.so
 %if %{with tokudb}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_tokudb.so
@@ -825,6 +850,7 @@ fi
 %attr(755,root,root) %{_sbindir}/mysql_plugin
 %{_mandir}/man1/mysql_install_db.1*
 %{_mandir}/man1/mysqldumpslow.1*
+%{_mandir}/man1/mytop.1*
 %{_mandir}/man1/resolveip.1*
 
 %attr(700,mysql,mysql) %{_mysqlhome}
@@ -898,6 +924,13 @@ fi
 
 %files extras-perl
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariadb-access
+%attr(755,root,root) %{_bindir}/mariadb-convert-table-format
+%attr(755,root,root) %{_bindir}/mariadb-dumpslow
+%attr(755,root,root) %{_bindir}/mariadb-find-rows
+%attr(755,root,root) %{_bindir}/mariadb-fix-extensions
+%attr(755,root,root) %{_bindir}/mariadb-hotcopy
+%attr(755,root,root) %{_bindir}/mariadb-setpermission
 %attr(755,root,root) %{_bindir}/mysqlaccess
 %attr(755,root,root) %{_bindir}/mysql_convert_table_format
 %attr(755,root,root) %{_bindir}/mysqldumpslow
@@ -905,6 +938,13 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_fix_extensions
 %attr(755,root,root) %{_bindir}/mysqlhotcopy
 %attr(755,root,root) %{_bindir}/mysql_setpermission
+%{_mandir}/man1/mariadb-access.1*
+%{_mandir}/man1/mariadb-convert-table-format.1*
+%{_mandir}/man1/mariadb-dumpslow.1*
+%{_mandir}/man1/mariadb-find-rows.1*
+%{_mandir}/man1/mariadb-fix-extensions.1*
+%{_mandir}/man1/mariadb-hotcopy.1*
+%{_mandir}/man1/mariadb-setpermission.1*
 %{_mandir}/man1/mysqlaccess.1*
 %{_mandir}/man1/mysql_convert_table_format.1*
 %{_mandir}/man1/mysql_find_rows.1*
@@ -914,6 +954,13 @@ fi
 
 %files client
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariadb
+%attr(755,root,root) %{_bindir}/mariadb-admin
+%attr(755,root,root) %{_bindir}/mariadb-binlog
+%attr(755,root,root) %{_bindir}/mariadb-dump
+%attr(755,root,root) %{_bindir}/mariadb-import
+%attr(755,root,root) %{_bindir}/mariadb-show
+%attr(755,root,root) %{_bindir}/mariadb-slap
 %attr(755,root,root) %{_bindir}/mysql
 %attr(755,root,root) %{_bindir}/mysqladmin
 %attr(755,root,root) %{_bindir}/mysqlbinlog
@@ -922,6 +969,13 @@ fi
 %attr(755,root,root) %{_bindir}/mysqlshow
 %attr(755,root,root) %{_bindir}/mysqlslap
 #%attr(755,root,root) %{_sbindir}/mysqlmanager
+%{_mandir}/man1/mariadb.1*
+%{_mandir}/man1/mariadb-admin.1*
+%{_mandir}/man1/mariadb-binlog.1*
+%{_mandir}/man1/mariadb-dump.1*
+%{_mandir}/man1/mariadb-import.1*
+%{_mandir}/man1/mariadb-show.1*
+%{_mandir}/man1/mariadb-slap.1*
 %{_mandir}/man1/mysql.1*
 %{_mandir}/man1/mysqladmin.1*
 %{_mandir}/man1/mysqlbinlog.1*
@@ -952,7 +1006,11 @@ fi
 %{_libdir}/lib*[!tr].a
 %{_includedir}/mysql
 %{_aclocaldir}/mysql.m4
+%{_pkgconfigdir}/libmariadb.pc
+%{_pkgconfigdir}/mariadb.pc
 %{_mandir}/man1/mysql_config.1*
+%{_mandir}/man3/mariadb*.3*
+%{_mandir}/man3/mysql*.3*
 
 %files static
 %defattr(644,root,root,755)
