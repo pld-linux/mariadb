@@ -11,7 +11,7 @@
 %bcond_without	raid		# RAID support
 %bcond_without	ssl		# OpenSSL support
 %bcond_without	tcpd		# libwrap (tcp_wrappers) support
-%bcond_without	tokudb		# TokuDB engine support (available only for x86_64 ??)
+%bcond_with	tokudb		# TokuDB engine support (available only for x86_64 ??)
 %bcond_without	mroonga		# https://mariadb.com/kb/en/mariadb/about-mroonga/ (only for x86_64)
 %bcond_without	rocksdb		# https://mariadb.com/kb/en/library/about-myrocks-for-mariadb/ (only for x86_64)
 %bcond_with	autodeps	# BR packages needed only for resolving deps
@@ -467,6 +467,38 @@ mv sphinx-*/mysqlse storage/sphinx
 %patch2 -p1
 %patch3 -p1
 
+%{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+perl(\s|$),#!%{__perl}\1,' \
+      scripts/mytop.sh \
+      sql-bench/bench-count-distinct.sh \
+      sql-bench/bench-init.pl.sh \
+      sql-bench/compare-results.sh \
+      sql-bench/copy-db.sh \
+      sql-bench/crash-me.sh \
+      sql-bench/graph-compare-results.sh \
+      sql-bench/innotest1.sh \
+      sql-bench/innotest1a.sh \
+      sql-bench/innotest1b.sh \
+      sql-bench/innotest2.sh \
+      sql-bench/innotest2a.sh \
+      sql-bench/innotest2b.sh \
+      sql-bench/run-all-tests.sh \
+      sql-bench/server-cfg.sh \
+      sql-bench/test-ATIS.sh \
+      sql-bench/test-alter-table.sh \
+      sql-bench/test-big-tables.sh \
+      sql-bench/test-connect.sh \
+      sql-bench/test-create.sh \
+      sql-bench/test-insert.sh \
+      sql-bench/test-select.sh \
+      sql-bench/test-table-elimination.sh \
+      sql-bench/test-transactions.sh \
+      sql-bench/test-wisconsin.sh
+
+%{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+bash(\s|$),#!/bin/bash\1,' \
+      scripts/wsrep_sst_mariabackup.sh \
+      scripts/wsrep_sst_mysqldump.sh \
+      scripts/wsrep_sst_rsync.sh
+
 %build
 install -d build
 cd build
@@ -809,7 +841,6 @@ fi
 %{_datadir}/mysql/mysql_system_tables_data.sql
 %{_datadir}/mysql/mysql_test_data_timezone.sql
 %{_datadir}/mysql/mysql_performance_tables.sql
-%{_datadir}/mysql/install_spider.sql
 
 %{_datadir}/mysql/english
 %{_datadir}/mysql/fill_help_tables.sql
@@ -904,7 +935,6 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
-%doc EXCEPTIONS-CLIENT
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
