@@ -38,12 +38,13 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	10.4.12
+Version:	10.6.7
 Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
-Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
-# Source0-md5:	97d7c0f508c04a31c138fdb24e95dbc4
+# Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
+Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-%{version}.tar.gz
+# Source0-md5:	8553244104a1054db1413362d68527be
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mysql.init
@@ -61,6 +62,7 @@ Source13:	mysql-client.conf
 Patch0:		mysql-client-config.patch
 Patch1:		heimdal.patch
 Patch2:		build.patch
+Patch3:		mariadb-openssl3.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -463,6 +465,7 @@ mv sphinx-*/mysqlse storage/sphinx
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
 install -d build

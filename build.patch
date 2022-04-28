@@ -1,13 +1,3 @@
---- mariadb-10.4.12/storage/cassandra/gen-cpp/Cassandra.h~	2020-01-26 21:43:53.000000000 +0100
-+++ mariadb-10.4.12/storage/cassandra/gen-cpp/Cassandra.h	2020-02-17 17:07:29.047122046 +0100
-@@ -7,6 +7,7 @@
- #ifndef Cassandra_H
- #define Cassandra_H
- 
-+#include <boost/shared_ptr.hpp>
- #include <thrift/TProcessor.h>
- #include "cassandra_types.h"
- 
 --- mariadb-10.4.12/storage/connect/cmgoconn.h~	2020-01-26 21:43:53.000000000 +0100
 +++ mariadb-10.4.12/storage/connect/cmgoconn.h	2020-02-17 17:58:36.193087139 +0100
 @@ -6,7 +6,6 @@
