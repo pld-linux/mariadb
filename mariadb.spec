@@ -5,6 +5,7 @@
 #
 # Conditional build:
 %bcond_without	innodb		# InnoDB storage engine support
+%bcond_with	galera		# Galera replication support
 %bcond_without	big_tables	# Support tables with more than 4G rows even on 32 bit platforms
 %bcond_with	connect		# Connect Storage Engine
 %bcond_without	federated	# Federated Storage Engine support
@@ -544,6 +545,8 @@ cd build
 	-DWITH_PCRE=ON \
 	-DWITH_READLINE=ON \
 	-DWITH_EMBEDDED_SERVER=ON \
+	-DWITH_WSREP=%{?with_galera:ON}%{!?with_galera:OFF} \
+	-DWITH_INNODB_DISALLOW_WRITES=%{?with_galera:ON}%{!?with_galera:OFF} \
 	-DNICE_PROJECT_NAME="MariaDB" \
 	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
 	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
@@ -630,7 +633,14 @@ mv $RPM_BUILD_ROOT%{_mandir}/man1/{,mysql_}resolve_stack_dump.1
 %{?debug:nm -n $RPM_BUILD_ROOT%{_sbindir}/mysqld > $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.sym}
 
 # do not clobber users $PATH
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_chk
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_dump_log
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_ftdump
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_pack
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_read_log
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_s3_copy
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_plugin
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-upgrade
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_upgrade
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/innochecksum
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamchk
@@ -639,17 +649,23 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisampack
 #mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_fix_privilege_tables
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/my_print_defaults
 sed -i -e 's#/usr/bin/my_print_defaults#%{_sbindir}/my_print_defaults#g' $RPM_BUILD_ROOT%{_bindir}/mysql_install_db
+mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-check
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 
 # delete - functionality in initscript / rpm
 # note: mysql_install_db (and thus resolveip) are needed by digikam
-%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysqld_safe
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadbd-safe*
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadbd-multi
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadbd-{multi,safe}*
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysqld_safe*
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysqld_multi
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqld_{multi,safe}*
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql-log-rotate
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql.server
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/binary-configure
 %{__rm} $RPM_BUILD_ROOT%{_datadir}/mysql/errmsg-utf8.txt
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-waitpid
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadb-waitpid.1*
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_waitpid.1*
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
@@ -657,15 +673,12 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 #%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-client-test
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadb-client-test.1*
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_client_test
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test.1*
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql_client_test_embedded.1*
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-stress-test.pl.1*
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-test-run.pl.1*
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/mysql-test
-
-# mariadb groff symlink to oracle mysql man pages
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/{mariadb-client-test-embedded,mariadb-client-test,mariadb-waitpid,mariadbd-multi,mariadbd-safe,mariadbd-safe-helper}.1
 
 # not needed
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/libdaemon_example.*
@@ -739,6 +752,15 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/mysql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql
 %attr(640,root,mysql) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/clusters.conf
+%attr(755,root,root) %{_sbindir}/aria_chk
+%attr(755,root,root) %{_sbindir}/aria_dump_log
+%attr(755,root,root) %{_sbindir}/aria_ftdump
+%attr(755,root,root) %{_sbindir}/aria_pack
+%attr(755,root,root) %{_sbindir}/aria_read_log
+%attr(755,root,root) %{_sbindir}/aria_s3_copy
+%attr(755,root,root) %{_sbindir}/mariadb-check
+%attr(755,root,root) %{_sbindir}/mariadbd
+%attr(755,root,root) %{_sbindir}/mariadb-upgrade
 %attr(755,root,root) %{_sbindir}/innochecksum
 %attr(755,root,root) %{_sbindir}/myisamchk
 %attr(755,root,root) %{_sbindir}/myisamlog
@@ -792,7 +814,9 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/test_versioning.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
+%if %{with galera}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
+%endif
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_example.so
 %if %{with tokudb}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_tokudb.so
@@ -815,6 +839,14 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
 %endif
 
+%{_mandir}/man1/aria_chk.1*
+%{_mandir}/man1/aria_dump_log.1*
+%{_mandir}/man1/aria_ftdump.1*
+%{_mandir}/man1/aria_pack.1*
+%{_mandir}/man1/aria_read_log.1*
+%{_mandir}/man1/aria_s3_copy.1*
+%{_mandir}/man1/mariadb-check.1*
+%{_mandir}/man1/mariadb-upgrade.1*
 %{_mandir}/man1/innochecksum.1*
 %{_mandir}/man1/myisamchk.1*
 %{_mandir}/man1/myisamlog.1*
@@ -824,6 +856,7 @@ fi
 #%{_mandir}/man1/mysql_fix_privilege_tables.1*
 %{_mandir}/man1/mysql_upgrade.1*
 %{_mandir}/man1/mysql_plugin.1*
+%{_mandir}/man8/mariadbd.8*
 %{_mandir}/man8/mysqld.8*
 
 %if %{?debug:1}0
@@ -839,17 +872,23 @@ fi
 %{_sysconfdir}/%{name}/my.cnf
 %dir %{_sysconfdir}/my.cnf.d
 %{_sysconfdir}/my.cnf.d/client.cnf
+%{_sysconfdir}/my.cnf.d/enable_encryption.preset
 %{_sysconfdir}/my.cnf.d/mysql-clients.cnf
+%{_sysconfdir}/my.cnf.d/s3.cnf
 %{_sysconfdir}/my.cnf.d/server.cnf
+%{_sysconfdir}/my.cnf.d/spider.cnf
 %if %{with tokudb}
 #%{_sysconfdir}/my.cnf.d/tokudb.cnf
 %endif
+%attr(755,root,root) %{_bindir}/mariadb-install-db
+%attr(755,root,root) %{_bindir}/mariadb-plugin
 %attr(755,root,root) %{_bindir}/mysql_install_db
 %attr(755,root,root) %{_bindir}/mytop
 %attr(755,root,root) %{_bindir}/resolveip
 %attr(755,root,root) %{_sbindir}/mysql_plugin
+%{_mandir}/man1/mariadb-install-db.1*
+%{_mandir}/man1/mariadb-plugin.1*
 %{_mandir}/man1/mysql_install_db.1*
-%{_mandir}/man1/mysqldumpslow.1*
 %{_mandir}/man1/mytop.1*
 %{_mandir}/man1/resolveip.1*
 
@@ -901,11 +940,9 @@ fi
 
 %files extras
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_bindir}/aria_chk
-%attr(755,root,root) %{_bindir}/aria_dump_log
-%attr(755,root,root) %{_bindir}/aria_ftdump
-%attr(755,root,root) %{_bindir}/aria_pack
-%attr(755,root,root) %{_bindir}/aria_read_log
+%attr(755,root,root) %{_bindir}/mariadb-conv
+%attr(755,root,root) %{_bindir}/mariadb-secure-installation
+%attr(755,root,root) %{_bindir}/mariadb-tzinfo-to-sql
 %attr(755,root,root) %{_bindir}/msql2mysql
 %attr(755,root,root) %{_bindir}/myisam_ftdump
 %attr(755,root,root) %{_bindir}/mysql_secure_installation
@@ -915,6 +952,9 @@ fi
 %if %{with tokudb}
 %attr(755,root,root) %{_bindir}/tokuftdump
 %endif
+%{_mandir}/man1/mariadb-conv.1*
+%{_mandir}/man1/mariadb-secure-installation.1*
+%{_mandir}/man1/mariadb-tzinfo-to-sql.1*
 %{_mandir}/man1/msql2mysql.1*
 %{_mandir}/man1/myisam_ftdump.1*
 %{_mandir}/man1/mysql_secure_installation.1*
@@ -946,6 +986,7 @@ fi
 %{_mandir}/man1/mariadb-hotcopy.1*
 %{_mandir}/man1/mariadb-setpermission.1*
 %{_mandir}/man1/mysqlaccess.1*
+%{_mandir}/man1/mysqldumpslow.1*
 %{_mandir}/man1/mysql_convert_table_format.1*
 %{_mandir}/man1/mysql_find_rows.1*
 %{_mandir}/man1/mysql_fix_extensions.1*
@@ -954,8 +995,10 @@ fi
 
 %files client
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariabackup
 %attr(755,root,root) %{_bindir}/mariadb
 %attr(755,root,root) %{_bindir}/mariadb-admin
+%attr(755,root,root) %{_bindir}/mariadb-backup
 %attr(755,root,root) %{_bindir}/mariadb-binlog
 %attr(755,root,root) %{_bindir}/mariadb-dump
 %attr(755,root,root) %{_bindir}/mariadb-import
@@ -969,8 +1012,10 @@ fi
 %attr(755,root,root) %{_bindir}/mysqlshow
 %attr(755,root,root) %{_bindir}/mysqlslap
 #%attr(755,root,root) %{_sbindir}/mysqlmanager
+%{_mandir}/man1/mariabackup.1*
 %{_mandir}/man1/mariadb.1*
 %{_mandir}/man1/mariadb-admin.1*
+%{_mandir}/man1/mariadb-backup.1*
 %{_mandir}/man1/mariadb-binlog.1*
 %{_mandir}/man1/mariadb-dump.1*
 %{_mandir}/man1/mariadb-import.1*
@@ -991,6 +1036,7 @@ fi
 %defattr(644,root,root,755)
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
+%attr(755,root,root) %{_libdir}/libmariadb.so.3
 %attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.18
 %if %{with ndb}
@@ -1000,6 +1046,8 @@ fi
 
 %files devel
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariadb-config
+%attr(755,root,root) %{_bindir}/mariadb_config
 %attr(755,root,root) %{_bindir}/mysql_config
 %attr(755,root,root) %{_libdir}/lib*.so
 #%{_libdir}/lib*.la
@@ -1008,6 +1056,7 @@ fi
 %{_aclocaldir}/mysql.m4
 %{_pkgconfigdir}/libmariadb.pc
 %{_pkgconfigdir}/mariadb.pc
+%{_mandir}/man1/mariadb_config.1*
 %{_mandir}/man1/mysql_config.1*
 %{_mandir}/man3/mariadb*.3*
 %{_mandir}/man3/mysql*.3*
@@ -1088,6 +1137,17 @@ fi
 
 %files embedded
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariadb-client-test-embedded
+%attr(755,root,root) %{_bindir}/mariadb-embedded
+%attr(755,root,root) %{_bindir}/mariadb-test-embedded
 %attr(755,root,root) %{_bindir}/mysql_client_test_embedded
 %attr(755,root,root) %{_bindir}/mysql_embedded
 %attr(755,root,root) %{_bindir}/mysqltest_embedded
+%{_mandir}/man1/mariadb-client-test-embedded.1*
+%{_mandir}/man1/mariadb-embedded.1*
+%{_mandir}/man1/mariadb-test-embedded.1*
+%{_mandir}/man1/mysql_client_test.1*
+# points to mysql_client_test.1
+%{_mandir}/man1/mysql_client_test_embedded.1*
+%attr(755,root,root) %{_libdir}/libmariadbd.so.19
+
