@@ -610,10 +610,6 @@ install -p %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
 cp -p %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
 %endif
 
-# symlinks point to the .so file, fix it
-ln -sf libmysqlclient.so.18 $RPM_BUILD_ROOT%{_libdir}/libmysqlclient_r.so.18
-ln -sf libmysqlclient.so.18.0.0 $RPM_BUILD_ROOT%{_libdir}/libmysqlclient_r.so.18.0.0
-
 sed -i -e 's,/usr//usr,%{_prefix},g' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 
@@ -1072,8 +1068,6 @@ fi
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %attr(755,root,root) %{_libdir}/libmariadb.so.3
-%attr(755,root,root) %{_libdir}/libmysqlclient_r.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libmysqlclient_r.so.18
 %if %{with ndb}
 %attr(755,root,root) %{_libdir}/libndbclient.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libndbclient.so.3
