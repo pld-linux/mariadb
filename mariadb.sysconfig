@@ -1,26 +1,26 @@
-# Customized settings for mysql
+# Customized settings for mariadb
 
-# Define nice level for mysql
+# Define nice level for mariadb
 SERVICE_RUN_NICE_LEVEL="+0"
 
 # Be compatible with RA layout (not supported)
 MYSQL_RA_COMPAT="no"
 
-# For clusters configuration look into /etc/mysql/clusters.conf
+# For clusters configuration look into /etc/mariadb/clusters.conf
 # Don't use **obsolete** MYSQL_DB_CLUSTERS option
 
-# Seconds to wait for fully initialized mysqld to start. mysqld takes longer to
+# Seconds to wait for fully initialized mariadbd to start. mariadbd takes longer to
 # start when it has to replay innodb logs, or create innodb pools at startup
 #MYSQL_START_WAIT_TIME=15
 
-# Seconds to wait for mysqld to terminate on shutdown. If timeout is exceeded
+# Seconds to wait for mariadbd to terminate on shutdown. If timeout is exceeded
 # shutdown is considered failed
 #MYSQL_STOP_WAIT_TIME=900
 
-# Skip automatic mysqld restarts invoked from rpm installs.
+# Skip automatic mariadbd restarts invoked from rpm installs.
 #RPM_SKIP_AUTO_RESTART=yes
 
-# Any option passed directly to mysqld on startup.
+# Any option passed directly to mariadbd on startup.
 #MYSQL_OPTIONS="--open-files-limit=65535"
 
 # fd limit increase

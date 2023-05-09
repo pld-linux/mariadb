@@ -529,7 +529,7 @@ cd build
         -DINSTALL_SYSCONF2DIR=%{_sysconfdir}/%{name}/conf.d \
 	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
         -DMYSQL_SERVER_SUFFIX="-PLD-%{version}-%{release}:%{epoch}" \
-	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
+	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/mysql.sock \
 	-DNICE_PROJECT_NAME="MariaDB" \
         -DPLUGIN_AWS_KEY_MANAGEMENT=NO \
         -DPLUGIN_COLUMNSTORE=NO \

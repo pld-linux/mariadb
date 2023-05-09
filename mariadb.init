@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# mysql		A very fast and reliable SQL database engine
+# mariadb	A very fast and reliable SQL database engine
 #
 # chkconfig:	2345 84 25
 #
@@ -23,22 +23,22 @@ else
 	exit 1
 fi
 
-if [ -n "$MYSQL_DB_CLUSTERS" ]; then
-	nls "Warning: MYSQL_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mysql/clusters.conf
+if [ -n "$MARIADB_DB_CLUSTERS" ]; then
+	nls "Warning: MARIADB_DB_CLUSTERS is set. It's obsolete. Use %s instead." /etc/mariadb/clusters.conf
 fi
 
-if [ -f /etc/mysql/clusters.conf ]; then
-	MYSQL_DB_CLUSTERS=$(awk -F= '!/^#/{print $2}' /etc/mysql/clusters.conf)
-	if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+if [ -f /etc/mariadb/clusters.conf ]; then
+	MARIADB_DB_CLUSTERS=$(awk -F= '!/^#/{print $2}' /etc/mariadb/clusters.conf)
+	if [ -z "$MARIADB_DB_CLUSTERS"  ]; then
 		nls "Warning: there are no configured clusters."
 	fi
 
 else
-	nls "Warning: Missing clusters config file %s" /etc/mysql/clusters.conf
-	if [ -z "$MYSQL_DB_CLUSTERS"  ]; then
+	nls "Warning: Missing clusters config file %s" /etc/mariadb/clusters.conf
+	if [ -z "$MARIADB_DB_CLUSTERS"  ]; then
 		nls "Warning: there are no configured clusters."
-		nls "Using default cluster /var/lib/mysql (compatibility mode)"
-		MYSQL_DB_CLUSTERS=/var/lib/mysql
+		nls "Using default cluster /var/lib/mariadb (compatibility mode)"
+		MARIADB_DB_CLUSTERS=/var/lib/mariadb
 	fi
 fi
 
@@ -60,9 +60,9 @@ if [ $# -gt 1 ]; then
 	shift
 	# perform action for specified clusters only
 	for a in "$@"; do
-		# try auto resolving from /etc/mysql/clusters.conf
+		# try auto resolving from /etc/mariadb/clusters.conf
 		if [[ "$a" != /* ]]; then
-			m=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $1}' /etc/mysql/clusters.conf)
+			m=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $1}' /etc/mariadb/clusters.conf)
 			if [ -z "$m" ]; then
 				echo >&2 "Cluster name '$a' did not match anything!"
 				exit 1
@@ -71,16 +71,16 @@ if [ $# -gt 1 ]; then
 				echo >&2 "Cluster name '$a' ambiguous:" $m
 				exit 1
 			fi
-			a=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $2}' /etc/mysql/clusters.conf)
+			a=$(awk -va="$a" -F= 'substr($0, 1, length(a)) == a {print $2}' /etc/mariadb/clusters.conf)
 		fi
 		DB_CLUSTERS="$DB_CLUSTERS $a"
 	done
 else
-	DB_CLUSTERS="$MYSQL_DB_CLUSTERS"
+	DB_CLUSTERS="$MARIADB_DB_CLUSTERS"
 fi
 
 # global error log, if mysqld.conf hasn't migrated to log-error style
-MYSQL_ERRLOG=/var/log/mysql/mysqld.log
+MYSQL_ERRLOG=/var/log/mariadb/mysqld.log
 MYSQL_STOP_WAIT_TIME=${MYSQL_STOP_WAIT_TIME:-900}
 
 #
@@ -96,7 +96,7 @@ MYSQL_STOP_WAIT_TIME=${MYSQL_STOP_WAIT_TIME:-900}
 #
 # sets variables:
 # MYSQL_STATUS = starting | running | not running | died
-# MYSQL_PID    = pid of mysqld process
+# MYSQL_PID    = pid of mariadbd process
 #
 mysqlstatus() {
 	clusterdir="$1"
@@ -125,7 +125,7 @@ mysqlstatus() {
 	fi
 
 	if [ "$mode" = "start" ]; then
-		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mysqld.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
+		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mariadbd.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
 		if [ -n "$MYSQL_GREP_PID" ]; then
 			MYSQL_PID=$MYSQL_GREP_PID
 			if grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null; then
@@ -157,15 +157,15 @@ mysqlgetconfig() {
 	clusterdir="$1"
 
 	# emulate old behaviour if only one cluster specified
-	if [ "$clusterdir" = "$MYSQL_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mysql" -a -f /etc/mysqld.conf ]; then
+	if [ "$clusterdir" = "$MARIADB_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mariadb" -a -f /etc/mysqld.conf ]; then
 		MYSQL_RA_COMPAT=yes
 		config_file=/etc/mysqld.conf
 	else
-		config=$(awk -F= -vclusterdir="$clusterdir" '!/^#/{ if (clusterdir == $2) print $1}' /etc/mysql/clusters.conf)
+		config=$(awk -F= -vclusterdir="$clusterdir" '!/^#/{ if (clusterdir == $2) print $1}' /etc/mariadb/clusters.conf)
 		if [[ $config = /* ]]; then
 			config_file="$config"
-		elif [ -f "/etc/mysql/$config" ]; then
-			config_file="/etc/mysql/$config"
+		elif [ -f "/etc/mariadb/$config" ]; then
+			config_file="/etc/mariadb/$config"
 		else
 			config_file="$clusterdir/mysqld.conf"
 		fi
@@ -251,16 +251,16 @@ mysqlstart() {
 	fi
 
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
-		/usr/bin/setsid /usr/sbin/mysqld \
+		/usr/bin/setsid /usr/sbin/mariadbd \
 			--defaults-file=$MYSQL_CONFIG \
 			--datadir=$MYSQL_DATA_DIR \
 			--pid-file=$MYSQL_PIDFILE \
 			$MYSQL_OPTIONS &
 	pid=$!
 
-	sleep 0.1
+	sleep 0.2
 	mysqlstatus "$clusterdir" start
-	# it takes longer for mysqld to start and create pidfile if it has to recover innodb transactions
+	# it takes longer for mariadbd to start and create pidfile if it has to recover innodb transactions
 	if [ "$MYSQL_STATUS" = "starting" ]; then
 		echo ""
 		show "Waiting for MariaDB to start"
@@ -297,7 +297,7 @@ mysqlstop() {
 
 	# try graceful shutdown -- send shutdown command
 	# requires mysql_sysadmin user proper privs
-	/usr/bin/mysqladmin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown >/dev/null 2>&1
+	/usr/bin/mariadb-admin --defaults-file=$MYSQL_CONFIG ${MYSQL_SOCKET:+--socket=$MYSQL_SOCKET} shutdown >/dev/null 2>&1
 	mysqlstatus "$clusterdir" stop
 
 	if [ "$MYSQL_PID" != "unknown" ]; then
@@ -376,31 +376,31 @@ mysqlinit() {
 	chown mysql:mysql "$MYSQL_CLUSTER_DIR/mysqldb" "$MYSQL_DATA_DIR" > /dev/null 2>&1
 	chmod 751 "$MYSQL_CLUSTER_DIR" "$MYSQL_CLUSTER_DIR/mysqldb"
 
-	if [ -f /usr/share/mysql/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
+	if [ -f /usr/share/mariadb/mysqld.conf -a ! -f "$MYSQL_CLUSTER_DIR/mysqld.conf" ]; then
 	    sed -e "
 		s#\(datadir.*\)=.*#\1= $MYSQL_DATA_DIR#g;
 		s#\(pid-file.*\)=.*#\1= $MYSQL_PIDFILE#g;
 		s#\(socket.*\)=.*#\1= $MYSQL_SOCKET#g;
 		s#@clusterdir@#$MYSQL_CLUSTER_DIR#g;
-		" /usr/share/mysql/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
+		" /usr/share/mariadb/mysqld.conf > "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chown root:root "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	    chmod 640 "$MYSQL_CLUSTER_DIR/mysqld.conf"
 	fi
 
-	if [ ! -e /var/lib/mysql/mysql.sock ] || [ -L /var/lib/mysql/mysql.sock ] && [ -z "$(readlink /var/lib/mysql/mysql.sock)" ]; then
-		sock=${MYSQL_SOCKET#/var/lib/mysql/} # make it relative if possible
-	    ln -s "$sock" /var/lib/mysql/mysql.sock
+	if [ ! -e /var/lib/mariadb/mysql.sock ] || [ -L /var/lib/mariadb/mysql.sock ] && [ -z "$(readlink /var/lib/mariadb/mysql.sock)" ]; then
+		sock=${MYSQL_SOCKET#/var/lib/mariadb/} # make it relative if possible
+	    ln -s "$sock" /var/lib/mariadb/mysql.sock
 	fi
 
-	cat > $MYSQL_DATA_DIR/mysql-init.sql <<-EOF
+	cat > $MYSQL_DATA_DIR/mariadb-init.sql <<-EOF
 		CREATE DATABASE mysql;
 		use mysql;
-		$(cat /usr/share/mysql/mysql_system_tables.sql)
-		$(sed -e "/@current_hostname/d" /usr/share/mysql/mysql_system_tables_data.sql)
+		$(cat /usr/share/mariadb/mysql_system_tables.sql)
+		$(sed -e "/@current_hostname/d" /usr/share/mariadb/mysql_system_tables_data.sql)
 EOF
 
 	ok=0
-	/usr/sbin/mysqld \
+	/usr/sbin/mariadbd \
 		--defaults-file=$MYSQL_CLUSTER_DIR/mysqld.conf \
 		--bootstrap \
 		--skip-grant-tables \
@@ -409,11 +409,11 @@ EOF
 		--slave-load-tmpdir=$MYSQL_DATA_DIR \
 		--tmpdir=$MYSQL_DATA_DIR \
 		--log-error=$MYSQL_ERRLOG \
-		< $MYSQL_DATA_DIR/mysql-init.sql && ok=1
-	[ -f $MYSQL_DATA_DIR/mysql/host.frm ] || ok=0
+		< $MYSQL_DATA_DIR/mariadb-init.sql && ok=1
+	[ -f $MYSQL_DATA_DIR/mysql/db.frm ] || ok=0
 
 	if [ "$ok" = 1 ]; then
-		rm -f $MYSQL_DATA_DIR/mysql-init.sql
+		rm -f $MYSQL_DATA_DIR/mariadb-init.sql
 		ok
 		cat << END_OF_MSG
 
@@ -422,20 +422,20 @@ This is done, after starting database, in the order shown,
 with:
 
 For 'mysql_sysadmin' (RELOAD and SHUTDOWN privileges):
-echo "update mysql.user set password=password('newpassword') where user='mysql_sysadmin'; FLUSH PRIVILEGES;" | mysql -u mysql -S $MYSQL_SOCKET
+echo "update mysql.user set password=password('newpassword') where user='mysql_sysadmin'; FLUSH PRIVILEGES;" | mysql -u root -S $MYSQL_SOCKET
 
 For 'mysql' user (ALL privileges, DB admin):
-echo "update mysql.user set password=password('newpassword') where user='mysql'; FLUSH PRIVILEGES;" | mysql -u mysql -S $MYSQL_SOCKET
+echo "update mysql.user set password=password('newpassword') where user='mysql'; FLUSH PRIVILEGES;" | mysql -u root -S $MYSQL_SOCKET
 
 NOTE: mysql_sysadmin password should be placed to $MYSQL_CONFIG in
-mysqladmin section. See the manual for more instructions.
+mariadb-admin section. See the manual for more instructions.
 (This user is used at logs rotation and server shutdown)
 
 END_OF_MSG
 		show "Filling help tables..."
 		ok=0
-		( echo "use mysql;"; cat /usr/share/mysql/fill_help_tables.sql ) | \
-			/usr/sbin/mysqld --bootstrap --skip-grant-tables \
+		( echo "use mysql;"; cat /usr/share/mariadb/fill_help_tables.sql ) | \
+			/usr/sbin/mariadbd --bootstrap --skip-grant-tables \
 			--datadir=$MYSQL_DATA_DIR --user=$MYSQL_USER \
 			--slave-load-tmpdir=$MYSQL_DATA_DIR --tmpdir=$MYSQL_DATA_DIR --log-error=$MYSQL_ERRLOG \
 			&& ok=1
@@ -454,12 +454,12 @@ END_OF_MSG
 		cat << END_OF_MSG
 Installation of grant tables FAILED!
 
-The initialization SQL script was preserved at $MYSQL_DATA_DIR/mysql-init.sql
+The initialization SQL script was preserved at $MYSQL_DATA_DIR/mariadb-init.sql
 
-Examine the logs in /var/log/mysql for more information.  You can
-also try to start the mysqld daemon with:
+Examine the logs in /var/log/mariadb for more information.  You can
+also try to start the mariadbdb daemon with:
 
-/usr/sbin/mysqld --skip-grant &
+/usr/sbin/mariadbd --skip-grant &
 
 You can use the command line tool mysql to connect to the mysql
 database and look at the grant tables:
@@ -467,10 +467,10 @@ database and look at the grant tables:
 shell> mysql -u mysql mysql
 mysql> show tables
 
-Try 'mysqld --help' if you have problems with paths. Setting on
-logging in /etc/mysqld.conf gives you a log in /var/log/mysql/log that
+Try 'mariadbd --help' if you have problems with paths. Setting on
+logging in /etc/mysqld.conf gives you a log in /var/log/mariadb/log that
 may be helpful. The latest information about MariaDB is available on the
-web at http://www.mysql.com/.
+web at https://www.mariadb.org/.
 
 Please check PLD Linux ftp site for newer versions of this package.
 
@@ -589,9 +589,9 @@ case "$action" in
   flush-logs)
   	for mysqldir in $DB_CLUSTERS; do
 	    mysqlgetconfig "$mysqldir"
-		# just if mysqld is really running
-		if /usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" ping >/dev/null 2>&1; then
-			/usr/bin/mysqladmin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
+		# just if mariadbd is really running
+		if /usr/bin/mariadb-admin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" ping >/dev/null 2>&1; then
+			/usr/bin/mariadb-admin --defaults-file="$MYSQL_CONFIG" --socket="$MYSQL_SOCKET" flush-logs
 		fi
 	done
 	;;
