@@ -47,9 +47,9 @@ Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-
 # Source0-md5:	12d920513797d4c48121c758d0ba8d96
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
-Source1:	mysql.init
-Source2:	mysql.sysconfig
-Source3:	mysql.logrotate
+Source1:	mariadb.init
+Source2:	mariadb.sysconfig
+Source3:	mariadb.logrotate
 Source4:	mysqld.conf
 Source5:	mysql-clusters.conf
 Source7:	mysql-ndb.init
@@ -526,6 +526,7 @@ cd build
         -DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
 	-DINSTALL_SYSCONFDIR=%{_sysconfdir}/%{name} \
+        -DINSTALL_SYSCONF2DIR=%{_sysconfdir}/%{name}/conf.d \
 	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
         -DMYSQL_SERVER_SUFFIX="-PLD-%{version}-%{release}:%{epoch}" \
 	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
@@ -670,6 +671,10 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql.server*
 #%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysqlman.1*
 #%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/comp_err.1*
+%{__rm} $RPM_BUILD_ROOT%{_sbindir}/rcmysql
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/test-connect-t
+%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/my_safe_process.1*
+%{__rm} $RPM_BUILD_ROOT%{_datadir}/%{name}/maria_add_gis_sp.sql
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-client-test
@@ -680,6 +685,7 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/mysql-test
 
 # not needed
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/example_key_management.*
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/libdaemon_example.*
 
 %clean
@@ -781,12 +787,13 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_tool_dir/auth_pam_tool
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_v1.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/caching_sha2_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/client_ed25519.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/cracklib_password_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/debug_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/disks.so
-#%attr(755,root,root) %{_libdir}/%{name}/plugin/example_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/file_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/func_test.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
@@ -796,12 +803,18 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_mroonga.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_oqgraph.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_rocksdb.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_s3.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/hashicorp_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/password_reuse_check.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_bzip2.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lz4.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lzma.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lzo.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_snappy.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_client.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
@@ -813,6 +826,7 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/test_versioning.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/zstd.so
 %if %{with galera}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
 %endif
@@ -833,6 +847,17 @@ fi
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %if %{with sphinx}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
+%endif
+
+%if %{with rocksdb}
+%attr(755,root,root) %{_bindir}/mariadb-ldb
+%attr(755,root,root) %{_bindir}/myrocks_hotbackup
+%attr(755,root,root) %{_bindir}/mysql_ldb
+%attr(755,root,root) %{_bindir}/sst_dump
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_rocksdb.so
+%{_mandir}/man1/mariadb-ldb.1*
+%{_mandir}/man1/myrocks_hotbackup.1*
+%{_mandir}/man1/mysql_ldb.1*
 %endif
 
 %{_mandir}/man1/aria_chk.1*
@@ -865,25 +890,32 @@ fi
 #%attr(644,root,root) %{_docdir}/%{name}-%{version}/*
 
 %dir %{_sysconfdir}/%{name}
-%{_sysconfdir}/%{name}/my.cnf
-%dir %{_sysconfdir}/my.cnf.d
-%{_sysconfdir}/my.cnf.d/client.cnf
-%{_sysconfdir}/my.cnf.d/enable_encryption.preset
-%{_sysconfdir}/my.cnf.d/mysql-clients.cnf
-%{_sysconfdir}/my.cnf.d/s3.cnf
-%{_sysconfdir}/my.cnf.d/server.cnf
-%{_sysconfdir}/my.cnf.d/spider.cnf
+%dir %{_sysconfdir}/%{name}/conf.d
+%{_sysconfdir}/%{name}/conf.d/client.cnf
+%{_sysconfdir}/%{name}/conf.d/enable_encryption.preset
+%{_sysconfdir}/%{name}/conf.d/hashicorp_key_management.cnf
+%{_sysconfdir}/%{name}/conf.d/mysql-clients.cnf
+%{_sysconfdir}/%{name}/conf.d/provider_bzip2.cnf
+%{_sysconfdir}/%{name}/conf.d/provider_lz4.cnf
+%{_sysconfdir}/%{name}/conf.d/provider_lzma.cnf
+%{_sysconfdir}/%{name}/conf.d/provider_lzo.cnf
+%{_sysconfdir}/%{name}/conf.d/provider_snappy.cnf
+%{_sysconfdir}/%{name}/conf.d/s3.cnf
+%{_sysconfdir}/%{name}/conf.d/server.cnf
+%{_sysconfdir}/%{name}/conf.d/spider.cnf
 %if %{with tokudb}
-#%{_sysconfdir}/my.cnf.d/tokudb.cnf
+#%{_sysconfdir}/%{name}/conf.d/tokudb.cnf
 %endif
 %attr(755,root,root) %{_bindir}/mariadb-install-db
 %attr(755,root,root) %{_bindir}/mariadb-plugin
+%attr(755,root,root) %{_bindir}/mariadb-service-convert
 %attr(755,root,root) %{_bindir}/mysql_install_db
 %attr(755,root,root) %{_bindir}/mytop
 %attr(755,root,root) %{_bindir}/resolveip
 %attr(755,root,root) %{_sbindir}/mysql_plugin
 %{_mandir}/man1/mariadb-install-db.1*
 %{_mandir}/man1/mariadb-plugin.1*
+%{_mandir}/man1/mariadb-service-convert.1*
 %{_mandir}/man1/mysql_install_db.1*
 %{_mandir}/man1/mytop.1*
 %{_mandir}/man1/resolveip.1*
@@ -898,8 +930,11 @@ fi
 %{_infodir}/mysql.info*
 # This is template for configuration file which is created after 'service mysql init'
 %{_datadir}/%{name}/mysqld.conf
+%{_datadir}/%{name}/maria_add_gis_sp_bootstrap.sql
+%{_datadir}/%{name}/mysql_sys_schema.sql
 %{_datadir}/%{name}/mysql_system_tables.sql
 %{_datadir}/%{name}/mysql_system_tables_data.sql
+%{_datadir}/%{name}/mysql_test_db.sql
 %{_datadir}/%{name}/mysql_test_data_timezone.sql
 %{_datadir}/%{name}/mysql_performance_tables.sql
 
@@ -907,12 +942,14 @@ fi
 %{_datadir}/%{name}/fill_help_tables.sql
 #%{_datadir}/%{name}/mysql_fix_privilege_tables.sql
 %lang(cs) %{_datadir}/%{name}/czech
+%lang(bg) %{_datadir}/%{name}/bulgarian
 %lang(da) %{_datadir}/%{name}/danish
 %lang(de) %{_datadir}/%{name}/german
 %lang(el) %{_datadir}/%{name}/greek
 %lang(es) %{_datadir}/%{name}/spanish
 %lang(et) %{_datadir}/%{name}/estonian
 %lang(fr) %{_datadir}/%{name}/french
+%lang(hi) %{_datadir}/%{name}/hindi
 %lang(hu) %{_datadir}/%{name}/hungarian
 %lang(it) %{_datadir}/%{name}/italian
 %lang(ja) %{_datadir}/%{name}/japanese
@@ -928,6 +965,7 @@ fi
 %lang(sk) %{_datadir}/%{name}/slovak
 %lang(sv) %{_datadir}/%{name}/swedish
 %lang(uk) %{_datadir}/%{name}/ukrainian
+%lang(zh) %{_datadir}/%{name}/chinese
 
 %files charsets
 %defattr(644,root,root,755)
@@ -1000,6 +1038,7 @@ fi
 %attr(755,root,root) %{_bindir}/mariadb-import
 %attr(755,root,root) %{_bindir}/mariadb-show
 %attr(755,root,root) %{_bindir}/mariadb-slap
+%attr(755,root,root) %{_bindir}/mbstream
 %attr(755,root,root) %{_bindir}/mysql
 %attr(755,root,root) %{_bindir}/mysqladmin
 %attr(755,root,root) %{_bindir}/mysqlbinlog
@@ -1007,7 +1046,7 @@ fi
 %attr(755,root,root) %{_bindir}/mysqlimport
 %attr(755,root,root) %{_bindir}/mysqlshow
 %attr(755,root,root) %{_bindir}/mysqlslap
-#%attr(755,root,root) %{_sbindir}/mysqlmanager
+%{_mandir}/man1/mbstream.1*
 %{_mandir}/man1/mariabackup.1*
 %{_mandir}/man1/mariadb.1*
 %{_mandir}/man1/mariadb-admin.1*
@@ -1145,5 +1184,6 @@ fi
 %{_mandir}/man1/mysql_client_test.1*
 # points to mysql_client_test.1
 %{_mandir}/man1/mysql_client_test_embedded.1*
+%{_mandir}/man1/mysql_embedded.1*
 %attr(755,root,root) %{_libdir}/libmariadbd.so.19
 
