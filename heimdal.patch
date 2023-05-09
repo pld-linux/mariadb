@@ -1,11 +1,12 @@
 --- mariadb-10.4.12/plugin/auth_gssapi/CMakeLists.txt~	2020-01-26 21:43:53.000000000 +0100
 +++ mariadb-10.4.12/plugin/auth_gssapi/CMakeLists.txt	2020-02-17 11:54:04.062115765 +0100
-@@ -34,7 +34,7 @@ ENDIF ()
- 
- 
+@@ -52,7 +52,7 @@ ELSE()
+   SET(AUTH_GSSAPI_DEFAULT)
+ ENDIF()
  MYSQL_ADD_PLUGIN(auth_gssapi server_plugin.cc ${GSSAPI_SERVER} ${GSSAPI_ERRMSG}
--                 LINK_LIBRARIES ${GSSAPI_LIBS} 
+-                 LINK_LIBRARIES ${GSSAPI_LIBS}
 +                 LINK_LIBRARIES ${GSSAPI_LIBS} -lkrb5
-                  COMPONENT gssapi-server
-                  MODULE_ONLY)
+                  ${AUTH_GSSAPI_DEFAULT}
+                  COMPONENT gssapi-server)
  
+

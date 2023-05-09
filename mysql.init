@@ -15,10 +15,10 @@
 . /etc/sysconfig/network
 
 # Get service config
-if [ -f /etc/sysconfig/mysql ]; then
-	. /etc/sysconfig/mysql
+if [ -f /etc/sysconfig/mariadb ]; then
+	. /etc/sysconfig/mariadb
 else
-	nls "Error: %s not found" /etc/sysconfig/mysql
+	nls "Error: %s not found" /etc/sysconfig/mariadb
 	nls "%s can't be run." MariaDB
 	exit 1
 fi

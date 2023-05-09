@@ -22,7 +22,6 @@
 %bcond_without	lz4		# lz4 page compression for InnoDB & XtraDB
 %bcond_with	tests		# FIXME: don't run correctly
 %bcond_with	ndb
-%bcond_with	cassandra	# Cassandra Storage Engine (https://jira.mariadb.org/browse/MDEV-21368)
 
 %ifnarch %{x8664}
 %unglobal	with_tokudb
@@ -39,13 +38,13 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	10.6.7
+Version:	10.11.2
 Release:	0.1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
 Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-%{version}.tar.gz
-# Source0-md5:	8553244104a1054db1413362d68527be
+# Source0-md5:	12d920513797d4c48121c758d0ba8d96
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mysql.init
@@ -63,7 +62,6 @@ Source13:	mysql-client.conf
 Patch0:		mysql-client-config.patch
 Patch1:		heimdal.patch
 Patch2:		build.patch
-Patch3:		mariadb-openssl3.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -86,8 +84,6 @@ BuildRequires:	rpm-perlprov >= 4.1-13
 BuildRequires:	rpmbuild(macros) >= 1.414
 BuildRequires:	sed >= 4.0
 BuildRequires:	texinfo
-# FIXME: to get thrift-devel 0.9.1 build it without php
-%{?with_cassandra:BuildRequires:	thrift-devel >= 0.13}
 BuildRequires:	zlib-devel
 Requires(post,preun):	/sbin/chkconfig
 Requires(postun):	/usr/sbin/groupdel
@@ -109,7 +105,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_libexecdir	%{_sbindir}
 %define		_localstatedir	/var/lib/%{name}
-%define		_mysqlhome	/home/services/mysql
+%define		_mysqlhome	/home/services/%{name}
 
 %define		_noautoreqdep	'perl(DBD::mysql)'
 
@@ -466,7 +462,6 @@ mv sphinx-*/mysqlse storage/sphinx
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 
 %{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+perl(\s|$),#!%{__perl}\1,' \
       scripts/mytop.sh \
@@ -508,60 +503,64 @@ cd build
 # cluster it wants)
 
 %cmake \
+        %{?debug:-DWITH_DEBUG=ON} \
+        -DBUILD_CONFIG=mysql_release \
 	-DCMAKE_BUILD_TYPE=%{!?debug:RelWithDebInfo}%{?debug:Debug} \
-	-DFEATURE_SET="community" \
 	-DCMAKE_C_FLAGS="%{rpmcflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
 	-DCMAKE_CXX_FLAGS="%{rpmcxxflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
-	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
 	-DCMAKE_INSTALL_PREFIX="%{_prefix}" \
+	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
+        -DCONC_DEFAULT_CHARSET=utf8mb4 \
+	-DCONNECT_WITH_JDBC=OFF \
+	-DCONNECT_WITH_MONGO=OFF \
 	-DDAEMON_NAME="%{name}" \
 	-DDAEMON_NO_PREFIX="%{name}" \
-	-DPLUGIN_CASSANDRA=%{?with_cassandra:DYNAMIC}%{!?with_cassandra:NO} \
+	-DENABLED_LOCAL_INFILE=ON \
+	-DFEATURE_SET="community" \
+	-DINSTALL_LAYOUT=RPM \
+	-DINSTALL_LIBDIR=%{_lib} \
+        -DINSTALL_MYSQLDATADIR:PATH=%{_var}/lib/%{name} \
+        -DINSTALL_MYSQLSHAREDIR:PATH=%{_datadir}/%{name} \
+	-DINSTALL_MYSQLTESTDIR_RPM="" \
+	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
+        -DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
+	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
+	-DINSTALL_SYSCONFDIR=%{_sysconfdir}/%{name} \
+	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
+        -DMYSQL_SERVER_SUFFIX="-PLD-%{version}-%{release}:%{epoch}" \
+	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
+	-DNICE_PROJECT_NAME="MariaDB" \
+        -DPLUGIN_AWS_KEY_MANAGEMENT=NO \
+        -DPLUGIN_COLUMNSTORE=NO \
 	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
+	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
 	-DPLUGIN_MROONGA=%{?with_mroonga:DYNAMIC}%{!?with_mroonga:NO} \
 	-DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
-	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
 	-DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
 	-DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
 	-DPLUGIN_TOKUDB=%{?with_tokudb:DYNAMIC}%{!?with_tokudb:NO} \
-	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
-	-DPLUGIN_CLIENT_ED25519=OFF \
-	-DPYTHON_SHEBANG=%{python_path} \
-	-DPLUGIN_CACHING_SHA2_PASSWORD=%{?with_clibrary:DYNAMIC}%{!?with_clibrary:OFF} \
-	-DPLUGIN_AWS_KEY_MANAGEMENT=NO \
         -DPYTHON_SHEBANG=%{__python3} \
-	-DENABLED_LOCAL_INFILE=ON \
+	-DPYTHON_SHEBANG=%{python_path} \
 	-DSECURITY_HARDENED=ON \
-	%{?debug:-DWITH_DEBUG=ON} \
-	-DWITH_FAST_MUTEXES=ON \
-	-DLZ4_LIBS=%{_libdir}/liblz4.so \
-	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
-	-DWITH_INNODB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
-	-DWITH_ROCKSDB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
-	-DWITH_PIC=ON \
-	-DWITH_LIBEDIT=OFF \
-	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
-	-DWITH_ZLIB=system \
-	-DWITH_PCRE=ON \
-	-DWITH_READLINE=ON \
-	-DWITH_EMBEDDED_SERVER=ON \
-	-DWITH_WSREP=%{?with_galera:ON}%{!?with_galera:OFF} \
-	-DWITH_INNODB_DISALLOW_WRITES=%{?with_galera:ON}%{!?with_galera:OFF} \
-	-DNICE_PROJECT_NAME="MariaDB" \
-	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
-	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
-	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
-	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/%{name}.sock \
-	-DINSTALL_LAYOUT=RPM \
-	-DINSTALL_MYSQLTESTDIR_RPM="" \
 	-DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir}/%{name} \
-	-DINSTALL_SYSCONFDIR=%{_sysconfdir}/%{name} \
-	-DINSTALL_SQLBENCHDIR=%{_datadir} \
-	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
-	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
-	-DINSTALL_LIBDIR=%{_lib} \
-	-DCONNECT_WITH_MONGO=OFF \
-	-DCONNECT_WITH_JDBC=OFF \
+	-DWITH_EMBEDDED_SERVER=ON \
+	-DWITH_FAST_MUTEXES=ON \
+	-DWITH_INNODB_DISALLOW_WRITES=%{?with_galera:ON}%{!?with_galera:OFF} \
+	-DWITH_INNODB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
+        -DWITH_INNODB_SNAPPY=ON \
+	-DWITH_LIBEDIT=OFF \
+	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
+	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
+        -DWITH_NUMA=AUTO \
+	-DWITH_PCRE=ON \
+	-DWITH_PIC=ON \
+	-DWITH_READLINE=ON \
+	-DWITH_ROCKSDB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
+	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
+	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
+        -DWITH_URING=ON \
+	-DWITH_WSREP=%{?with_galera:ON}%{!?with_galera:OFF} \
+	-DWITH_ZLIB=system \
 	..
 
 %{__make}
@@ -581,11 +580,11 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
 # we use our own
-rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mysql
+rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mariadb
 
-install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql
-cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mysql
-cp -p %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mysql
+install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mariadb
+cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mariadb
+cp -p %{SOURCE3} $RPM_BUILD_ROOT/etc/logrotate.d/mariadb
 # This is template for configuration file which is created after 'service mysql init'
 cp -p %{SOURCE4} mysqld.conf
 cp -p %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/clusters.conf
@@ -597,7 +596,7 @@ touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 	awk 'BEGIN { RS="\n\n" } !/innodb/ { printf("%s\n\n", $0) }' < mysqld.tmp > mysqld.conf
 %endif
 
-cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/mysql/mysqld.conf
+cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.conf
 cp -p %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
 
 # NDB
@@ -663,7 +662,7 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql-log-rotate
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql.server
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/binary-configure
-%{__rm} $RPM_BUILD_ROOT%{_datadir}/mysql/errmsg-utf8.txt
+%{__rm} $RPM_BUILD_ROOT%{_datadir}/%{name}/errmsg-utf8.txt
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-waitpid
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadb-waitpid.1*
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
@@ -692,13 +691,13 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 [ ! -x /usr/sbin/fix-info-dir ] || /usr/sbin/fix-info-dir -c %{_infodir} >/dev/null 2>&1
-/sbin/chkconfig --add mysql
-%service mysql restart
+/sbin/chkconfig --add mariadb
+%service mariadb restart
 
 %preun
 if [ "$1" = "0" ]; then
-	%service -q mysql stop
-	/sbin/chkconfig --del mysql
+	%service -q mariadb stop
+	/sbin/chkconfig --del mariadb
 fi
 
 %postun
@@ -748,9 +747,9 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc KNOWN_BUGS.txt README.md CREDITS COPYING THIRDPARTY
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/mysql
-%attr(754,root,root) /etc/rc.d/init.d/mysql
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/mariadb
+%attr(754,root,root) /etc/rc.d/init.d/mariadb
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mariadb
 %attr(640,root,mysql) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/clusters.conf
 %attr(755,root,root) %{_sbindir}/aria_chk
 %attr(755,root,root) %{_sbindir}/aria_dump_log
@@ -821,9 +820,6 @@ fi
 %if %{with tokudb}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_tokudb.so
 %endif
-%if %{with cassandra}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_cassandra.so
-%endif
 %attr(755,root,root) %{_libdir}/%{name}/plugin/locales.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/metadata_lock_info.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_response_time.so
@@ -861,7 +857,7 @@ fi
 
 %if %{?debug:1}0
 %attr(755,root,root) %{_bindir}/*resolve_stack_dump
-%{_datadir}/mysql/mysqld.sym
+%{_datadir}/%{name}/mysqld.sym
 %{_mandir}/man1/*resolve_stack_dump.1*
 %endif
 
@@ -901,42 +897,42 @@ fi
 
 %{_infodir}/mysql.info*
 # This is template for configuration file which is created after 'service mysql init'
-%{_datadir}/mysql/mysqld.conf
-%{_datadir}/mysql/mysql_system_tables.sql
-%{_datadir}/mysql/mysql_system_tables_data.sql
-%{_datadir}/mysql/mysql_test_data_timezone.sql
-%{_datadir}/mysql/mysql_performance_tables.sql
+%{_datadir}/%{name}/mysqld.conf
+%{_datadir}/%{name}/mysql_system_tables.sql
+%{_datadir}/%{name}/mysql_system_tables_data.sql
+%{_datadir}/%{name}/mysql_test_data_timezone.sql
+%{_datadir}/%{name}/mysql_performance_tables.sql
 
-%{_datadir}/mysql/english
-%{_datadir}/mysql/fill_help_tables.sql
-#%{_datadir}/mysql/mysql_fix_privilege_tables.sql
-%lang(cs) %{_datadir}/mysql/czech
-%lang(da) %{_datadir}/mysql/danish
-%lang(de) %{_datadir}/mysql/german
-%lang(el) %{_datadir}/mysql/greek
-%lang(es) %{_datadir}/mysql/spanish
-%lang(et) %{_datadir}/mysql/estonian
-%lang(fr) %{_datadir}/mysql/french
-%lang(hu) %{_datadir}/mysql/hungarian
-%lang(it) %{_datadir}/mysql/italian
-%lang(ja) %{_datadir}/mysql/japanese
-%lang(ko) %{_datadir}/mysql/korean
-%lang(nl) %{_datadir}/mysql/dutch
-%lang(nb) %{_datadir}/mysql/norwegian
-%lang(nn) %{_datadir}/mysql/norwegian-ny
-%lang(pl) %{_datadir}/mysql/polish
-%lang(pt) %{_datadir}/mysql/portuguese
-%lang(ro) %{_datadir}/mysql/romanian
-%lang(ru) %{_datadir}/mysql/russian
-%lang(sr) %{_datadir}/mysql/serbian
-%lang(sk) %{_datadir}/mysql/slovak
-%lang(sv) %{_datadir}/mysql/swedish
-%lang(uk) %{_datadir}/mysql/ukrainian
+%{_datadir}/%{name}/english
+%{_datadir}/%{name}/fill_help_tables.sql
+#%{_datadir}/%{name}/mysql_fix_privilege_tables.sql
+%lang(cs) %{_datadir}/%{name}/czech
+%lang(da) %{_datadir}/%{name}/danish
+%lang(de) %{_datadir}/%{name}/german
+%lang(el) %{_datadir}/%{name}/greek
+%lang(es) %{_datadir}/%{name}/spanish
+%lang(et) %{_datadir}/%{name}/estonian
+%lang(fr) %{_datadir}/%{name}/french
+%lang(hu) %{_datadir}/%{name}/hungarian
+%lang(it) %{_datadir}/%{name}/italian
+%lang(ja) %{_datadir}/%{name}/japanese
+%lang(ko) %{_datadir}/%{name}/korean
+%lang(nl) %{_datadir}/%{name}/dutch
+%lang(nb) %{_datadir}/%{name}/norwegian
+%lang(nn) %{_datadir}/%{name}/norwegian-ny
+%lang(pl) %{_datadir}/%{name}/polish
+%lang(pt) %{_datadir}/%{name}/portuguese
+%lang(ro) %{_datadir}/%{name}/romanian
+%lang(ru) %{_datadir}/%{name}/russian
+%lang(sr) %{_datadir}/%{name}/serbian
+%lang(sk) %{_datadir}/%{name}/slovak
+%lang(sv) %{_datadir}/%{name}/swedish
+%lang(uk) %{_datadir}/%{name}/ukrainian
 
 %files charsets
 %defattr(644,root,root,755)
-%dir %{_datadir}/mysql
-%{_datadir}/mysql/charsets
+%dir %{_datadir}/%{name}
+%{_datadir}/%{name}/charsets
 
 %files extras
 %defattr(644,root,root,755)
@@ -1068,10 +1064,10 @@ fi
 %files bench
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/mysqltest
-%dir %{_datadir}/sql-bench
-%{_datadir}/sql-bench/[CDRl]*
-%{_datadir}/sql-bench/myisam.cnf
-%attr(755,root,root) %{_datadir}/sql-bench/[bcgirst]*
+%dir %{_datadir}/%{name}/sql-bench
+%{_datadir}/%{name}/sql-bench/[CDRl]*
+%{_datadir}/%{name}/sql-bench/myisam.cnf
+%attr(755,root,root) %{_datadir}/%{name}/sql-bench/[bcgirst]*
 %{_mandir}/man1/mysqltest.1*
 %{_mandir}/man1/mysqltest_embedded.1*
 
