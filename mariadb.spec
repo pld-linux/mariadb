@@ -689,7 +689,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %pre
 %groupadd -g 89 mysql
-%useradd -u 89 -d %{_mysqlhome} -s /bin/sh -g mysql -c "MariaDB Server" mysql
+%useradd -u 89 -d %{_mysqlhome} -s /bin/false -g mysql -c "MariaDB Server" mysql
 
 %post
 [ ! -x /usr/sbin/fix-info-dir ] || /usr/sbin/fix-info-dir -c %{_infodir} >/dev/null 2>&1
