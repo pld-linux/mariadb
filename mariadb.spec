@@ -1,18 +1,12 @@
 # TODO:
 # - package not conflicting with mysql (or just easily replacing mysql)
-# - something wrong in //libmysql/CMakeLists.txt and thus symbols like
-#   libmysqlclient.so.18(libmysqlclient_16) are missing
 #
 # Conditional build:
 %bcond_without	innodb		# InnoDB storage engine support
 %bcond_with	galera		# Galera replication support
-%bcond_without	big_tables	# Support tables with more than 4G rows even on 32 bit platforms
 %bcond_with	connect		# Connect Storage Engine
-%bcond_without	federated	# Federated Storage Engine support
-%bcond_without	raid		# RAID support
 %bcond_without	ssl		# OpenSSL support
 %bcond_without	tcpd		# libwrap (tcp_wrappers) support
-%bcond_with	tokudb		# TokuDB engine support (available only for x86_64 ??)
 %bcond_without	mroonga		# https://mariadb.com/kb/en/mariadb/about-mroonga/ (only for x86_64)
 %bcond_without	rocksdb		# https://mariadb.com/kb/en/library/about-myrocks-for-mariadb/ (only for x86_64)
 %bcond_with	autodeps	# BR packages needed only for resolving deps
@@ -21,10 +15,8 @@
 %bcond_without	cracklib	# cracklib support
 %bcond_without	lz4		# lz4 page compression for InnoDB & XtraDB
 %bcond_with	tests		# FIXME: don't run correctly
-%bcond_with	ndb
 
 %ifnarch %{x8664}
-%unglobal	with_tokudb
 %unglobal	with_mroonga
 %unglobal	with_rocksdb
 %endif
@@ -52,12 +44,6 @@ Source2:	mariadb.sysconfig
 Source3:	mariadb.logrotate
 Source4:	mysqld.conf
 Source5:	mysql-clusters.conf
-Source7:	mysql-ndb.init
-Source8:	mysql-ndb.sysconfig
-Source9:	mysql-ndb-mgm.init
-Source10:	mysql-ndb-mgm.sysconfig
-Source11:	mysql-ndb-cpc.init
-Source12:	mysql-ndb-cpc.sysconfig
 Source13:	mysql-client.conf
 Patch0:		mysql-client-config.patch
 Patch1:		heimdal.patch
@@ -394,55 +380,6 @@ This package contains manual in HTML format.
 %description doc -l pl.UTF-8
 Podręcznik MariaDB-a w formacie HTML.
 
-%package ndb
-Summary:	MariaDB - NDB Storage Engine Daemon
-Summary(pl.UTF-8):	MariaDB - demon silnika przechowywania danych NDB
-Group:		Applications/Databases
-Requires:	%{name}-libs = %{version}-%{release}
-
-%description ndb
-This package contains the standard MariaDB NDB Storage Engine Daemon.
-
-%description ndb -l pl.UTF-8
-Ten pakiet zawiera standardowego demona silnika przechowywania danych
-NDB.
-
-%package ndb-client
-Summary:	MariaDB - NDB Clients
-Summary(pl.UTF-8):	MariaDB - programy klienckie NDB
-Group:		Applications/Databases
-Requires:	%{name}-libs = %{version}-%{release}
-
-%description ndb-client
-This package contains the standard MariaDB NDB Clients.
-
-%description ndb-client -l pl.UTF-8
-Ten pakiet zawiera standardowe programy klienckie MariaDB NDB.
-
-%package ndb-mgm
-Summary:	MariaDB - NDB Management Daemon
-Summary(pl.UTF-8):	MariaDB - demon zarządzający NDB
-Group:		Applications/Databases
-Requires:	%{name}-libs = %{version}-%{release}
-
-%description ndb-mgm
-This package contains the standard MariaDB NDB Management Daemon.
-
-%description ndb-mgm -l pl.UTF-8
-Ten pakiet zawiera standardowego demona zarządzającego MariaDB NDB.
-
-%package ndb-cpc
-Summary:	MariaDB - NDB CPC Daemon
-Summary(pl.UTF-8):	MariaDB - demon NDB CPC
-Group:		Applications/Databases
-Requires:	%{name}-libs = %{version}-%{release}
-
-%description ndb-cpc
-This package contains the standard MariaDB NDB CPC Daemon.
-
-%description ndb-cpc -l pl.UTF-8
-Ten pakiet zawiera standardowego demona MariaDB NDB CPC.
-
 %package embedded
 Summary:	MariaDB as an embeddable library
 Group:		Applications/Databases
@@ -539,7 +476,6 @@ cd build
 	-DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
 	-DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
 	-DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
-	-DPLUGIN_TOKUDB=%{?with_tokudb:DYNAMIC}%{!?with_tokudb:NO} \
         -DPYTHON_SHEBANG=%{__python3} \
 	-DPYTHON_SHEBANG=%{python_path} \
 	-DSECURITY_HARDENED=ON \
@@ -599,16 +535,6 @@ touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 
 cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.conf
 cp -p %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
-
-# NDB
-%if %{with ndb}
-install -p %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb
-cp -p %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb
-install -p %{SOURCE9} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-mgm
-cp -p %{SOURCE10} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-mgm
-install -p %{SOURCE11} $RPM_BUILD_ROOT/etc/rc.d/init.d/mysql-ndb-cpc
-cp -p %{SOURCE12} $RPM_BUILD_ROOT/etc/sysconfig/mysql-ndb-cpc
-%endif
 
 sed -i -e 's,/usr//usr,%{_prefix},g' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
@@ -710,36 +636,6 @@ if [ "$1" = "0" ]; then
 	%groupremove mysql
 fi
 
-%post ndb
-/sbin/chkconfig --add mysql-ndb
-%service mysql-ndb restart "mysql NDB engine"
-
-%preun ndb
-if [ "$1" = "0" ]; then
-	%service mysql-ndb stop
-	/sbin/chkconfig --del mysql-ndb
-fi
-
-%post ndb-mgm
-/sbin/chkconfig --add mysql-ndb-mgm
-%service mysql-ndb-mgm restart "mysql NDB management node"
-
-%preun ndb-mgm
-if [ "$1" = "0" ]; then
-	%service mysql-ndb-mgm stop
-	/sbin/chkconfig --del mysql-ndb-mgm
-fi
-
-%post ndb-cpc
-/sbin/chkconfig --add mysql-ndb-cpc
-%service mysql-ndb-cpc restart "mysql NDB CPC"
-
-%preun ndb-cpc
-if [ "$1" = "0" ]; then
-	%service mysql-ndb-cpc stop
-	/sbin/chkconfig --del mysql-ndb-cpc
-fi
-
 %post   libs -p /sbin/ldconfig
 %postun libs -p /sbin/ldconfig
 
@@ -827,9 +723,6 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
 %endif
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_example.so
-%if %{with tokudb}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_tokudb.so
-%endif
 %attr(755,root,root) %{_libdir}/%{name}/plugin/locales.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/metadata_lock_info.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_response_time.so
@@ -899,9 +792,6 @@ fi
 %{_sysconfdir}/%{name}/conf.d/s3.cnf
 %{_sysconfdir}/%{name}/conf.d/server.cnf
 %{_sysconfdir}/%{name}/conf.d/spider.cnf
-%if %{with tokudb}
-#%{_sysconfdir}/%{name}/conf.d/tokudb.cnf
-%endif
 %attr(755,root,root) %{_bindir}/mariadb-install-db
 %attr(755,root,root) %{_bindir}/mariadb-plugin
 %attr(755,root,root) %{_bindir}/mariadb-service-convert
@@ -979,9 +869,6 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_tzinfo_to_sql
 %attr(755,root,root) %{_bindir}/perror
 %attr(755,root,root) %{_bindir}/replace
-%if %{with tokudb}
-%attr(755,root,root) %{_bindir}/tokuftdump
-%endif
 %{_mandir}/man1/mariadb-conv.1*
 %{_mandir}/man1/mariadb-secure-installation.1*
 %{_mandir}/man1/mariadb-tzinfo-to-sql.1*
@@ -1068,10 +955,6 @@ fi
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %attr(755,root,root) %{_libdir}/libmariadb.so.3
-%if %{with ndb}
-%attr(755,root,root) %{_libdir}/libndbclient.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libndbclient.so.3
-%endif
 
 %files devel
 %defattr(644,root,root,755)
@@ -1103,66 +986,6 @@ fi
 %attr(755,root,root) %{_datadir}/%{name}/sql-bench/[bcgirst]*
 %{_mandir}/man1/mysqltest.1*
 %{_mandir}/man1/mysqltest_embedded.1*
-
-%if %{with ndb}
-%files ndb
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_sbindir}/ndbd
-%attr(754,root,root) /etc/rc.d/init.d/mysql-ndb
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb
-#%{_mandir}/man1/ndbd.1*
-%{_mandir}/man1/ndbd_redo_log_reader.1*
-
-%files ndb-client
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_bindir}/ndb_config
-%attr(755,root,root) %{_bindir}/ndb_delete_all
-%attr(755,root,root) %{_bindir}/ndb_desc
-%attr(755,root,root) %{_bindir}/ndb_drop_index
-%attr(755,root,root) %{_bindir}/ndb_drop_table
-%attr(755,root,root) %{_bindir}/ndb_error_reporter
-%attr(755,root,root) %{_bindir}/ndb_mgm
-%attr(755,root,root) %{_bindir}/ndb_print_backup_file
-%attr(755,root,root) %{_bindir}/ndb_print_schema_file
-%attr(755,root,root) %{_bindir}/ndb_print_sys_file
-%attr(755,root,root) %{_bindir}/ndb_restore
-%attr(755,root,root) %{_bindir}/ndb_select_all
-%attr(755,root,root) %{_bindir}/ndb_select_count
-%attr(755,root,root) %{_bindir}/ndb_show_tables
-%attr(755,root,root) %{_bindir}/ndb_size.pl
-%attr(755,root,root) %{_bindir}/ndb_test_platform
-%attr(755,root,root) %{_bindir}/ndb_waiter
-%{_mandir}/man1/ndb_config.1*
-%{_mandir}/man1/ndb_delete_all.1*
-%{_mandir}/man1/ndb_desc.1*
-%{_mandir}/man1/ndb_drop_index.1*
-%{_mandir}/man1/ndb_drop_table.1*
-%{_mandir}/man1/ndb_error_reporter.1*
-%{_mandir}/man1/ndb_mgm.1*
-%{_mandir}/man1/ndb_print_backup_file.1*
-%{_mandir}/man1/ndb_print_schema_file.1*
-%{_mandir}/man1/ndb_print_sys_file.1*
-%{_mandir}/man1/ndb_restore.1*
-%{_mandir}/man1/ndb_select_all.1*
-%{_mandir}/man1/ndb_select_count.1*
-%{_mandir}/man1/ndb_show_tables.1*
-%{_mandir}/man1/ndb_size.pl.1*
-%{_mandir}/man1/ndb_waiter.1*
-
-%files ndb-mgm
-%defattr(644,root,root,755)
-#%attr(755,root,root) %{_sbindir}/ndb_mgmd
-%attr(754,root,root) /etc/rc.d/init.d/mysql-ndb-mgm
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb-mgm
-#%{_mandir}/man1/ndb_mgmd.1*
-
-%files ndb-cpc
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_sbindir}/ndb_cpcd
-%attr(754,root,root) /etc/rc.d/init.d/mysql-ndb-cpc
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mysql-ndb-cpc
-%{_mandir}/man1/ndb_cpcd.1*
-%endif
 
 %files embedded
 %defattr(644,root,root,755)
