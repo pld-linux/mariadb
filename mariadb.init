@@ -250,6 +250,9 @@ mysqlstart() {
 		MYSQL_OPTIONS="$MYSQL_OPTIONS --log-error=$MYSQL_ERRLOG"
 	fi
 
+	# SERVICE_LIMITS isn't applied automatically: mariadbd is started directly, not via daemon()
+	_daemon_set_ulimits
+
 	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
 		/usr/bin/setsid /usr/sbin/mariadbd \
 			--defaults-file=$MYSQL_CONFIG \
