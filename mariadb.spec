@@ -30,13 +30,13 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	10.11.2
-Release:	0.1
+Version:	11.8.7
+Release:	1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
 Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-%{version}.tar.gz
-# Source0-md5:	12d920513797d4c48121c758d0ba8d96
+# Source0-md5:	27c6eeeda18e0c298f63b7def5ad8061
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mariadb.init
@@ -51,26 +51,34 @@ Patch2:		build.patch
 URL:		https://mariadb.org/
 BuildRequires:	autoconf
 BuildRequires:	automake
-BuildRequires:	cmake >= 2.6
+BuildRequires:	bzip2-devel
+BuildRequires:	cmake >= 3.12.0
+%{?with_connect:BuildRequires:	libbson-devel >= 1.16.0}
 %{?with_cracklib:BuildRequires:	cracklib-devel}
 BuildRequires:	doxygen
 BuildRequires:	groff
-BuildRequires:	libbson-devel >= 1.16.0
 BuildRequires:	libevent-devel
+BuildRequires:	libfmt-devel
 BuildRequires:	libstdc++-devel >= 5:3.0
 BuildRequires:	libtool
+BuildRequires:	liburing-devel
 %{?with_tcpd:BuildRequires:	libwrap-devel}
 %{?with_lz4:BuildRequires:	lz4-devel}
+BuildRequires:	lzo-devel
 BuildRequires:	ncurses-devel >= 4.2
-%{?with_ssl:BuildRequires:	openssl-devel >= 0.9.7d}
+BuildRequires:	numactl-devel
+%{?with_ssl:BuildRequires:	openssl-devel >= 1.1.1}
+BuildRequires:	pcre2-8-devel
 %{?with_autodeps:BuildRequires:	perl-DBI}
 BuildRequires:	perl-devel >= 1:5.6.1
 BuildRequires:	readline-devel >= 4.2
 BuildRequires:	rpm-perlprov >= 4.1-13
-BuildRequires:	rpmbuild(macros) >= 1.414
+BuildRequires:	rpmbuild(macros) >= 1.671
 BuildRequires:	sed >= 4.0
-BuildRequires:	texinfo
+BuildRequires:	snappy-devel
+BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
+BuildRequires:	zstd-devel
 Requires(post,preun):	/sbin/chkconfig
 Requires(postun):	/usr/sbin/groupdel
 Requires(postun):	/usr/sbin/userdel
@@ -79,7 +87,9 @@ Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(post): sed >= 4.0
+Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-charsets = %{version}-%{release}
+Requires:	systemd-units >= 38
 Requires:	/usr/bin/setsid
 Requires:	rc-scripts >= 0.2.0
 Provides:	MariaDB-server
@@ -453,6 +463,7 @@ cd build
 	-DDAEMON_NAME="%{name}" \
 	-DDAEMON_NO_PREFIX="%{name}" \
 	-DENABLED_LOCAL_INFILE=ON \
+	-DENABLE_DTRACE=OFF \
 	-DFEATURE_SET="community" \
 	-DINSTALL_LAYOUT=RPM \
 	-DINSTALL_LIBDIR=%{_lib} \
@@ -476,8 +487,7 @@ cd build
 	-DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
 	-DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
 	-DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
-        -DPYTHON_SHEBANG=%{__python3} \
-	-DPYTHON_SHEBANG=%{python_path} \
+	-DPYTHON_SHEBANG=%{__python3} \
 	-DSECURITY_HARDENED=ON \
 	-DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir}/%{name} \
 	-DWITH_EMBEDDED_SERVER=ON \
@@ -488,8 +498,9 @@ cd build
 	-DWITH_LIBEDIT=OFF \
 	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
 	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
+	-DWITH_LIBFMT=system \
         -DWITH_NUMA=AUTO \
-	-DWITH_PCRE=ON \
+	-DWITH_PCRE=system \
 	-DWITH_PIC=ON \
 	-DWITH_READLINE=ON \
 	-DWITH_ROCKSDB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
@@ -508,13 +519,11 @@ cd build
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} \
 	   $RPM_BUILD_ROOT/var/{log/{archive,}/%{name},lib/%{name}} \
-	   $RPM_BUILD_ROOT{%{_infodir},%{_mysqlhome}} \
+	   $RPM_BUILD_ROOT%{_mysqlhome} \
 	   $RPM_BUILD_ROOT%{_libdir}
 
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
-
-cp -p Docs/mysql.info $RPM_BUILD_ROOT%{_infodir}
 
 # we use our own
 rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mariadb
@@ -536,11 +545,27 @@ touch $RPM_BUILD_ROOT/var/log/%{name}/{mysqld,query,slow}.log
 cp -p mysqld.conf $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.conf
 cp -p %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
 
+# upstream my.cnf includes a hardcoded dir; point it at our conf.d so the
+# shipped provider/server *.cnf there are actually read
+sed -i -e 's,!includedir /etc/my.cnf.d,!includedir %{_sysconfdir}/%{name}/conf.d,' \
+	$RPM_BUILD_ROOT%{_sysconfdir}/%{name}/my.cnf
+
 sed -i -e 's,/usr//usr,%{_prefix},g' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 
 # remove known unpackaged files
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/%{name}-support
+
+# PLD keeps systemd units in %{systemdunitdir}; ship them next to the SysV
+# init script so the package works under both init systems
+install -d $RPM_BUILD_ROOT%{systemdunitdir}
+mv $RPM_BUILD_ROOT/usr/lib/systemd/system/* $RPM_BUILD_ROOT%{systemdunitdir}/
+%{__rm} -r $RPM_BUILD_ROOT/usr/lib/systemd
+
+# docs are handled via %%doc from the source tree; groonga/mroonga ship only
+# license/readme files here
+%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/doc
+%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/groonga{,-normalizer-mysql}
 
 # rename not to be so generic name
 mv $RPM_BUILD_ROOT%{_bindir}/{,mysql_}resolve_stack_dump
@@ -561,7 +586,6 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_ftdump
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_pack
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_read_log
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_s3_copy
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_plugin
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-upgrade
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_upgrade
 mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/innochecksum
@@ -585,7 +609,6 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql-log-rotate
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/mysql.server
 #rm $RPM_BUILD_ROOT%{_datadir}/%{name}/binary-configure
-%{__rm} $RPM_BUILD_ROOT%{_datadir}/%{name}/errmsg-utf8.txt
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-waitpid
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadb-waitpid.1*
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_waitpid
@@ -600,11 +623,13 @@ mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 
 # we don't package those (we have no -test or -testsuite pkg) and some of them just segfault
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mariadb-client-test
-%{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mariadb-client-test.1*
+# keep mariadb-client-test.1: it is the target of the embedded test man .so links
 %{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_client_test
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-stress-test.pl.1*
 %{__rm} $RPM_BUILD_ROOT%{_mandir}/man1/mysql-test-run.pl.1*
-%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/mysql-test
+%{__rm} -r $RPM_BUILD_ROOT%{_datadir}/%{name}-test
+# PAM module used only by the test suite
+%{__rm} -r $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/test_pam_modules
 
 # not needed
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/%{name}/plugin/example_key_management.*
@@ -618,23 +643,26 @@ rm -rf $RPM_BUILD_ROOT
 %useradd -u 89 -d %{_mysqlhome} -s /bin/false -g mysql -c "MariaDB Server" mysql
 
 %post
-[ ! -x /usr/sbin/fix-info-dir ] || /usr/sbin/fix-info-dir -c %{_infodir} >/dev/null 2>&1
 /sbin/chkconfig --add mariadb
 %service mariadb restart
+%systemd_post mariadb.service
 
 %preun
 if [ "$1" = "0" ]; then
 	%service -q mariadb stop
 	/sbin/chkconfig --del mariadb
 fi
+%systemd_preun mariadb.service
 
 %postun
-[ ! -x /usr/sbin/fix-info-dir ] || /usr/sbin/fix-info-dir -c %{_infodir} >/dev/null 2>&1
-
 if [ "$1" = "0" ]; then
 	%userremove mysql
 	%groupremove mysql
 fi
+%systemd_reload
+
+%triggerpostun -- %{name} < 11.8.7-1
+%systemd_trigger mariadb.service
 
 %post   libs -p /sbin/ldconfig
 %postun libs -p /sbin/ldconfig
@@ -649,6 +677,18 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/mariadb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/mariadb
 %attr(640,root,mysql) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/clusters.conf
+%{systemdunitdir}/mariadb.service
+%{systemdunitdir}/mariadb@.service
+%{systemdunitdir}/mariadb.socket
+%{systemdunitdir}/mariadb@.socket
+%{systemdunitdir}/mariadb-extra.socket
+%{systemdunitdir}/mariadb-extra@.socket
+%{systemdunitdir}/mysql.service
+%{systemdunitdir}/mysqld.service
+%dir %{systemdunitdir}/mariadb@bootstrap.service.d
+%{systemdunitdir}/mariadb@bootstrap.service.d/use_galera_new_cluster.conf
+%{systemdtmpfilesdir}/mariadb.conf
+%{_sysusersdir}/mariadb.conf
 %attr(755,root,root) %{_sbindir}/aria_chk
 %attr(755,root,root) %{_sbindir}/aria_dump_log
 %attr(755,root,root) %{_sbindir}/aria_ftdump
@@ -675,9 +715,11 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_ed25519.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi_client.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_mysql_sha2.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_tool_dir/auth_pam_tool
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_v1.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_parsec.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/caching_sha2_password.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/client_ed25519.so
@@ -701,6 +743,7 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/parsec.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/password_reuse_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/provider_bzip2.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lz4.so
@@ -717,6 +760,7 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/test_sql_service.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/test_versioning.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_timestamp.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/zstd.so
 %if %{with galera}
@@ -748,6 +792,10 @@ fi
 %{_mandir}/man1/myrocks_hotbackup.1*
 %{_mandir}/man1/mysql_ldb.1*
 %endif
+
+# PAM user-mapping module used by the auth_pam plugin
+%attr(755,root,root) /lib64/security/pam_user_map.so
+%config(noreplace) %verify(not md5 mtime size) /etc/security/user_map.conf
 
 %{_mandir}/man1/aria_chk.1*
 %{_mandir}/man1/aria_dump_log.1*
@@ -798,7 +846,7 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_install_db
 %attr(755,root,root) %{_bindir}/mytop
 %attr(755,root,root) %{_bindir}/resolveip
-%attr(755,root,root) %{_sbindir}/mysql_plugin
+%attr(755,root,root) %{_bindir}/mysql_plugin
 %{_mandir}/man1/mariadb-install-db.1*
 %{_mandir}/man1/mariadb-plugin.1*
 %{_mandir}/man1/mariadb-service-convert.1*
@@ -813,19 +861,21 @@ fi
 %attr(750,mysql,mysql) %dir /var/log/archive/%{name}
 %attr(640,mysql,mysql) %ghost /var/log/%{name}/*
 
-%{_infodir}/mysql.info*
 # This is template for configuration file which is created after 'service mysql init'
 %{_datadir}/%{name}/mysqld.conf
 %{_datadir}/%{name}/maria_add_gis_sp_bootstrap.sql
-%{_datadir}/%{name}/mysql_sys_schema.sql
-%{_datadir}/%{name}/mysql_system_tables.sql
-%{_datadir}/%{name}/mysql_system_tables_data.sql
-%{_datadir}/%{name}/mysql_test_db.sql
-%{_datadir}/%{name}/mysql_test_data_timezone.sql
-%{_datadir}/%{name}/mysql_performance_tables.sql
+%{_datadir}/%{name}/mariadb_sys_schema.sql
+%{_datadir}/%{name}/mariadb_system_tables.sql
+%{_datadir}/%{name}/mariadb_system_tables_data.sql
+%{_datadir}/%{name}/mariadb_test_db.sql
+%{_datadir}/%{name}/mariadb_test_data_timezone.sql
+%{_datadir}/%{name}/mariadb_performance_tables.sql
 
 %{_datadir}/%{name}/english
 %{_datadir}/%{name}/fill_help_tables.sql
+%if %{with mroonga}
+%{_datadir}/%{name}/mroonga
+%endif
 #%{_datadir}/%{name}/mysql_fix_privilege_tables.sql
 %lang(cs) %{_datadir}/%{name}/czech
 %lang(bg) %{_datadir}/%{name}/bulgarian
@@ -839,6 +889,7 @@ fi
 %lang(hu) %{_datadir}/%{name}/hungarian
 %lang(it) %{_datadir}/%{name}/italian
 %lang(ja) %{_datadir}/%{name}/japanese
+%lang(ka) %{_datadir}/%{name}/georgian
 %lang(ko) %{_datadir}/%{name}/korean
 %lang(nl) %{_datadir}/%{name}/dutch
 %lang(nb) %{_datadir}/%{name}/norwegian
@@ -850,6 +901,7 @@ fi
 %lang(sr) %{_datadir}/%{name}/serbian
 %lang(sk) %{_datadir}/%{name}/slovak
 %lang(sv) %{_datadir}/%{name}/swedish
+%lang(sw) %{_datadir}/%{name}/swahili
 %lang(uk) %{_datadir}/%{name}/ukrainian
 %lang(zh) %{_datadir}/%{name}/chinese
 
@@ -861,6 +913,7 @@ fi
 %files extras
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/mariadb-conv
+%attr(755,root,root) %{_bindir}/mariadb-migrate-config-file
 %attr(755,root,root) %{_bindir}/mariadb-secure-installation
 %attr(755,root,root) %{_bindir}/mariadb-tzinfo-to-sql
 %attr(755,root,root) %{_bindir}/msql2mysql
@@ -954,6 +1007,7 @@ fi
 %defattr(644,root,root,755)
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/my.cnf
 %attr(755,root,root) %{_libdir}/libmariadb.so.3
 
 %files devel
@@ -979,11 +1033,13 @@ fi
 
 %files bench
 %defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/mariadb-test
 %attr(755,root,root) %{_bindir}/mysqltest
 %dir %{_datadir}/%{name}/sql-bench
 %{_datadir}/%{name}/sql-bench/[CDRl]*
 %{_datadir}/%{name}/sql-bench/myisam.cnf
 %attr(755,root,root) %{_datadir}/%{name}/sql-bench/[bcgirst]*
+%{_mandir}/man1/mariadb-test.1*
 %{_mandir}/man1/mysqltest.1*
 %{_mandir}/man1/mysqltest_embedded.1*
 
@@ -1002,5 +1058,7 @@ fi
 # points to mysql_client_test.1
 %{_mandir}/man1/mysql_client_test_embedded.1*
 %{_mandir}/man1/mysql_embedded.1*
+# real page; the embedded/mysql_client_test man pages are groff .so links to it
+%{_mandir}/man1/mariadb-client-test.1*
 %attr(755,root,root) %{_libdir}/libmariadbd.so.19
 
