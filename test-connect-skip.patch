@@ -1,0 +1,17 @@
+test-connect connects to an external server; without one it exited 1 and failed
+"make test", unlike every other server-dependent test in the same ctest run.
+--- mariadb-12.3.3/unittest/embedded/test-connect.cc.orig
++++ mariadb-12.3.3/unittest/embedded/test-connect.cc
+@@ -36,8 +36,10 @@
+ 
+   if (get_evar(&host, &porta, &user, &passwd))
+   {
+-    printf("set environment variable MASTER_MYPORT\n");
+-    return 1;
++    /* Connects to a real server over TCP; report a TAP skip like the other
++       server-dependent tests rather than failing when none is configured. */
++    printf("1..0 # skip No server configured: set MASTER_MYPORT or MYSQL_TEST_PORT\n");
++    return 0;
+   }
+ 
+   port = atoi(porta);

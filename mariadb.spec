@@ -12,9 +12,10 @@
 %bcond_with	autodeps	# BR packages needed only for resolving deps
 %bcond_without	oqgraph		# Open Query GRAPH engine (OQGRAPH)
 %bcond_without	sphinx		# Sphinx storage engine support
+%bcond_without	videx		# VIDEX virtual index engine (what-if index analysis)
 %bcond_without	cracklib	# cracklib support
 %bcond_without	lz4		# lz4 page compression for InnoDB & XtraDB
-%bcond_with	tests		# FIXME: don't run correctly
+%bcond_with	tests		# run test suite
 
 %ifnarch %{x8664}
 %unglobal	with_mroonga
@@ -30,13 +31,13 @@ Summary(ru.UTF-8):	MariaDB - быстрый SQL-сервер
 Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
-Version:	11.8.7
+Version:	12.3.3
 Release:	1
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
 Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-%{version}.tar.gz
-# Source0-md5:	27c6eeeda18e0c298f63b7def5ad8061
+# Source0-md5:	83d962d0f5917a0445786cc31337b118
 Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mariadb.init
@@ -45,22 +46,23 @@ Source3:	mariadb.logrotate
 Source4:	mysqld.conf
 Source5:	mysql-clusters.conf
 Source13:	mysql-client.conf
-Patch0:		mysql-client-config.patch
 Patch1:		heimdal.patch
 Patch2:		build.patch
+Patch3:		test-connect-skip.patch
 URL:		https://mariadb.org/
-BuildRequires:	autoconf
-BuildRequires:	automake
+BuildRequires:	bison >= 2.4
+%{?with_oqgraph:BuildRequires:	boost-devel >= 1.40.0}
 BuildRequires:	bzip2-devel
 BuildRequires:	cmake >= 3.12.0
 %{?with_connect:BuildRequires:	libbson-devel >= 1.16.0}
 %{?with_cracklib:BuildRequires:	cracklib-devel}
-BuildRequires:	doxygen
+BuildRequires:	curl-devel
 BuildRequires:	groff
+BuildRequires:	heimdal-devel
+%{?with_oqgraph:BuildRequires:	judy-devel}
 BuildRequires:	libevent-devel
 BuildRequires:	libfmt-devel
 BuildRequires:	libstdc++-devel >= 5:3.0
-BuildRequires:	libtool
 BuildRequires:	liburing-devel
 %{?with_tcpd:BuildRequires:	libwrap-devel}
 %{?with_lz4:BuildRequires:	lz4-devel}
@@ -68,6 +70,7 @@ BuildRequires:	lzo-devel
 BuildRequires:	ncurses-devel >= 4.2
 BuildRequires:	numactl-devel
 %{?with_ssl:BuildRequires:	openssl-devel >= 1.1.1}
+BuildRequires:	pam-devel
 BuildRequires:	pcre2-8-devel
 %{?with_autodeps:BuildRequires:	perl-DBI}
 BuildRequires:	perl-devel >= 1:5.6.1
@@ -76,6 +79,7 @@ BuildRequires:	rpm-perlprov >= 4.1-13
 BuildRequires:	rpmbuild(macros) >= 1.671
 BuildRequires:	sed >= 4.0
 BuildRequires:	snappy-devel
+BuildRequires:	systemd-devel
 BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
 BuildRequires:	zstd-devel
@@ -89,6 +93,7 @@ Requires(pre):	/usr/sbin/useradd
 Requires(post): sed >= 4.0
 Requires(post,preun,postun):	systemd-units >= 38
 Requires:	%{name}-charsets = %{version}-%{release}
+Requires:	%{name}-libs = %{version}-%{release}
 Requires:	systemd-units >= 38
 Requires:	/usr/bin/setsid
 Requires:	rc-scripts >= 0.2.0
@@ -406,9 +411,9 @@ process.
 mv sphinx-*/mysqlse storage/sphinx
 %endif
 
-%patch -P0 -p1
 %patch -P1 -p1
 %patch -P2 -p1
+%patch -P3 -p1
 
 %{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+perl(\s|$),#!%{__perl}\1,' \
       scripts/mytop.sh \
@@ -448,6 +453,8 @@ cd build
 # NOTE that /var/lib/mariadb/mariadb.sock is symlink to real sock file
 # (it defaults to first cluster but user may change it to whatever
 # cluster it wants)
+# PLD keeps PAM modules on the root fs; upstream defaults to /usr/%{_lib}/security
+# duckdb statically links its own bundled DuckDB tree, so it is not built
 
 %cmake \
         %{?debug:-DWITH_DEBUG=ON} \
@@ -470,6 +477,7 @@ cd build
         -DINSTALL_MYSQLDATADIR:PATH=%{_var}/lib/%{name} \
         -DINSTALL_MYSQLSHAREDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_MYSQLTESTDIR_RPM="" \
+	-DINSTALL_PAMDIR=/%{_lib}/security \
 	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
         -DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
@@ -483,10 +491,12 @@ cd build
         -DPLUGIN_COLUMNSTORE=NO \
 	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
 	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
+	-DPLUGIN_DUCKDB=NO \
 	-DPLUGIN_MROONGA=%{?with_mroonga:DYNAMIC}%{!?with_mroonga:NO} \
 	-DPLUGIN_OQGRAPH=%{?with_oqgraph:DYNAMIC}%{!?with_oqgraph:NO} \
 	-DPLUGIN_ROCKSDB=%{?with_rocksdb:DYNAMIC}%{!?with_rocksdb:NO} \
 	-DPLUGIN_SPHINX=%{?with_sphinx:DYNAMIC}%{!?with_sphinx:NO} \
+	-DPLUGIN_VIDEX=%{?with_videx:DYNAMIC}%{!?with_videx:NO} \
 	-DPYTHON_SHEBANG=%{__python3} \
 	-DSECURITY_HARDENED=ON \
 	-DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir}/%{name} \
@@ -513,7 +523,7 @@ cd build
 
 %{__make}
 
-%{?with_tests:%{__make} test}
+%{?with_tests:%{__make} test ARGS="--output-on-failure"}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -549,6 +559,7 @@ cp -p %{SOURCE13} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/mysql-client.conf
 # shipped provider/server *.cnf there are actually read
 sed -i -e 's,!includedir /etc/my.cnf.d,!includedir %{_sysconfdir}/%{name}/conf.d,' \
 	$RPM_BUILD_ROOT%{_sysconfdir}/%{name}/my.cnf
+echo '!include %{_sysconfdir}/%{name}/mysql-client.conf' >> $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/my.cnf
 
 sed -i -e 's,/usr//usr,%{_prefix},g' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
@@ -707,13 +718,10 @@ fi
 %attr(755,root,root) %{_sbindir}/mysqld
 #%attr(755,root,root) %{_sbindir}/mysql_fix_privilege_tables
 %attr(755,root,root) %{_sbindir}/mysql_upgrade
-%dir %{_libdir}/%{name}
-%dir %{_libdir}/%{name}/plugin
 %{_libdir}/%{name}/plugin/daemon_example.ini
 %attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_0x0100.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_ed25519.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi_client.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_mysql_sha2.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
@@ -721,12 +729,9 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_v1.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_parsec.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/caching_sha2_password.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/client_ed25519.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/cracklib_password_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/debug_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/disks.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/file_key_management.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/func_test.so
@@ -742,8 +747,6 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/parsec.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/password_reuse_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/provider_bzip2.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lz4.so
@@ -754,7 +757,6 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/query_cache_info.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/sha256_password.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/simple_password_check.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/test_sql_service.so
@@ -762,7 +764,6 @@ fi
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_timestamp.so
 %attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/zstd.so
 %if %{with galera}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
 %endif
@@ -781,6 +782,9 @@ fi
 %if %{with sphinx}
 %attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
 %endif
+%if %{with videx}
+%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_videx.so
+%endif
 
 %if %{with rocksdb}
 %attr(755,root,root) %{_bindir}/mariadb-ldb
@@ -794,7 +798,7 @@ fi
 %endif
 
 # PAM user-mapping module used by the auth_pam plugin
-%attr(755,root,root) /lib64/security/pam_user_map.so
+%attr(755,root,root) /%{_lib}/security/pam_user_map.so
 %config(noreplace) %verify(not md5 mtime size) /etc/security/user_map.conf
 
 %{_mandir}/man1/aria_chk.1*
@@ -1005,6 +1009,16 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
+%dir %{_libdir}/%{name}
+%dir %{_libdir}/%{name}/plugin
+%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi_client.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/caching_sha2_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/client_ed25519.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/parsec.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/sha256_password.so
+%attr(755,root,root) %{_libdir}/%{name}/plugin/zstd.so
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/my.cnf
