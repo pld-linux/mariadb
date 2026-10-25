@@ -9,13 +9,12 @@
 %bcond_without	tcpd		# libwrap (tcp_wrappers) support
 %bcond_without	mroonga		# https://mariadb.com/kb/en/mariadb/about-mroonga/ (only for x86_64)
 %bcond_without	rocksdb		# https://mariadb.com/kb/en/library/about-myrocks-for-mariadb/ (only for x86_64)
-%bcond_with	autodeps	# BR packages needed only for resolving deps
 %bcond_without	oqgraph		# Open Query GRAPH engine (OQGRAPH)
 %bcond_without	sphinx		# Sphinx storage engine support
 %bcond_without	videx		# VIDEX virtual index engine (what-if index analysis)
 %bcond_without	cracklib	# cracklib support
 %bcond_without	lz4		# lz4 page compression for InnoDB & XtraDB
-%bcond_with	tests		# run test suite
+%bcond_with	tests		# test suite
 
 %ifnarch %{x8664}
 %unglobal	with_mroonga
@@ -32,7 +31,7 @@ Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
 Version:	12.3.3
-Release:	1
+Release:	2
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
@@ -72,7 +71,6 @@ BuildRequires:	numactl-devel
 %{?with_ssl:BuildRequires:	openssl-devel >= 1.1.1}
 BuildRequires:	pam-devel
 BuildRequires:	pcre2-8-devel
-%{?with_autodeps:BuildRequires:	perl-DBI}
 BuildRequires:	perl-devel >= 1:5.6.1
 BuildRequires:	readline-devel >= 4.2
 BuildRequires:	rpm-perlprov >= 4.1-13
@@ -457,14 +455,14 @@ cd build
 # duckdb statically links its own bundled DuckDB tree, so it is not built
 
 %cmake \
-        %{?debug:-DWITH_DEBUG=ON} \
-        -DBUILD_CONFIG=mysql_release \
+	%{?debug:-DWITH_DEBUG=ON} \
+	-DBUILD_CONFIG=mysql_release \
 	-DCMAKE_BUILD_TYPE=%{!?debug:RelWithDebInfo}%{?debug:Debug} \
 	-DCMAKE_C_FLAGS="%{rpmcflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
 	-DCMAKE_CXX_FLAGS="%{rpmcxxflags} %{rpmcppflags} -DNDEBUG -fno-omit-frame-pointer -fno-strict-aliasing" \
 	-DCMAKE_INSTALL_PREFIX="%{_prefix}" \
 	-DCOMPILATION_COMMENT="PLD/Linux Distribution MariaDB RPM" \
-        -DCONC_DEFAULT_CHARSET=utf8mb4 \
+	-DCONC_DEFAULT_CHARSET=utf8mb4 \
 	-DCONNECT_WITH_JDBC=OFF \
 	-DCONNECT_WITH_MONGO=OFF \
 	-DDAEMON_NAME="%{name}" \
@@ -474,21 +472,21 @@ cd build
 	-DFEATURE_SET="community" \
 	-DINSTALL_LAYOUT=RPM \
 	-DINSTALL_LIBDIR=%{_lib} \
-        -DINSTALL_MYSQLDATADIR:PATH=%{_var}/lib/%{name} \
-        -DINSTALL_MYSQLSHAREDIR:PATH=%{_datadir}/%{name} \
+	-DINSTALL_MYSQLDATADIR:PATH=%{_var}/lib/%{name} \
+	-DINSTALL_MYSQLSHAREDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_MYSQLTESTDIR_RPM="" \
 	-DINSTALL_PAMDIR=/%{_lib}/security \
 	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
-        -DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
+	-DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
 	-DINSTALL_SYSCONFDIR=%{_sysconfdir}/%{name} \
-        -DINSTALL_SYSCONF2DIR=%{_sysconfdir}/%{name}/conf.d \
+	-DINSTALL_SYSCONF2DIR=%{_sysconfdir}/%{name}/conf.d \
 	-DLZ4_LIBS=%{?with_lz4:%{_libdir}/liblz4.so}%{!?with_lz4:} \
-        -DMYSQL_SERVER_SUFFIX="-PLD-%{version}-%{release}:%{epoch}" \
+	-DMYSQL_SERVER_SUFFIX="-PLD-%{version}-%{release}:%{epoch}" \
 	-DMYSQL_UNIX_ADDR=/var/lib/%{name}/mysql.sock \
 	-DNICE_PROJECT_NAME="MariaDB" \
-        -DPLUGIN_AWS_KEY_MANAGEMENT=NO \
-        -DPLUGIN_COLUMNSTORE=NO \
+	-DPLUGIN_AWS_KEY_MANAGEMENT=NO \
+	-DPLUGIN_COLUMNSTORE=NO \
 	-DPLUGIN_CONNECT=%{?with_connect:DYNAMIC}%{!?with_connect:NO} \
 	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=%{?with_cracklib:DYNAMIC}%{!?with_cracklib:NO} \
 	-DPLUGIN_DUCKDB=NO \
@@ -504,19 +502,19 @@ cd build
 	-DWITH_FAST_MUTEXES=ON \
 	-DWITH_INNODB_DISALLOW_WRITES=%{?with_galera:ON}%{!?with_galera:OFF} \
 	-DWITH_INNODB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
-        -DWITH_INNODB_SNAPPY=ON \
+	-DWITH_INNODB_SNAPPY=ON \
 	-DWITH_LIBEDIT=OFF \
 	-DWITH_LIBWRAP=%{?with_tcpd:ON}%{!?with_tcpd:OFF} \
 	-DWITH_MYSQLD_LDFLAGS="%{rpmldflags}" \
 	-DWITH_LIBFMT=system \
-        -DWITH_NUMA=AUTO \
+	-DWITH_NUMA=AUTO \
 	-DWITH_PCRE=system \
 	-DWITH_PIC=ON \
 	-DWITH_READLINE=ON \
 	-DWITH_ROCKSDB_LZ4=%{?with_lz4:ON}%{!?with_lz4:OFF} \
 	-DWITH_SSL=%{?with_ssl:system}%{!?with_ssl:no} \
 	-DWITH_UNIT_TESTS=%{?with_tests:ON}%{!?with_tests:OFF} \
-        -DWITH_URING=ON \
+	-DWITH_URING=ON \
 	-DWITH_WSREP=%{?with_galera:ON}%{!?with_galera:OFF} \
 	-DWITH_ZLIB=system \
 	..
@@ -570,7 +568,7 @@ sed -i -e '/libs/s/$ldflags//' $RPM_BUILD_ROOT%{_bindir}/mysql_config
 # PLD keeps systemd units in %{systemdunitdir}; ship them next to the SysV
 # init script so the package works under both init systems
 install -d $RPM_BUILD_ROOT%{systemdunitdir}
-mv $RPM_BUILD_ROOT/usr/lib/systemd/system/* $RPM_BUILD_ROOT%{systemdunitdir}/
+%{__mv} $RPM_BUILD_ROOT/usr/lib/systemd/system/* $RPM_BUILD_ROOT%{systemdunitdir}/
 %{__rm} -r $RPM_BUILD_ROOT/usr/lib/systemd
 
 # docs are handled via %%doc from the source tree; groonga/mroonga ship only
@@ -579,8 +577,8 @@ mv $RPM_BUILD_ROOT/usr/lib/systemd/system/* $RPM_BUILD_ROOT%{systemdunitdir}/
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/groonga{,-normalizer-mysql}
 
 # rename not to be so generic name
-mv $RPM_BUILD_ROOT%{_bindir}/{,mysql_}resolve_stack_dump
-mv $RPM_BUILD_ROOT%{_mandir}/man1/{,mysql_}resolve_stack_dump.1
+%{__mv} $RPM_BUILD_ROOT%{_bindir}/{,mysql_}resolve_stack_dump
+%{__mv} $RPM_BUILD_ROOT%{_mandir}/man1/{,mysql_}resolve_stack_dump.1
 
 # not useful without -debug build
 %{!?debug:%{__rm} $RPM_BUILD_ROOT%{_bindir}/mysql_resolve_stack_dump}
@@ -591,23 +589,23 @@ mv $RPM_BUILD_ROOT%{_mandir}/man1/{,mysql_}resolve_stack_dump.1
 %{?debug:nm -n $RPM_BUILD_ROOT%{_sbindir}/mysqld > $RPM_BUILD_ROOT%{_datadir}/%{name}/mysqld.sym}
 
 # do not clobber users $PATH
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_chk
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_dump_log
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_ftdump
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_pack
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_read_log
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_s3_copy
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-upgrade
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_upgrade
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/innochecksum
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamchk
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamlog
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisampack
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_chk
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_dump_log
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_ftdump
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_pack
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_read_log
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/aria_s3_copy
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-upgrade
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_upgrade
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/innochecksum
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamchk
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisamlog
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/myisampack
 #mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysql_fix_privilege_tables
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/my_print_defaults
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/my_print_defaults
 sed -i -e 's#/usr/bin/my_print_defaults#%{_sbindir}/my_print_defaults#g' $RPM_BUILD_ROOT%{_bindir}/mysql_install_db
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-check
-mv $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mariadb-check
+%{__mv} $RPM_BUILD_ROOT{%{_bindir},%{_sbindir}}/mysqlcheck
 
 # delete - functionality in initscript / rpm
 # note: mysql_install_db (and thus resolveip) are needed by digikam
@@ -719,59 +717,60 @@ fi
 #%attr(755,root,root) %{_sbindir}/mysql_fix_privilege_tables
 %attr(755,root,root) %{_sbindir}/mysql_upgrade
 %{_libdir}/%{name}/plugin/daemon_example.ini
-%attr(755,root,root) %{_libdir}/%{name}/plugin/adt_null.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_0x0100.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_ed25519.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_mysql_sha2.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam.so
+%{_libdir}/%{name}/plugin/adt_null.so
+%{_libdir}/%{name}/plugin/auth_0x0100.so
+%{_libdir}/%{name}/plugin/auth_ed25519.so
+%{_libdir}/%{name}/plugin/auth_gssapi.so
+%{_libdir}/%{name}/plugin/auth_mysql_sha2.so
+%{_libdir}/%{name}/plugin/auth_pam.so
+%dir %{_libdir}/%{name}/plugin/auth_pam_tool_dir
 %attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_tool_dir/auth_pam_tool
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_pam_v1.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_parsec.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_test_plugin.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/cracklib_password_check.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/debug_key_management.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog_examples.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/disks.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/file_key_management.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/func_test.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federated.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_federatedx.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_mroonga.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/handlersocket.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_oqgraph.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_s3.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/hashicorp_key_management.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_spider.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/mypluglib.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/password_reuse_check.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_bzip2.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lz4.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lzma.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_lzo.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/provider_snappy.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_client.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_interface.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/qa_auth_server.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/query_cache_info.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/simple_password_check.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/sql_errlog.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/test_sql_service.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/test_versioning.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_json.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/type_mysql_timestamp.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/type_test.so
+%{_libdir}/%{name}/plugin/auth_pam_v1.so
+%{_libdir}/%{name}/plugin/auth_parsec.so
+%{_libdir}/%{name}/plugin/auth_test_plugin.so
+%{_libdir}/%{name}/plugin/cracklib_password_check.so
+%{_libdir}/%{name}/plugin/debug_key_management.so
+%{_libdir}/%{name}/plugin/dialog_examples.so
+%{_libdir}/%{name}/plugin/disks.so
+%{_libdir}/%{name}/plugin/file_key_management.so
+%{_libdir}/%{name}/plugin/func_test.so
+%{_libdir}/%{name}/plugin/ha_archive.so
+%{_libdir}/%{name}/plugin/ha_blackhole.so
+%{_libdir}/%{name}/plugin/ha_federated.so
+%{_libdir}/%{name}/plugin/ha_federatedx.so
+%{_libdir}/%{name}/plugin/ha_mroonga.so
+%{_libdir}/%{name}/plugin/handlersocket.so
+%{_libdir}/%{name}/plugin/ha_oqgraph.so
+%{_libdir}/%{name}/plugin/ha_s3.so
+%{_libdir}/%{name}/plugin/hashicorp_key_management.so
+%{_libdir}/%{name}/plugin/ha_spider.so
+%{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
+%{_libdir}/%{name}/plugin/mypluglib.so
+%{_libdir}/%{name}/plugin/password_reuse_check.so
+%{_libdir}/%{name}/plugin/provider_bzip2.so
+%{_libdir}/%{name}/plugin/provider_lz4.so
+%{_libdir}/%{name}/plugin/provider_lzma.so
+%{_libdir}/%{name}/plugin/provider_lzo.so
+%{_libdir}/%{name}/plugin/provider_snappy.so
+%{_libdir}/%{name}/plugin/qa_auth_client.so
+%{_libdir}/%{name}/plugin/qa_auth_interface.so
+%{_libdir}/%{name}/plugin/qa_auth_server.so
+%{_libdir}/%{name}/plugin/query_cache_info.so
+%{_libdir}/%{name}/plugin/simple_password_check.so
+%{_libdir}/%{name}/plugin/sql_errlog.so
+%{_libdir}/%{name}/plugin/test_sql_service.so
+%{_libdir}/%{name}/plugin/test_versioning.so
+%{_libdir}/%{name}/plugin/type_mysql_json.so
+%{_libdir}/%{name}/plugin/type_mysql_timestamp.so
+%{_libdir}/%{name}/plugin/type_test.so
 %if %{with galera}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/wsrep_info.so
+%{_libdir}/%{name}/plugin/wsrep_info.so
 %endif
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_example.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/locales.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/metadata_lock_info.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/query_response_time.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/server_audit.so
+%{_libdir}/%{name}/plugin/ha_example.so
+%{_libdir}/%{name}/plugin/locales.so
+%{_libdir}/%{name}/plugin/metadata_lock_info.so
+%{_libdir}/%{name}/plugin/query_response_time.so
+%{_libdir}/%{name}/plugin/server_audit.so
 
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_archive.so
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_blackhole.so
@@ -780,10 +779,10 @@ fi
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sequence.so
 #%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_test_sql_discovery.so
 %if %{with sphinx}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_sphinx.so
+%{_libdir}/%{name}/plugin/ha_sphinx.so
 %endif
 %if %{with videx}
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_videx.so
+%{_libdir}/%{name}/plugin/ha_videx.so
 %endif
 
 %if %{with rocksdb}
@@ -791,14 +790,14 @@ fi
 %attr(755,root,root) %{_bindir}/myrocks_hotbackup
 %attr(755,root,root) %{_bindir}/mysql_ldb
 %attr(755,root,root) %{_bindir}/sst_dump
-%attr(755,root,root) %{_libdir}/%{name}/plugin/ha_rocksdb.so
+%{_libdir}/%{name}/plugin/ha_rocksdb.so
 %{_mandir}/man1/mariadb-ldb.1*
 %{_mandir}/man1/myrocks_hotbackup.1*
 %{_mandir}/man1/mysql_ldb.1*
 %endif
 
 # PAM user-mapping module used by the auth_pam plugin
-%attr(755,root,root) /%{_lib}/security/pam_user_map.so
+/%{_lib}/security/pam_user_map.so
 %config(noreplace) %verify(not md5 mtime size) /etc/security/user_map.conf
 
 %{_mandir}/man1/aria_chk.1*
@@ -1011,27 +1010,30 @@ fi
 %defattr(644,root,root,755)
 %dir %{_libdir}/%{name}
 %dir %{_libdir}/%{name}/plugin
-%attr(755,root,root) %{_libdir}/%{name}/plugin/auth_gssapi_client.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/caching_sha2_password.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/client_ed25519.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/dialog.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/mysql_clear_password.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/parsec.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/sha256_password.so
-%attr(755,root,root) %{_libdir}/%{name}/plugin/zstd.so
+%{_libdir}/%{name}/plugin/auth_gssapi_client.so
+%{_libdir}/%{name}/plugin/caching_sha2_password.so
+%{_libdir}/%{name}/plugin/client_ed25519.so
+%{_libdir}/%{name}/plugin/dialog.so
+%{_libdir}/%{name}/plugin/mysql_clear_password.so
+%{_libdir}/%{name}/plugin/parsec.so
+%{_libdir}/%{name}/plugin/sha256_password.so
+%{_libdir}/%{name}/plugin/zstd.so
 %attr(751,root,root) %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/mysql-client.conf
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/my.cnf
-%attr(755,root,root) %{_libdir}/libmariadb.so.3
+%{_libdir}/libmariadb.so.3
 
 %files devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/mariadb-config
 %attr(755,root,root) %{_bindir}/mariadb_config
 %attr(755,root,root) %{_bindir}/mysql_config
-%attr(755,root,root) %{_libdir}/lib*.so
-#%{_libdir}/lib*.la
-%{_libdir}/lib*[!tr].a
+%attr(755,root,root) %{_libdir}/libmariadb.so
+%attr(755,root,root) %{_libdir}/libmariadbd.so
+%attr(755,root,root) %{_libdir}/libmysqlclient.so
+%attr(755,root,root) %{_libdir}/libmysqlclient_r.so
+%attr(755,root,root) %{_libdir}/libmysqld.so
+%{_libdir}/libmysqlservices.a
 %{_includedir}/mysql
 %{_aclocaldir}/mysql.m4
 %{_pkgconfigdir}/libmariadb.pc
@@ -1043,7 +1045,12 @@ fi
 
 %files static
 %defattr(644,root,root,755)
-%{_libdir}/lib*[tr].a
+%{_libdir}/libmariadb.a
+%{_libdir}/libmariadbclient.a
+%{_libdir}/libmariadbd.a
+%{_libdir}/libmysqlclient.a
+%{_libdir}/libmysqlclient_r.a
+%{_libdir}/libmysqldb.a
 
 %files bench
 %defattr(644,root,root,755)
@@ -1065,6 +1072,7 @@ fi
 %attr(755,root,root) %{_bindir}/mysql_client_test_embedded
 %attr(755,root,root) %{_bindir}/mysql_embedded
 %attr(755,root,root) %{_bindir}/mysqltest_embedded
+%{_libdir}/libmariadbd.so.19
 %{_mandir}/man1/mariadb-client-test-embedded.1*
 %{_mandir}/man1/mariadb-embedded.1*
 %{_mandir}/man1/mariadb-test-embedded.1*
@@ -1074,5 +1082,3 @@ fi
 %{_mandir}/man1/mysql_embedded.1*
 # real page; the embedded/mysql_client_test man pages are groff .so links to it
 %{_mandir}/man1/mariadb-client-test.1*
-%attr(755,root,root) %{_libdir}/libmariadbd.so.19
-
