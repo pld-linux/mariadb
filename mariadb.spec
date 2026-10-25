@@ -71,6 +71,7 @@ BuildRequires:	numactl-devel
 %{?with_ssl:BuildRequires:	openssl-devel >= 1.1.1}
 BuildRequires:	pam-devel
 BuildRequires:	pcre2-8-devel
+BuildRequires:	pcre2-posix-devel
 BuildRequires:	perl-devel >= 1:5.6.1
 BuildRequires:	readline-devel >= 4.2
 BuildRequires:	rpm-perlprov >= 4.1-13
