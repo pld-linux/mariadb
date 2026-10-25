@@ -17,8 +17,8 @@
 %bcond_with	tests		# test suite
 
 %ifnarch %{x8664}
-%unglobal	with_mroonga
-%unglobal	with_rocksdb
+%undefine	with_mroonga
+%undefine	with_rocksdb
 %endif
 
 Summary:	An enhanced, drop-in replacement for MySQL
