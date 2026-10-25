@@ -574,7 +574,9 @@ install -d $RPM_BUILD_ROOT%{systemdunitdir}
 # docs are handled via %%doc from the source tree; groonga/mroonga ship only
 # license/readme files here
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/doc
+%if %{with mroonga}
 %{__rm} -r $RPM_BUILD_ROOT%{_datadir}/groonga{,-normalizer-mysql}
+%endif
 
 # rename not to be so generic name
 %{__mv} $RPM_BUILD_ROOT%{_bindir}/{,mysql_}resolve_stack_dump
@@ -1050,7 +1052,7 @@ fi
 %{_libdir}/libmariadbd.a
 %{_libdir}/libmysqlclient.a
 %{_libdir}/libmysqlclient_r.a
-%{_libdir}/libmysqldb.a
+%{_libdir}/libmysqld.a
 
 %files bench
 %defattr(644,root,root,755)
