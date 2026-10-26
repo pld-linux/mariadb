@@ -31,7 +31,7 @@ Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
 Version:	12.3.3
-Release:	2
+Release:	3
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
@@ -477,6 +477,7 @@ cd build
 	-DINSTALL_MYSQLSHAREDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_MYSQLTESTDIR_RPM="" \
 	-DINSTALL_PAMDIR=/%{_lib}/security \
+	-DINSTALL_PCDIR=%{_pkgconfigdir} \
 	-DINSTALL_PLUGINDIR=%{_libdir}/%{name}/plugin \
 	-DINSTALL_SQLBENCHDIR:PATH=%{_datadir}/%{name} \
 	-DINSTALL_SUPPORTFILESDIR=%{_datadir}/%{name}-support \
@@ -535,7 +536,7 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,sysconfig,%{name},skel} 
 	DESTDIR=$RPM_BUILD_ROOT
 
 # we use our own
-rm $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mariadb
+%{__rm} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/logrotate.d/mariadb
 
 install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/mariadb
 cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/mariadb
@@ -741,7 +742,9 @@ fi
 %{_libdir}/%{name}/plugin/ha_blackhole.so
 %{_libdir}/%{name}/plugin/ha_federated.so
 %{_libdir}/%{name}/plugin/ha_federatedx.so
+%if %{with mroonga}
 %{_libdir}/%{name}/plugin/ha_mroonga.so
+%endif
 %{_libdir}/%{name}/plugin/handlersocket.so
 %{_libdir}/%{name}/plugin/ha_oqgraph.so
 %{_libdir}/%{name}/plugin/ha_s3.so
