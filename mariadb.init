@@ -125,7 +125,7 @@ mysqlstatus() {
 	fi
 
 	if [ "$mode" = "start" ]; then
-		MYSQL_GREP_PID=$(grep -lE "^/usr/sbin/mariadbd.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
+		MYSQL_GREP_PID=$(grep -alE "^/usr/sbin/mariadbd.*${MYSQL_PIDFILE}" /proc/[0-9]*/cmdline 2> /dev/null | awk -F "/" '{ print $3; exit; }')
 		if [ -n "$MYSQL_GREP_PID" ]; then
 			MYSQL_PID=$MYSQL_GREP_PID
 			if grep -qa "$MYSQL_PIDFILE" /proc/$MYSQL_PID/cmdline 2> /dev/null; then
@@ -156,19 +156,13 @@ mysqlstatus() {
 mysqlgetconfig() {
 	clusterdir="$1"
 
-	# emulate old behaviour if only one cluster specified
-	if [ "$clusterdir" = "$MARIADB_DB_CLUSTERS" -a "$clusterdir" = "/var/lib/mariadb" -a -f /etc/mysqld.conf ]; then
-		MYSQL_RA_COMPAT=yes
-		config_file=/etc/mysqld.conf
+	config=$(awk -F= -vclusterdir="$clusterdir" '!/^#/{ if (clusterdir == $2) print $1}' /etc/mariadb/clusters.conf)
+	if [[ $config = /* ]]; then
+		config_file="$config"
+	elif [ -f "/etc/mariadb/$config" ]; then
+		config_file="/etc/mariadb/$config"
 	else
-		config=$(awk -F= -vclusterdir="$clusterdir" '!/^#/{ if (clusterdir == $2) print $1}' /etc/mariadb/clusters.conf)
-		if [[ $config = /* ]]; then
-			config_file="$config"
-		elif [ -f "/etc/mariadb/$config" ]; then
-			config_file="/etc/mariadb/$config"
-		else
-			config_file="$clusterdir/mysqld.conf"
-		fi
+		config_file="$clusterdir/mysqld.conf"
 	fi
 
 	MYSQL_CLUSTER_DIR="$clusterdir"
@@ -205,20 +199,14 @@ section == "mysqld" && $2 ~ "=" {
 ' $config_file`
 
 
-	if is_yes "$MYSQL_RA_COMPAT"; then
-		MYSQL_DATA_DIR_SUB=""
-	else
-		MYSQL_DATA_DIR_SUB="/mysqldb"
-	fi
-
-	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "${clusterdir}${MYSQL_DATA_DIR_SUB}/db" ]; then
-		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/db"
+	if [ -z "$MYSQL_DATA_DIR" -o "$MYSQL_DATA_DIR" != "$clusterdir/mysqldb/db" ]; then
+		nls "Error: datadir specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/db"
 		nls " MariaDB can't be run."
 		exit 6
 	fi
 
-	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid" ]; then
-		nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir${MYSQL_DATA_DIR_SUB}/mysql.pid"
+	if [ -z "$MYSQL_PIDFILE" -o "$MYSQL_PIDFILE" != "$clusterdir/mysqldb/mysql.pid" ]; then
+		nls "Error: pid-file specified in %s should be %s" "$config_file" "$clusterdir/mysqldb/mysql.pid"
 		nls " MariaDB can't be run."
 		exit 6
 	fi
@@ -253,7 +241,8 @@ mysqlstart() {
 	# SERVICE_LIMITS isn't applied automatically: mariadbd is started directly, not via daemon()
 	_daemon_set_ulimits
 
-	TMPDIR=/tmp nice -n ${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} \
+	# absolute nice level, as daemon() sets it; nice -n alone adds to the caller's level
+	TMPDIR=/tmp nice -n $((${SERVICE_RUN_NICE_LEVEL:-$DEFAULT_SERVICE_RUN_NICE_LEVEL} - $(nice))) \
 		/usr/bin/setsid /usr/sbin/mariadbd \
 			--defaults-file=$MYSQL_CONFIG \
 			--datadir=$MYSQL_DATA_DIR \
@@ -340,12 +329,6 @@ mysqlsubsys() {
 mysqlinit() {
 	clusterdir="$1"
 
-	if [ -f /etc/mysqld.conf ]; then
-		nls "Running in \`no cluster compat' mode: can't initialize database."
-		nls "Move /etc/mysqld.conf away and rerun \`$0 init' (new config will be in $clusterdir)."
-		exit 1
-	fi
-
 	if [ -f "$clusterdir/mysqld.conf" ]; then
 		mysqlgetconfig "$clusterdir"
 	else
@@ -398,8 +381,8 @@ mysqlinit() {
 	cat > $MYSQL_DATA_DIR/mariadb-init.sql <<-EOF
 		CREATE DATABASE mysql;
 		use mysql;
-		$(cat /usr/share/mariadb/mysql_system_tables.sql)
-		$(sed -e "/@current_hostname/d" /usr/share/mariadb/mysql_system_tables_data.sql)
+		$(cat /usr/share/mariadb/mariadb_system_tables.sql)
+		$(sed -e "/@current_hostname/d" /usr/share/mariadb/mariadb_system_tables_data.sql)
 EOF
 
 	ok=0
@@ -471,7 +454,7 @@ shell> mysql -u mysql mysql
 mysql> show tables
 
 Try 'mariadbd --help' if you have problems with paths. Setting on
-logging in /etc/mysqld.conf gives you a log in /var/log/mariadb/log that
+logging in $MYSQL_CONFIG gives you a log in /var/log/mariadb/log that
 may be helpful. The latest information about MariaDB is available on the
 web at https://www.mariadb.org/.
 

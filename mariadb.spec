@@ -31,13 +31,13 @@ Summary(uk.UTF-8):	MariaDB - швидкий SQL-сервер
 Summary(zh_CN.UTF-8):	MariaDB数据库服务器
 Name:		mariadb
 Version:	12.3.3
-Release:	3
+Release:	4
 License:	GPL + MariaDB FLOSS Exception
 Group:		Applications/Databases
 # Source0:	https://downloads.mariadb.org/f/%{name}-%{version}/source/%{name}-%{version}.tar.gz
 Source0:	https://rsync.osuosl.org/pub/mariadb/%{name}-%{version}/source/%{name}-%{version}.tar.gz
 # Source0-md5:	83d962d0f5917a0445786cc31337b118
-Source100:	http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
+Source100:	https://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz
 # Source100-md5:	5cac34f3d78a9d612ca4301abfcbd666
 Source1:	mariadb.init
 Source2:	mariadb.sysconfig
@@ -835,7 +835,6 @@ fi
 #%dir %{_docdir}/%{name}-%{version}
 #%attr(644,root,root) %{_docdir}/%{name}-%{version}/*
 
-%dir %{_sysconfdir}/%{name}
 %dir %{_sysconfdir}/%{name}/conf.d
 %{_sysconfdir}/%{name}/conf.d/client.cnf
 %{_sysconfdir}/%{name}/conf.d/enable_encryption.preset
@@ -865,7 +864,7 @@ fi
 
 %attr(700,mysql,mysql) %{_mysqlhome}
 # root:root is proper here for mysql.rpm while mysql:mysql is potential security hole
-#%attr(751,root,root) /var/lib/mysql
+%attr(751,root,root) %dir /var/lib/%{name}
 %attr(750,mysql,mysql) %dir /var/log/%{name}
 %attr(750,mysql,mysql) %dir /var/log/archive/%{name}
 %attr(640,mysql,mysql) %ghost /var/log/%{name}/*
